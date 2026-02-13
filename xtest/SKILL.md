@@ -39,10 +39,15 @@ allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestio
 
 2. **验证调试基础设施**（手动测试需要）：检查项目是否有调试运行脚本支持构建、后台启动、日志捕获和停止。缺失则根据项目类型自动创建（逻辑同 `/xdebug` 阶段 0 步骤 2）。
 
-3. **检测 TEST-CHECKLIST.md**，判断状态：
-   - **不存在** → 执行步骤 4-6 **全量生成**
-   - **存在但格式不符**（如旧版测试清单）→ 用 AskUserQuestion 询问是否迁移（保留原始测试结果，套用新格式）
-   - **存在且格式正确** → **增量更新**：只扫描 `git diff` 变更的文件，新增/删除对应测试项，跳到阶段 1
+3. **检测 TEST-CHECKLIST.md 和 ISSUES.md**，判断状态（两个文件独立做三态检测）：
+   - **TEST-CHECKLIST.md**：
+     - **不存在** → 执行步骤 4-6 **全量生成**
+     - **存在但格式不符**（如旧版测试清单）→ 用 AskUserQuestion 询问是否迁移（保留原始测试结果，套用新格式）
+     - **存在且格式正确** → **增量更新**：只扫描 `git diff` 变更的文件，新增/删除对应测试项，跳到阶段 1
+   - **ISSUES.md**：
+     - **不存在** → 创建空模板（格式见 `references/issues-format.md`）
+     - **存在但格式不符** → 用 AskUserQuestion 询问是否迁移
+     - **存在且格式正确** → 跳过
 
 4. **扫描代码**生成测试功能点（代码是唯一事实来源）：
    - **全量生成时用并行子 agent 加速**：按语言/模块拆分，每个子 agent（Task 工具）扫描一个区域，最后合并结果
@@ -63,6 +68,7 @@ allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestio
    ```bash
    python3 .claude/skills/xbase/skill-state.py write-info 类型 "<类型>" 构建命令 "<命令>" 运行脚本 "<脚本>" 日志位置 "<路径>"
    python3 .claude/skills/xbase/skill-state.py write xtest test_checklist "<TEST-CHECKLIST.md 路径>"
+   python3 .claude/skills/xbase/skill-state.py write-info issues_file "<ISSUES.md 路径>"
    ```
 
 ### 阶段 1：选择测试类型
@@ -126,7 +132,13 @@ allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestio
 
 1. 启动后台子 agent（Task 工具，run_in_background），让它读取日志做初步分析，输出分析结论
 2. **不打断测试流程**，在 TEST-CHECKLIST.md 该项标注 ❌ 并记录问题描述
-3. 继续下一个测试项
+3. 写入 ISSUES.md 一条 🔴 条目：
+   ```bash
+   # 获取下一个编号
+   python3 .claude/skills/xbase/issues.py next-id <ISSUES.md 路径>
+   ```
+   然后用 Edit 工具在 ISSUES.md 末尾追加问题记录（格式见 `references/issues-format.md`），包含复现步骤、实际/预期表现
+4. 继续下一个测试项
 
 ### 阶段 4：汇总
 
@@ -140,15 +152,16 @@ allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestio
 ```
 问题：本轮完成：X 通过 / Y 失败 / Z 跳过。下一步？
 选项：
+- 立即修复（→ 从 ISSUES.md 取优先级最高的 🔴，启动 /xdebug）
+- 复测已修复项（→ 扫描 🟢 条目逐项验证，通过→✅，未通过→补充描述回 🔴）
 - 继续下一个模块（→ 回阶段 1）
-- 修复失败项（→ 衔接 /xdebug，传递失败描述和日志分析）
+- 稍后修复（→ 保留 🔴 队列，结束）
 - 结束
 ```
 
-选择"修复失败项"时：用 `task set` 写入失败描述和分析结论，衔接 `/xdebug`（跳过阶段 1）：
-```bash
-python3 .claude/skills/xbase/skill-state.py task set xtest "<失败文件>" "<失败描述 + 分析结论>"
-```
+选择"立即修复"时：从 ISSUES.md 取优先级最高的 🔴 条目，衔接 `/xdebug`。
+
+选择"复测已修复项"时：用 `issues.py list` 找到所有 🟢 条目，逐项引导用户验证。通过则用 `issues.py status` 改为 ✅，未通过则补充描述后用 `issues.py status` 改回 🔴。
 
 ---
 
@@ -163,5 +176,5 @@ python3 .claude/skills/xbase/skill-state.py task set xtest "<失败文件>" "<�
 - **每次一个用例** — 不堆叠
 - **操作步骤要具体** — 根据功能给出 1-2-3 步骤，不泛泛说"测试 XX 功能"
 - **失败不打断测试** — 后台子 agent 分析日志，主流程继续下一项
-- **衔接 /xdebug 时传递上下文** — 通过 `task set` 写入失败描述 + 日志分析结论，让 /xdebug 跳过确认问题
+- **失败同步写入 ISSUES.md** — 每个失败项同时写入 TEST-CHECKLIST.md（❌）和 ISSUES.md（🔴），保持双向一致
 - **概览表保持更新** — 每次测试后刷新统计

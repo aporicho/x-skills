@@ -8,8 +8,7 @@
     python3 .claude/skills/xbase/skill-state.py read
     python3 .claude/skills/xbase/skill-state.py write <skill> <key> <value> [<key2> <value2> ...]
     python3 .claude/skills/xbase/skill-state.py write-info <key> <value> [<key2> <value2> ...]
-    python3 .claude/skills/xbase/skill-state.py task set <caller> <target> <description>
-    python3 .claude/skills/xbase/skill-state.py task clear
+    python3 .claude/skills/xbase/skill-state.py delete <skill>
 """
 
 import sys
@@ -174,59 +173,33 @@ def cmd_write_info(args: list[str]) -> None:
     print("已更新 ## 项目信息")
 
 
-def cmd_task(args: list[str]) -> None:
-    """task set/clear — 管理当前任务段。"""
-    if not args:
-        print("用法: skill-state.py task set <caller> <target> <description>", file=sys.stderr)
-        print("      skill-state.py task clear", file=sys.stderr)
+def cmd_delete(args: list[str]) -> None:
+    """delete <skill> — 删除指定 skill 段。"""
+    if len(args) != 1:
+        print("用法: skill-state.py delete <skill>", file=sys.stderr)
         sys.exit(1)
 
-    subcmd = args[0]
-    content = ensure_file()
+    skill = args[0]
+    content = read_file()
+    if not content:
+        print(f"文件不存在，无需删除")
+        return
 
-    if subcmd == "clear":
-        rng = find_section(content, "当前任务")
-        if rng is not None:
-            lines = content.split("\n")
-            # 移除整个段（包括标题和段后空行）
-            end = rng[1]
-            while end < len(lines) and not lines[end].strip():
-                end += 1
-            content = "\n".join(lines[: rng[0]] + lines[end:])
-            # 清理多余空行
-            content = re.sub(r"\n{3,}", "\n\n", content)
-            write_file(content)
-        print("已清除 ## 当前任务")
+    rng = find_section(content, skill)
+    if rng is None:
+        print(f"未找到 ## {skill} 段")
+        return
 
-    elif subcmd == "set":
-        if len(args) != 4:
-            print("用法: skill-state.py task set <caller> <target> <description>", file=sys.stderr)
-            sys.exit(1)
-        caller, target, description = args[1], args[2], args[3]
-
-        task_section = f"""
-## 当前任务
-
-- 调用方: {caller}
-- 目标: {target}
-- 描述: {description}
-- 分析: (待填入)
-"""
-        # 先清除旧的
-        rng = find_section(content, "当前任务")
-        if rng is not None:
-            lines = content.split("\n")
-            end = rng[1]
-            while end < len(lines) and not lines[end].strip():
-                end += 1
-            content = "\n".join(lines[: rng[0]] + lines[end:])
-
-        content = content.rstrip("\n") + "\n" + task_section
-        write_file(content)
-        print("已写入 ## 当前任务")
-    else:
-        print(f"未知子命令: {subcmd}", file=sys.stderr)
-        sys.exit(1)
+    lines = content.split("\n")
+    # 移除整个段（包括标题和段后空行）
+    end = rng[1]
+    while end < len(lines) and not lines[end].strip():
+        end += 1
+    content = "\n".join(lines[: rng[0]] + lines[end:])
+    # 清理多余空行
+    content = re.sub(r"\n{3,}", "\n\n", content)
+    write_file(content)
+    print(f"已删除 ## {skill}")
 
 
 def main() -> None:
@@ -242,7 +215,7 @@ def main() -> None:
         "read": cmd_read,
         "write": cmd_write,
         "write-info": cmd_write_info,
-        "task": cmd_task,
+        "delete": cmd_delete,
     }
 
     if cmd not in commands:

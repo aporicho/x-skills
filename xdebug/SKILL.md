@@ -62,13 +62,12 @@ allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestio
 
 ### 阶段 1：确认问题
 
-> 从其他 skill 衔接且 Bug 已知时（如 `/xtest` 通过 `## 当前任务` 传递了失败描述），跳过此阶段，直接进入阶段 2。
-
 用 AskUserQuestion，一步到位。**同时后台启动构建**（用户思考的时间不浪费）：
 
 ```
 问题：这次调试什么？
 选项：
+- 从 ISSUES.md 选取（→ 用 issues.py list 展示 🔴 项，用户选一个后 issues.py status 设为 🟡）
 - 探索性测试（先跑起来看日志）
 - 继续上次调试
 - Other → 用户直接输入 Bug 描述
@@ -80,11 +79,7 @@ allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestio
 
 1. 判断现有日志是否足够覆盖问题区域（先查 LOG-COVERAGE.md，再读相关代码确认）
    - 覆盖足够 → 直接构建运行
-   - 覆盖不足 → 用 `task set` 写入目标后启动子 agent：
-     ```bash
-     python3 .claude/skills/xbase/skill-state.py task set xdebug "<目标文件>" "<问题描述>"
-     ```
-     启动子 agent（Task 工具），让它读取 `.claude/skills/xlog/SKILL.md` 并按 `/xlog` 流程给目标区域补日志。子 agent 完成后主流程继续
+   - 覆盖不足 → 启动子 agent（Task 工具），在 prompt 参数中直接传入目标文件和问题描述，让它读取 `.claude/skills/xlog/SKILL.md` 并按 `/xlog` 流程给目标区域补日志。子 agent 完成后主流程继续
 2. 执行构建命令（从阶段 0 推导）
 3. 编译失败 → 自己修复后重试，不问用户
 4. 停止旧进程，后台启动项目，日志输出到阶段 0 确定的位置
@@ -145,9 +140,21 @@ allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestio
 1. 停止项目
 2. 在 DEBUG_LOG.md 追加本次 Bug 修复记录（格式见 `references/debug-log-format.md`）
 3. 如涉及技术决策且项目有决策记录文档，更新记录
-4. 清除衔接任务：`python3 .claude/skills/xbase/skill-state.py task clear`
+4. 如果本次修复来自 ISSUES.md：
+   - 用 `issues.py status` 将状态从 🟡 改为 🟢
+   - 用 Edit 工具在对应条目下写入修复说明
+5. 用 AskUserQuestion：
 
-如果用户描述了新问题 → 以新问题回到阶段 1。
+```
+问题：修复完成。下一步？
+选项：
+- 继续修下一个（→ 如果 ISSUES.md 还有 🔴 条目，回阶段 1）
+- 结束
+- Other → 用户描述新问题
+```
+
+选择"继续修下一个"且 ISSUES.md 有 🔴 条目 → 回到阶段 1。
+用户描述了新问题 → 以新问题回到阶段 1。
 
 ---
 

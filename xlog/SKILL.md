@@ -35,8 +35,6 @@ allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "Task"]
 > - 输出 `initialized` → 运行 `python3 .claude/skills/xbase/skill-state.py read` 获取已有信息 → **跳过整个阶段 0**
 > - `## 项目信息` 段已存在（其他 skill 写入）→ 直接复用，不再重复探测
 > - 输出 `not_found` → 执行下方完整探测流程
->
-> **衔接检查**：同时检查 `## 当前任务` 段，如果调用方已指定目标 → 记住目标，阶段 1 自动跳过。
 
 1. 阅读 CLAUDE.md 了解日志相关规则和禁忌（如禁止 print）
 2. 扫描代码找到日志工具：
@@ -56,7 +54,7 @@ allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "Task"]
 
 ### 阶段 1：选择范围
 
-> 从 `/xdebug` 子 agent 调用时（`## 当前任务` 段已指定目标），跳过此阶段直接进入阶段 2。
+> 从 `/xdebug` 子 agent 调用时，目标信息在 Task prompt 中传入，跳过此阶段直接进入阶段 2。
 
 读取 LOG-COVERAGE.md 概览，用 AskUserQuestion：
 
@@ -102,7 +100,7 @@ allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "Task"]
 - 有些不需要，撤回（→ Other 指定）
 ```
 
-完成后清除衔接任务（如果有）：`python3 .claude/skills/xbase/skill-state.py task clear`
+完成后返回调用方（如果是子 agent 调用则自动结束）。
 
 ---
 

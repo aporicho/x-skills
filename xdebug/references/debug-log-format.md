@@ -1,8 +1,8 @@
-# DEBUG_LOG.md 规范
+# DEBUG-LOG.md 规范
 
 ## 创建位置
 
-放在项目文档目录下（根据项目结构判断位置，如 `docs/`、`document/`、项目根目录等）。
+存放在 SKILL-STATE.md 的 `output_dir` 目录下。
 
 ## 文件格式
 

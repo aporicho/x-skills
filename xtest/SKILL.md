@@ -30,7 +30,7 @@ argument-hint: "[自动化 | 手动 | reinit]"
 
 ## 核心文件
 
-`TEST-CHECKLIST.md` — 由 `/xtest` 创建和维护，放在项目文档目录下（根据项目结构判断位置）。
+`TEST-CHECKLIST.md` — 由 `/xtest` 创建和维护，存放在 SKILL-STATE.md 的 `output_dir` 目录下。
 
 ## 流程
 
@@ -40,27 +40,21 @@ argument-hint: "[自动化 | 手动 | reinit]"
 
 ### 阶段 0：初始化
 
-> **快速跳过**：查看上方预加载结果。
-> - 输出 `initialized` → 已有状态信息可用 → **跳过步骤 1-2**，直接进入步骤 3 检测 TEST-CHECKLIST.md
-> - `## 项目信息` 段已存在（其他 skill 写入）→ 直接复用项目类型、构建命令、运行脚本等，不再重复探测
-> - `## 项目信息` 中有 `运行脚本` 字段 → 跳过基础设施检查（步骤 2）
-> - 输出 `not_found` → 执行下方完整流程
+> 按 `references/phase0-template.md` 标准流程执行。特有探测步骤：
 
-1. **项目探测**：按 xbase skill 中的标准流程执行（扫描项目、读 CLAUDE.md、确定项目关键信息）
+1. **验证调试基础设施**（手动测试需要）：按 `references/infra-setup.md` 中的流程检查四项能力（构建、后台启动、日志捕获、停止），缺失的自动创建。
 
-2. **验证调试基础设施**（手动测试需要）：按 `references/infra-setup.md` 中的流程检查四项能力（构建、后台启动、日志捕获、停止），缺失的自动创建。
-
-3. **检测 TEST-CHECKLIST.md 和 ISSUES.md**，判断状态（两个文件独立做三态检测）：
+2. **检测 TEST-CHECKLIST.md 和 TEST-ISSUES.md**，判断状态（两个文件独立做三态检测）：
    - **TEST-CHECKLIST.md**：
-     - **不存在** → 执行步骤 4-6 **全量生成**
+     - **不存在** → 执行步骤 3-5 **全量生成**
      - **存在但格式不符**（如旧版测试清单）→ 用 AskUserQuestion 询问是否迁移（保留原始测试结果，套用新格式）
      - **存在且格式正确** → **增量更新**：只扫描 `git diff` 变更的文件，新增/删除对应测试项，跳到阶段 1
-   - **ISSUES.md**：
-     - **不存在** → 创建空模板（格式见 `references/issues-format.md`）
+   - **TEST-ISSUES.md**：
+     - **不存在** → 创建空模板（格式见 `references/test-issues-format.md`）
      - **存在但格式不符** → 用 AskUserQuestion 询问是否迁移
      - **存在且格式正确** → 跳过
 
-4. **扫描代码**生成测试功能点（代码是唯一事实来源）：
+3. **扫描代码**生成测试功能点（代码是唯一事实来源）：
    - **全量生成时用并行子 agent 加速**：按语言/模块拆分，每个子 agent（Task 工具）扫描一个区域，最后合并结果
      - 子 agent A：扫描自动化测试用例（`#[test]`、XCTest、jest 等）
      - 子 agent B：扫描公开接口、命令、状态管理
@@ -68,19 +62,14 @@ argument-hint: "[自动化 | 手动 | reinit]"
      - 子 agent D：扫描 FFI/API 边界
    - **增量更新时**：只扫描变更文件，不启动子 agent
 
-5. **文档作为补充**：参考项目文档补充业务逻辑、边界条件、用户场景
+4. **文档作为补充**：参考项目文档补充业务逻辑、边界条件、用户场景
 
-6. 为每个功能点分类并生成 `TEST-CHECKLIST.md`（格式见 `references/checklist-format.md`）：
+5. 为每个功能点分类并生成 `TEST-CHECKLIST.md`（格式见 `references/checklist-format.md`）：
    - 🤖 自动化：已有测试代码覆盖，或可通过命令行验证
    - 👤 手动：需要启动 App 操作验证（UI 交互、视觉效果、动画等）
    - 🤝 结合：机器准备场景，人验证结果
 
-7. **写入 SKILL-STATE.md**：按 xbase 规范，用脚本写入：
-   ```bash
-   python3 .claude/skills/xbase/skill-state.py write-info 类型 "<类型>" 构建命令 "<命令>" 运行脚本 "<脚本>" 日志位置 "<路径>"
-   python3 .claude/skills/xbase/skill-state.py write xtest test_checklist "<TEST-CHECKLIST.md 路径>"
-   python3 .claude/skills/xbase/skill-state.py write-info issues_file "<ISSUES.md 路径>"
-   ```
+6. **写入**：`python3 .claude/skills/xbase/skill-state.py write xtest test_checklist "<TEST-CHECKLIST.md 路径>"`
 
 ### 阶段 1：选择测试类型
 
@@ -143,12 +132,12 @@ argument-hint: "[自动化 | 手动 | reinit]"
 
 1. 启动后台子 agent（Task 工具，run_in_background），让它读取日志做初步分析，输出分析结论
 2. **不打断测试流程**，在 TEST-CHECKLIST.md 该项标注 ❌ 并记录问题描述
-3. 写入 ISSUES.md 一条 🔴 条目：
+3. 写入 TEST-ISSUES.md 一条 🔴 条目：
    ```bash
    # 获取下一个编号
-   python3 .claude/skills/xbase/issues.py next-id <ISSUES.md 路径>
+   python3 .claude/skills/xbase/issues.py next-id <TEST-ISSUES.md 路径>
    ```
-   然后用 Edit 工具在 ISSUES.md 末尾追加问题记录（格式见 `references/issues-format.md`），包含复现步骤、实际/预期表现
+   然后用 Edit 工具在 TEST-ISSUES.md 末尾追加问题记录（格式见 `references/test-issues-format.md`），包含复现步骤、实际/预期表现
 4. 继续下一个测试项
 
 ### 阶段 4：汇总
@@ -163,16 +152,18 @@ argument-hint: "[自动化 | 手动 | reinit]"
 ```
 问题：本轮完成：X 通过 / Y 失败 / Z 跳过。下一步？
 选项：
-- 立即修复（→ 从 ISSUES.md 取优先级最高的 🔴，启动 /xdebug）
+- 立即修复（→ 从 TEST-ISSUES.md 取优先级最高的 🔴，启动 /xdebug）
 - 复测已修复项（→ 扫描 🟢 条目逐项验证，通过→✅，未通过→补充描述回 🔴）
+- 提交变更（→ /xcommit）
 - 继续下一个模块（→ 回阶段 1）
-- 稍后修复（→ 保留 🔴 队列，结束）
-- 结束
+- Other → 稍后修复 / 结束
 ```
 
-选择"立即修复"时：从 ISSUES.md 取优先级最高的 🔴 条目，衔接 `/xdebug`。
+选择"立即修复"时：从 TEST-ISSUES.md 取优先级最高的 🔴 条目，衔接 `/xdebug`。
 
 选择"复测已修复项"时：用 `issues.py list` 找到所有 🟢 条目，逐项引导用户验证。通过则用 `issues.py status` 改为 ✅，未通过则补充描述后用 `issues.py status` 改回 🔴。
+
+选择"提交变更"时：衔接 `/xcommit`。
 
 ---
 
@@ -187,5 +178,5 @@ argument-hint: "[自动化 | 手动 | reinit]"
 - **每次一个用例** — 不堆叠
 - **操作步骤要具体** — 根据功能给出 1-2-3 步骤，不泛泛说"测试 XX 功能"
 - **失败不打断测试** — 后台子 agent 分析日志，主流程继续下一项
-- **失败同步写入 ISSUES.md** — 每个失败项同时写入 TEST-CHECKLIST.md（❌）和 ISSUES.md（🔴），保持双向一致
+- **失败同步写入 TEST-ISSUES.md** — 每个失败项同时写入 TEST-CHECKLIST.md（❌）和 TEST-ISSUES.md（🔴），保持双向一致
 - **概览表保持更新** — 每次测试后刷新统计

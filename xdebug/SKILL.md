@@ -3,7 +3,6 @@ name: xdebug
 description: 命令行调试工作流。用户输入 /xdebug 时激活。自动构建运行 App、捕获日志、引导复现、定位修复，全程选项驱动。
 allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestion", "Task"]
 argument-hint: "[bug描述 | #issue编号 | reinit]"
-disable-model-invocation: true
 ---
 
 # 命令行调试工作流
@@ -27,8 +26,15 @@ disable-model-invocation: true
 
 - **空** → 正常走阶段 1 询问
 - **`reinit`** → 删除 SKILL-STATE.md 中 `## xdebug` 段（`python3 .claude/skills/xbase/skill-state.py delete xdebug`）+ 重新执行阶段 0
-- **以 `#` 开头**（如 `#003`）→ 从 ISSUES.md 取对应条目作为问题描述，用 `issues.py status` 设为 🟡，跳过阶段 1 直接进入阶段 2
+- **以 `#` 开头**（如 `#003`）→ 从 TEST-ISSUES.md 取对应条目作为问题描述，用 `issues.py status` 设为 🟡，跳过阶段 1 直接进入阶段 2
 - **其他文本** → 作为 bug 描述，跳过阶段 1 直接进入阶段 2
+
+## 核心文件
+
+| 文件 | 说明 | 格式规范 |
+|------|------|----------|
+| `DEBUG-LOG.md` | Bug 修复日志（症状→根因→解决） | `references/debug-log-format.md` |
+| `scripts/run.sh`（或等价物） | 调试运行脚本（构建/启动/停止/日志） | `references/infra-setup.md` |
 
 ## 流程
 
@@ -38,23 +44,14 @@ disable-model-invocation: true
 
 ### 阶段 0：探测项目
 
-> **快速跳过**：查看上方预加载结果。
-> - 输出 `initialized` → 已有状态信息可用 → **跳过整个阶段 0**
-> - 输出 `not_found` → 执行下方完整探测流程
+> 按 `references/phase0-template.md` 标准流程执行。特有探测步骤：
 
-1. **项目探测**：按 xbase skill 中的标准流程执行（扫描项目、读 CLAUDE.md、确定项目关键信息）
-2. **验证并补齐调试基础设施**：按 `references/infra-setup.md` 中的流程检查四项能力（构建、后台启动、日志捕获、停止），缺失的自动创建。后续阶段的"构建""启动""读日志""停止"均通过此基础设施执行，不再各自拼命令。
-
-3. 检测调试日志文件（DEBUG_LOG.md），判断状态：
-   - **不存在** → 在项目文档目录创建（格式见 `references/debug-log-format.md`）
+1. **验证并补齐调试基础设施**：按 `references/infra-setup.md` 中的流程检查四项能力（构建、后台启动、日志捕获、停止），缺失的自动创建。后续阶段的"构建""启动""读日志""停止"均通过此基础设施执行，不再各自拼命令。
+2. **检测调试日志文件**（DEBUG-LOG.md），判断状态：
+   - **不存在** → 在 `output_dir` 下创建（格式见 `references/debug-log-format.md`）
    - **存在但格式不符** → 用 AskUserQuestion 询问是否迁移（保留原始内容，套用新格式）
    - **存在且格式正确** → 跳过，无需操作
-
-4. **写入 SKILL-STATE.md**：按 xbase 规范，用脚本写入：
-   ```bash
-   python3 .claude/skills/xbase/skill-state.py write-info 类型 "<类型>" 构建命令 "<命令>" 运行脚本 "<脚本>" 日志位置 "<路径>"
-   python3 .claude/skills/xbase/skill-state.py write xdebug debug_log "<DEBUG_LOG.md 路径>"
-   ```
+3. **写入**：`python3 .claude/skills/xbase/skill-state.py write xdebug debug_log "<DEBUG-LOG.md 路径>"`
 
 ### 阶段 1：确认问题
 
@@ -63,7 +60,7 @@ disable-model-invocation: true
 ```
 问题：这次调试什么？
 选项：
-- 从 ISSUES.md 选取（→ 用 issues.py list 展示 🔴 项，用户选一个后 issues.py status 设为 🟡）
+- 从 TEST-ISSUES.md 选取（→ 用 issues.py list 展示 🔴 项，用户选一个后 issues.py status 设为 🟡）
 - 探索性测试（先跑起来看日志）
 - 继续上次调试
 - Other → 用户直接输入 Bug 描述
@@ -134,9 +131,9 @@ disable-model-invocation: true
 **仅在确认修好后执行，不问用户：**
 
 1. 停止项目
-2. 在 DEBUG_LOG.md 追加本次 Bug 修复记录（格式见 `references/debug-log-format.md`）
+2. 在 DEBUG-LOG.md 追加本次 Bug 修复记录（格式见 `references/debug-log-format.md`）
 3. 如涉及技术决策且项目有决策记录文档，更新记录
-4. 如果本次修复来自 ISSUES.md：
+4. 如果本次修复来自 TEST-ISSUES.md：
    - 用 `issues.py status` 将状态从 🟡 改为 🟢
    - 用 Edit 工具在对应条目下写入修复说明
 5. 用 AskUserQuestion：
@@ -144,12 +141,15 @@ disable-model-invocation: true
 ```
 问题：修复完成。下一步？
 选项：
-- 继续修下一个（→ 如果 ISSUES.md 还有 🔴 条目，回阶段 1）
-- 结束
+- 继续修下一个（→ 如果 TEST-ISSUES.md 还有 🔴 条目，回阶段 1）
+- 提交变更（→ /xcommit）
+- 记录决策（→ /xdecide）
 - Other → 用户描述新问题
 ```
 
-选择"继续修下一个"且 ISSUES.md 有 🔴 条目 → 回到阶段 1。
+选择"继续修下一个"且 TEST-ISSUES.md 有 🔴 条目 → 回到阶段 1。
+选择"提交变更" → 衔接 `/xcommit`。
+选择"记录决策" → 衔接 `/xdecide`。
 用户描述了新问题 → 以新问题回到阶段 1。
 
 ---

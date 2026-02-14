@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ISSUES.md 操作工具。
+"""TEST-ISSUES.md 操作工具。
 
 供 xtest/xdebug skill 使用，管理跨 session Bug 队列。
 

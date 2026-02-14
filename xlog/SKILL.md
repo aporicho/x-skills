@@ -28,10 +28,10 @@ argument-hint: "[文件/模块路径 | reinit]"
 
 ## 核心文件
 
-- `LOG-STANDARD.md` — 本项目的日志规范（Logger 列表、级别用法、代码模式、消息风格）
+- `LOG-RULES.md` — 本项目的日志规范（Logger 列表、级别用法、代码模式、消息风格）
 - `LOG-COVERAGE.md` — 日志覆盖度跟踪（哪些模块扫过、状态如何）
 
-两个文件均由 `/xlog` 创建和维护，放在项目文档目录下（根据项目结构判断位置）。
+两个文件均由 `/xlog` 创建和维护，存放在 SKILL-STATE.md 的 `output_dir` 目录下。
 
 ## 流程
 
@@ -41,10 +41,7 @@ argument-hint: "[文件/模块路径 | reinit]"
 
 ### 阶段 0：探测项目日志系统
 
-> **快速跳过**：查看上方预加载结果。
-> - 输出 `initialized` → 已有状态信息可用 → **跳过整个阶段 0**
-> - `## 项目信息` 段已存在（其他 skill 写入）→ 直接复用，不再重复探测
-> - 输出 `not_found` → 执行下方完整探测流程
+> 按 `references/phase0-template.md` 标准流程执行。特有探测步骤：
 
 1. 阅读 CLAUDE.md 了解日志相关规则和禁忌（如禁止 print）
 2. 扫描代码找到日志工具：
@@ -53,14 +50,9 @@ argument-hint: "[文件/模块路径 | reinit]"
    - 可用的 Logger 实例 / 分类 / 子系统
    - 消息语言和 metadata 命名风格
 3. 检测两个核心文件：
-   - **LOG-STANDARD.md**：不存在 → 基于扫描结果生成（格式见 `references/log-standard-format.md`）；存在但格式不符 → 问是否迁移；已就绪 → 跳过
+   - **LOG-RULES.md**：不存在 → 基于扫描结果生成（格式见 `references/log-rules-format.md`）；存在但格式不符 → 问是否迁移；已就绪 → 跳过
    - **LOG-COVERAGE.md**：同上三态检测（格式见 `references/log-coverage-format.md`）
-
-4. **写入 SKILL-STATE.md**：按 xbase 规范，用脚本写入：
-   ```bash
-   python3 .claude/skills/xbase/skill-state.py write-info 类型 "<类型>" 构建命令 "<命令>"
-   python3 .claude/skills/xbase/skill-state.py write xlog log_standard "<LOG-STANDARD.md 路径>" log_coverage "<LOG-COVERAGE.md 路径>"
-   ```
+4. **写入**：`python3 .claude/skills/xbase/skill-state.py write xlog log_rules "<LOG-RULES.md 路径>" log_coverage "<LOG-COVERAGE.md 路径>"`
 
 ### 阶段 1：选择范围
 
@@ -81,14 +73,14 @@ argument-hint: "[文件/模块路径 | reinit]"
 
 **不问用户，自动完成：**
 
-1. 读取 LOG-STANDARD.md 获取本项目的日志规则
+1. 读取 LOG-RULES.md 获取本项目的日志规则
 2. 确定扫描范围：
    - **指定模块/文件** → 扫描指定范围
    - **全项目扫描且 LOG-COVERAGE.md 已有记录** → 只扫描 `git diff` 变更文件（增量），未扫描过的模块仍全量扫
    - **首次全项目扫描** → 全量扫描
 3. 读取目标代码，检查两类问题：
    - **盲区**：该有日志但没有的位置 → 补充
-   - **不规范**：已有日志但不符合 LOG-STANDARD.md → 纠正
+   - **不规范**：已有日志但不符合 LOG-RULES.md → 纠正
      - 违反项目禁忌（如用 print 代替 Logger）
      - 级别错误（如 guard 失败用了 debug 而非 warning）
      - Logger 实例不匹配（如交互代码用了 `Log.general` 而非 `Log.interaction`）
@@ -127,10 +119,10 @@ argument-hint: "[文件/模块路径 | reinit]"
 
 - **不硬编码** — 日志工具、调用模式、模块划分均从项目动态发现
 - **增量优先** — 已扫描过的模块只检查 git diff 变更文件，未扫描的模块才全量扫
-- **规范从代码提取** — LOG-STANDARD.md 基于扫描生成，不是凭空编写
+- **规范从代码提取** — LOG-RULES.md 基于扫描生成，不是凭空编写
 - **日志在决策点，不在执行点** — 在分支处记录，不在每行赋值处记录
 - **日志在边界处** — 模块入口、FFI 边界、异步回调入口
 - **日志消息回答"为什么"** — 包含因果关系，不只是描述现象
-- **遵循项目禁忌** — LOG-STANDARD.md 中的禁忌条目严格遵守
+- **遵循项目禁忌** — LOG-RULES.md 中的禁忌条目严格遵守
 - **编译必须通过** — 加完日志后必须确认编译成功
-- **两个文档保持更新** — 规范变化更新 STANDARD，扫描后更新 COVERAGE
+- **两个文档保持更新** — 规范变化更新 LOG-RULES，扫描后更新 COVERAGE

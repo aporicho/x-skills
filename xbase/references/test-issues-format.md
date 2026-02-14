@@ -1,4 +1,4 @@
-# ISSUES.md 格式规范
+# TEST-ISSUES.md 格式规范
 
 ## 文件头
 
@@ -54,7 +54,7 @@
 
 ## 脚本操作
 
-ISSUES.md 的状态管理通过 `issues.py` 脚本完成，富文本内容（复现步骤、修复说明等）由 skill 用 Read/Edit 工具直接操作。
+TEST-ISSUES.md 的状态管理通过 `issues.py` 脚本完成，富文本内容（复现步骤、修复说明等）由 skill 用 Read/Edit 工具直接操作。
 
 ```bash
 # 列出所有问题

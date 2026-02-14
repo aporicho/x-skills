@@ -1,11 +1,11 @@
-# LOG-STANDARD.md 规范
+# LOG-RULES.md 规范
 
 ## 生成方式
 
 从项目代码中提取（不是凭空编），包含以下内容：
 
 ```markdown
-# LOG STANDARD
+# LOG RULES
 
 > 由 /xlog skill 基于代码扫描生成，可手动调整
 

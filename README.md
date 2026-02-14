@@ -6,13 +6,13 @@ Claude Code 自定义工作流 skill 集合。通过 `/x*` 命令调用，引导
 
 | Skill | 命令 | 参数 | 用途 | 产出物 |
 |-------|------|------|------|--------|
-| xdebug | `/xdebug` | `[bug描述 \| #issue编号 \| reinit]` | 调试：构建运行 → 加日志 → 引导复现 → 定位修复 | DEBUG_LOG.md, run.sh |
-| xtest | `/xtest` | `[自动化 \| 手动 \| reinit]` | 测试：自动化 + 手动逐项验证 | TEST-CHECKLIST.md, ISSUES.md |
-| xlog | `/xlog` | `[文件/模块路径 \| reinit]` | 日志补全：建立规范，扫描代码补日志 | LOG-STANDARD.md, LOG-COVERAGE.md |
-| xreview | `/xreview` | `[文件/目录路径 \| reinit]` | 代码审查：从 CLAUDE.md 提取规范，三维度审查 | — |
-| xcommit | `/xcommit` | `[commit消息 \| reinit]` | 提交：自动预检 + 文档完整性检查 + 规范化 | git commit |
-| xdoc | `/xdoc` | `[健康检查 \| 一致性 \| reinit]` | 文档维护：健康检查 + 代码-文档一致性验证 | — |
-| xdecide | `/xdecide` | `[决策描述 \| review \| reinit]` | 决策记录：引导式决策 + 快速录入 + 回顾修订 | 决策记录文件 |
+| xdebug | `/xdebug` | `[bug描述 \| #issue编号 \| reinit]` | 调试：构建运行 → 加日志 → 引导复现 → 定位修复 | DEBUG-LOG.md, run.sh |
+| xtest | `/xtest` | `[自动化 \| 手动 \| reinit]` | 测试：自动化 + 手动逐项验证 | TEST-CHECKLIST.md, TEST-ISSUES.md |
+| xlog | `/xlog` | `[文件/模块路径 \| reinit]` | 日志补全：建立规范，扫描代码补日志 | LOG-RULES.md, LOG-COVERAGE.md |
+| xreview | `/xreview` | `[文件/目录路径 \| reinit]` | 代码审查：基于 REVIEW-RULES.md 三维度审查 | REVIEW-RULES.md |
+| xcommit | `/xcommit` | `[commit消息 \| reinit]` | 提交：基于 COMMIT-RULES.md 预检 + 文档完整性 + 规范化 | COMMIT-RULES.md |
+| xdoc | `/xdoc` | `[健康检查 \| 一致性 \| reinit]` | 文档维护：基于 DOC-RULES.md 健康检查 + 一致性验证 | DOC-RULES.md |
+| xdecide | `/xdecide` | `[决策描述 \| review \| reinit]` | 决策记录：引导式决策 + 快速录入 + 回顾修订 | DECIDE-LOG.md |
 | xbase | — | — | 共享基础（不可直接调用） | SKILL-STATE.md |
 
 所有 skill 共享 `reinit` 参数：强制重新初始化（删除状态 + 重新探测项目）。
@@ -24,16 +24,16 @@ Claude Code 自定义工作流 skill 集合。通过 `/x*` 命令调用，引导
 | 产出物 | 说明 | 创建 | 维护 |
 |--------|------|------|------|
 | `SKILL-STATE.md` | 运行时状态（项目类型、构建命令等探测结果） | 首个运行的 skill | 所有 skill 共同维护 |
-| `DEBUG_LOG.md` | Bug 修复日志 | xdebug | xdebug |
+| `DEBUG-LOG.md` | Bug 修复日志 | xdebug | xdebug |
 | `scripts/run.sh`（或等价物） | 调试运行脚本（构建/启动/停止/日志） | xdebug 或 xtest（谁先需要） | xdebug、xtest |
 | `TEST-CHECKLIST.md` | 测试清单（扫描代码生成，记录结果） | xtest | xtest |
-| `ISSUES.md` | Bug 队列（状态流转：🔴→🟡→🟢→✅） | xtest | xtest 写入、xdebug 更新状态 |
-| `LOG-STANDARD.md` | 日志规范（从代码扫描提取） | xlog | xlog |
+| `TEST-ISSUES.md` | Bug 队列（状态流转：🔴→🟡→🟢→✅） | xtest | xtest 写入、xdebug 更新状态 |
+| `LOG-RULES.md` | 日志规范（从代码扫描提取） | xlog | xlog |
 | `LOG-COVERAGE.md` | 日志覆盖度跟踪 | xlog | xlog |
-| 决策记录文件 | 决策条目（编号递增，含背景/选项/结论） | xdecide | xdecide |
-| git commit | 规范化提交 | xcommit | — |
-| — | xreview：审查结果通过 AskUserQuestion 逐项交互，不产出文件 | — | — |
-| — | xdoc：直接修复文档问题，不产出额外文件 | — | — |
+| `REVIEW-RULES.md` | 审查规范（代码扫描 + CLAUDE.md 提取） | xreview | xreview |
+| `DECIDE-LOG.md` | 决策条目（编号递增，含背景/选项/结论） | xdecide | xdecide |
+| `COMMIT-RULES.md` | 提交规范（git log 分析 + CLAUDE.md 提取） | xcommit | xcommit |
+| `DOC-RULES.md` | 文档规范（目录结构 + 检查脚本 + 映射规则） | xdoc | xdoc |
 
 ## 工作流衔接
 
@@ -66,7 +66,7 @@ python3 .claude/skills/xbase/skill-state.py write-info <k> <v> [...]     # 写�
 python3 .claude/skills/xbase/skill-state.py delete <skill>       # 删除 skill 段（reinit）
 ```
 
-### ISSUES.md 管理（issues.py）
+### TEST-ISSUES.md 管理（issues.py）
 
 xtest 发现失败时写入 🔴 条目，xdebug 修复后改为 🟢，复测通过后改为 ✅。
 
@@ -94,18 +94,18 @@ python3 .claude/skills/xbase/decision-log.py search <path> <关键词>   # 搜�
 xbase/
 ├── SKILL.md                  # 共享规范（项目探测、状态格式、衔接协议）
 ├── skill-state.py            # 状态管理脚本
-├── issues.py                 # ISSUES.md 操作脚本
+├── issues.py                 # TEST-ISSUES.md 操作脚本
 ├── decision-log.py           # 决策记录操作脚本
-├── SKILL-STATE.md            # 运行时状态（自动生成，git ignore）
+├── SKILL-STATE.md            # 运行时状态（模板预置，skill 初始化时填值）
 └── references/
     ├── infra-setup.md        # 调试基础设施检查流程（xdebug/xtest 共享）
-    ├── issues-format.md      # ISSUES.md 格式规范
+    ├── test-issues-format.md      # TEST-ISSUES.md 格式规范
     └── decision-format.md    # 决策记录格式规范
 
 xdebug/
 ├── SKILL.md
 └── references/
-    └── debug-log-format.md   # DEBUG_LOG.md 格式规范
+    └── debug-log-format.md   # DEBUG-LOG.md 格式规范
 
 xtest/
 ├── SKILL.md
@@ -115,13 +115,25 @@ xtest/
 xlog/
 ├── SKILL.md
 └── references/
-    ├── log-standard-format.md   # LOG-STANDARD.md 格式规范
+    ├── log-rules-format.md   # LOG-RULES.md 格式规范
     └── log-coverage-format.md   # LOG-COVERAGE.md 格式规范
 
-xreview/SKILL.md
-xcommit/SKILL.md
-xdoc/SKILL.md
-xdecide/SKILL.md
+xreview/
+├── SKILL.md
+└── references/
+    └── review-rules-format.md   # REVIEW-RULES.md 格式规范
+xcommit/
+├── SKILL.md
+└── references/
+    └── commit-rules-format.md   # COMMIT-RULES.md 格式规范
+xdoc/
+├── SKILL.md
+└── references/
+    └── doc-rules-format.md      # DOC-RULES.md 格式规范
+xdecide/
+├── SKILL.md
+└── references/
+    └── decision-format.md       # 决策记录格式规范
 ```
 
 ## 使用的 Claude Code 官方特性

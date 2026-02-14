@@ -1,47 +1,49 @@
 # SKILL STATE
 
-> 由 /xbase 初始化，xdebug/xtest/xlog/xcommit/xreview/xdoc/xdecide 共同维护
+> 由 xdebug/xtest/xlog/xcommit/xreview/xdoc/xdecide 共同维护
 
 ## 项目信息
 
-- 类型: GUI 应用（Rust Core + Swift/AppKit macOS + React/TypeScript Web）
-- 构建命令: scripts/run.sh build
-- 运行脚本: scripts/run.sh
-- 日志位置: /tmp/entro-debug.log + macos/Utils/Log.swift
-- output_dir: document/90-开发
+- 类型:
+- 构建命令:
+- 运行脚本:
+- 日志位置:
+- output_dir:
+- skip_dedup:
 
 ## xdebug
 
-- debug_log: document/90-开发/DEBUG_LOG.md
-- initialized: 2026-02-14
+- debug_log:
+- initialized:
 
 ## xtest
 
-- test_checklist: document/90-开发/TEST-CHECKLIST.md
-- initialized: 2026-02-14
+- test_checklist:
+- test_issues:
+- initialized:
 
 ## xlog
 
-- log_rules: document/90-开发/LOG-RULES.md
-- log_coverage: document/90-开发/LOG-COVERAGE.md
-- initialized: 2026-02-14
+- log_rules:
+- log_coverage:
+- initialized:
 
 ## xcommit
 
-- commit_rules: document/90-开发/COMMIT-RULES.md
-- initialized: 2026-02-14
+- commit_rules:
+- initialized:
 
 ## xreview
 
-- review_rules: document/90-开发/REVIEW-RULES.md
-- initialized: 2026-02-14
+- review_rules:
+- initialized:
 
 ## xdoc
 
-- doc_rules: document/90-开发/DOC-RULES.md
-- initialized: 2026-02-14
+- doc_rules:
+- initialized:
 
 ## xdecide
 
-- decision_log: document/90-开发/DECIDE-LOG.md
-- initialized: 2026-02-14
+- decision_log:
+- initialized:

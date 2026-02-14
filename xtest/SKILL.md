@@ -1,6 +1,7 @@
 ---
 name: xtest
-description: 测试工作流。用户输入 /xtest 时激活。自动化测试 + 手动逐项验证，维护 TEST-CHECKLIST.md，失败自动衔接 /xdebug。
+description: 测试工作流。用户输入 /xtest 时激活。自动化测试 + 手动逐项验证，维护 TEST-CHECKLIST.md，失败自动衔接 /xdebug。当用户要测试、验证功能、跑测试用例时也适用。
+user-invocable: true
 allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestion", "Task"]
 argument-hint: "[自动化 | 手动 | reinit]"
 ---
@@ -23,26 +24,30 @@ argument-hint: "[自动化 | 手动 | reinit]"
 
 ### 参数处理（`$ARGUMENTS`）
 
+> **执行顺序**：无论参数如何，阶段 0 的快速跳过检查始终先执行。参数仅影响阶段 1 及之后的跳转。
+
 - **空** → 正常走阶段 1 询问
-- **`reinit`** → 删除 SKILL-STATE.md 中 `## xtest` 段（`python3 .claude/skills/xbase/skill-state.py delete xtest`）+ 重新执行阶段 0
+- **`reinit`** → 删除 SKILL-STATE.md 中 `## xtest` 段（`python3 .claude/skills/xbase/skill-state.py delete xtest`）+ 重新执行阶段 0（忽略预加载的 check 结果，delete 后强制执行完整阶段 0）
 - **`自动化`** → 跳过阶段 1，直接进入阶段 2a
 - **`手动`** → 跳过阶段 1，直接进入阶段 2b
 
 ## 核心文件
 
-`TEST-CHECKLIST.md` — 由 `/xtest` 创建和维护，存放在 SKILL-STATE.md 的 `output_dir` 目录下。
+| 文件 | 说明 | 格式规范 |
+|------|------|----------|
+| `TEST-CHECKLIST.md` | 测试清单（按模块组织，记录测试结果） | `references/checklist-format.md` |
+| `TEST-ISSUES.md` | Bug 队列（状态流转：🔴→🟡→🟢→✅） | `../xbase/references/test-issues-format.md` |
 
 ## 流程
 
 ### 预加载状态
-!`python3 .claude/skills/xbase/skill-state.py check xtest 2>/dev/null`
-!`python3 .claude/skills/xbase/skill-state.py read 2>/dev/null`
+!`python3 .claude/skills/xbase/skill-state.py check-and-read xtest 2>/dev/null`
 
 ### 阶段 0：初始化
 
-> 按 `references/phase0-template.md` 标准流程执行。特有探测步骤：
+> 按 `../xbase/references/phase0-template.md` 标准流程执行。特有探测步骤：
 
-1. **验证调试基础设施**（手动测试需要）：按 `references/infra-setup.md` 中的流程检查四项能力（构建、后台启动、日志捕获、停止），缺失的自动创建。
+1. **验证调试基础设施**（手动测试需要）：按 `../xbase/references/infra-setup.md` 中的流程检查四项能力（构建、后台启动、日志捕获、停止），缺失的自动创建。
 
 2. **检测 TEST-CHECKLIST.md 和 TEST-ISSUES.md**，判断状态（两个文件独立做三态检测）：
    - **TEST-CHECKLIST.md**：
@@ -50,7 +55,7 @@ argument-hint: "[自动化 | 手动 | reinit]"
      - **存在但格式不符**（如旧版测试清单）→ 用 AskUserQuestion 询问是否迁移（保留原始测试结果，套用新格式）
      - **存在且格式正确** → **增量更新**：只扫描 `git diff` 变更的文件，新增/删除对应测试项，跳到阶段 1
    - **TEST-ISSUES.md**：
-     - **不存在** → 创建空模板（格式见 `references/test-issues-format.md`）
+     - **不存在** → 创建空模板（格式见 `../xbase/references/test-issues-format.md`）
      - **存在但格式不符** → 用 AskUserQuestion 询问是否迁移
      - **存在且格式正确** → 跳过
 
@@ -69,19 +74,9 @@ argument-hint: "[自动化 | 手动 | reinit]"
    - 👤 手动：需要启动 App 操作验证（UI 交互、视觉效果、动画等）
    - 🤝 结合：机器准备场景，人验证结果
 
-6. **写入**：`python3 .claude/skills/xbase/skill-state.py write xtest test_checklist "<TEST-CHECKLIST.md 路径>"`
+6. **写入**：`python3 .claude/skills/xbase/skill-state.py write xtest test_checklist "<TEST-CHECKLIST.md 路径>" test_issues "<TEST-ISSUES.md 路径>"`
 
-7. **去重子步骤**（阶段 0 最后执行）：
-
-   产出物创建/确认就绪后，扫描 CLAUDE.md 和 MEMORY.md，将本 skill 产出物已覆盖的详细内容替换为指针。
-
-   **原则**：
-   - 每次对话都需要的**方法论/禁令/哲学** → 保留原文
-   - 已被产出物详细覆盖的**具体规范** → 替换为一句话 + 文件路径
-   - 修改前展示 diff 预览，等用户确认
-
-   **去重职责**：
-   - xtest 当前无对应的 CLAUDE.md / MEMORY.md 重复内容 → **跳过**
+7. **去重子步骤**：按 `../xbase/references/dedup-protocol.md` 流程执行。xtest 当前无对应重复内容 → **跳过**。
 
 ### 阶段 1：选择测试类型
 
@@ -149,7 +144,7 @@ argument-hint: "[自动化 | 手动 | reinit]"
    # 获取下一个编号
    python3 .claude/skills/xbase/issues.py next-id <TEST-ISSUES.md 路径>
    ```
-   然后用 Edit 工具在 TEST-ISSUES.md 末尾追加问题记录（格式见 `references/test-issues-format.md`），包含复现步骤、实际/预期表现
+   然后用 Edit 工具在 TEST-ISSUES.md 末尾追加问题记录（格式见 `../xbase/references/test-issues-format.md`），包含复现步骤、实际/预期表现
 4. 继续下一个测试项
 
 ### 阶段 4：汇总
@@ -164,7 +159,7 @@ argument-hint: "[自动化 | 手动 | reinit]"
 ```
 问题：本轮完成：X 通过 / Y 失败 / Z 跳过。下一步？
 选项：
-- 立即修复（→ 从 TEST-ISSUES.md 取优先级最高的 🔴，启动 /xdebug）
+- 立即修复（→ 从 TEST-ISSUES.md 取优先级最高的 🔴，衔接 /xdebug，传递 TEST-ISSUES.md 条目编号如 #003）
 - 复测已修复项（→ 扫描 🟢 条目逐项验证，通过→✅，未通过→补充描述回 🔴）
 - 提交变更（→ /xcommit）
 - 继续下一个模块（→ 回阶段 1）

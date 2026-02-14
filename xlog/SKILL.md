@@ -1,7 +1,8 @@
 ---
 name: xlog
-description: 日志补全。用户输入 /xlog 时激活，或由 /xdebug 子 agent 自动调用。建立日志规范，扫描代码补充诊断日志。
-allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestion", "Task"]
+description: 日志补全。用户输入 /xlog 时激活，或由 /xdebug 子 agent 自动调用。建立日志规范，扫描代码补充诊断日志。当用户要补日志、完善日志覆盖时也适用。
+user-invocable: true
+allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestion"]
 argument-hint: "[文件/模块路径 | reinit]"
 ---
 
@@ -22,26 +23,29 @@ argument-hint: "[文件/模块路径 | reinit]"
 
 ### 参数处理（`$ARGUMENTS`）
 
+> **执行顺序**：无论参数如何，阶段 0 的快速跳过检查始终先执行。参数仅影响阶段 1 及之后的跳转。
+
 - **空** → 正常走阶段 1 询问
-- **`reinit`** → 删除 SKILL-STATE.md 中 `## xlog` 段（`python3 .claude/skills/xbase/skill-state.py delete xlog`）+ 重新执行阶段 0
+- **`reinit`** → 删除 SKILL-STATE.md 中 `## xlog` 段（`python3 .claude/skills/xbase/skill-state.py delete xlog`）+ 重新执行阶段 0（忽略预加载的 check 结果，delete 后强制执行完整阶段 0）
 - **其他文本** → 作为目标文件/模块路径，跳过阶段 1 直接进入阶段 2
 
 ## 核心文件
 
-- `LOG-RULES.md` — 本项目的日志规范（Logger 列表、级别用法、代码模式、消息风格）
-- `LOG-COVERAGE.md` — 日志覆盖度跟踪（哪些模块扫过、状态如何）
+| 文件 | 说明 | 格式规范 |
+|------|------|----------|
+| `LOG-RULES.md` | 日志规范（Logger 列表、级别用法、代码模式） | `references/log-rules-format.md` |
+| `LOG-COVERAGE.md` | 日志覆盖度跟踪（模块扫描状态） | `references/log-coverage-format.md` |
 
 两个文件均由 `/xlog` 创建和维护，存放在 SKILL-STATE.md 的 `output_dir` 目录下。
 
 ## 流程
 
 ### 预加载状态
-!`python3 .claude/skills/xbase/skill-state.py check xlog 2>/dev/null`
-!`python3 .claude/skills/xbase/skill-state.py read 2>/dev/null`
+!`python3 .claude/skills/xbase/skill-state.py check-and-read xlog 2>/dev/null`
 
 ### 阶段 0：探测项目日志系统
 
-> 按 `references/phase0-template.md` 标准流程执行。特有探测步骤：
+> 按 `../xbase/references/phase0-template.md` 标准流程执行。特有探测步骤：
 
 1. 阅读 CLAUDE.md 了解日志相关规则和禁忌（如禁止 print）
 2. 扫描代码找到日志工具：
@@ -54,19 +58,7 @@ argument-hint: "[文件/模块路径 | reinit]"
    - **LOG-COVERAGE.md**：同上三态检测（格式见 `references/log-coverage-format.md`）
 4. **写入**：`python3 .claude/skills/xbase/skill-state.py write xlog log_rules "<LOG-RULES.md 路径>" log_coverage "<LOG-COVERAGE.md 路径>"`
 
-5. **去重子步骤**（阶段 0 最后执行）：
-
-   产出物创建/确认就绪后，扫描 CLAUDE.md 和 MEMORY.md，将本 skill 产出物已覆盖的详细内容替换为指针。
-
-   **原则**：
-   - 每次对话都需要的**方法论/禁令/哲学** → 保留原文
-   - 已被产出物详细覆盖的**具体规范** → 替换为一句话 + 文件路径
-   - 修改前展示 diff 预览，等用户确认
-
-   **去重职责**：
-   - MEMORY.md 中日志规则的重复部分（如有）→ 替换为指向 LOG-RULES.md 的指针
-   - CLAUDE.md 中「禁止 print()」的规则 → **保留**（这是禁令）
-   - CLAUDE.md 中「日志规范详见 /logging skill」→ **保留**（已是指针形式）
+5. **去重子步骤**：按 `../xbase/references/dedup-protocol.md` 流程执行。xlog 去重职责：MEMORY.md 中日志规则重复部分 → 替换为指针；「禁止 print()」「日志规范详见 /logging」→ **保留**。
 
 ### 阶段 1：选择范围
 

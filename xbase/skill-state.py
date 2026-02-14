@@ -8,14 +8,17 @@ SKILL-STATE.md 作为模板预置在同目录下，所有段和字段已定义�
 用法:
     python3 .claude/skills/xbase/skill-state.py check <skill>
     python3 .claude/skills/xbase/skill-state.py read
+    python3 .claude/skills/xbase/skill-state.py check-and-read <skill>
     python3 .claude/skills/xbase/skill-state.py write <skill> <key> <value> [<key2> <value2> ...]
     python3 .claude/skills/xbase/skill-state.py write-info <key> <value> [<key2> <value2> ...]
     python3 .claude/skills/xbase/skill-state.py delete <skill>
+    python3 .claude/skills/xbase/skill-state.py delete-info
     python3 .claude/skills/xbase/skill-state.py reset-all
 """
 
 import sys
 import re
+import fcntl
 from datetime import date
 from pathlib import Path
 
@@ -34,6 +37,7 @@ TEMPLATE = """\
 - 运行脚本:
 - 日志位置:
 - output_dir:
+- skip_dedup:
 
 ## xdebug
 
@@ -43,6 +47,7 @@ TEMPLATE = """\
 ## xtest
 
 - test_checklist:
+- test_issues:
 - initialized:
 
 ## xlog
@@ -74,18 +79,59 @@ TEMPLATE = """\
 
 
 def read_file() -> str:
-    """读取状态文件，不存在则从模板恢复。"""
-    if STATE_FILE.exists():
-        return STATE_FILE.read_text(encoding="utf-8")
-    # 模板文件被意外删除时自动恢复
-    write_file(TEMPLATE)
-    return TEMPLATE
+    """读取状态文件（共享锁保护），不存在则从模板恢复。"""
+    if not STATE_FILE.exists():
+        _write_file_raw(TEMPLATE)
+        return TEMPLATE
+
+    with open(STATE_FILE, "rb") as fd:
+        fcntl.flock(fd, fcntl.LOCK_SH)
+        try:
+            content = fd.read().decode("utf-8")
+        finally:
+            fcntl.flock(fd, fcntl.LOCK_UN)
+
+    if not content.strip():
+        _write_file_raw(TEMPLATE)
+        return TEMPLATE
+    return content
 
 
-def write_file(content: str) -> None:
-    """写入状态文件。"""
+def _write_file_raw(content: str) -> None:
+    """无锁写入（仅供 read_file 恢复模板时使用）。"""
     STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
     STATE_FILE.write_text(content, encoding="utf-8")
+
+
+def atomic_read_modify_write(modify_fn) -> str:
+    """在文件锁保护下执行 read → modify → write，返回修改后的内容。
+
+    modify_fn: 接收当前文件内容(str)，返回修改后的内容(str)。
+    """
+    STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    # 使用 r+b 打开已有文件，或 w+b 创建新文件
+    if STATE_FILE.exists():
+        fd = open(STATE_FILE, "r+b")
+    else:
+        fd = open(STATE_FILE, "w+b")
+        fd.write(TEMPLATE.encode("utf-8"))
+        fd.flush()
+        fd.seek(0)
+
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX)
+        content = fd.read().decode("utf-8")
+        if not content.strip():
+            content = TEMPLATE
+        new_content = modify_fn(content)
+        fd.seek(0)
+        fd.truncate()
+        fd.write(new_content.encode("utf-8"))
+        fd.flush()
+        return new_content
+    finally:
+        fcntl.flock(fd, fcntl.LOCK_UN)
+        fd.close()
 
 
 def find_section(content: str, heading: str) -> tuple[int, int] | None:
@@ -198,6 +244,33 @@ def cmd_read(_args: list[str]) -> None:
     print(content)
 
 
+def cmd_check_and_read(args: list[str]) -> None:
+    """check-and-read <skill> — 一次调用完成 check + read，减少进程启动开销。
+
+    输出格式：第一行为 check 结果（initialized / not_found），第二行为 ---，后续为完整状态。
+    """
+    if len(args) != 1:
+        print("用法: skill-state.py check-and-read <skill>", file=sys.stderr)
+        sys.exit(1)
+
+    skill = args[0]
+    content = read_file()
+
+    # check 逻辑
+    check_result = "not_found"
+    section = get_section_content(content, skill)
+    if section:
+        for line in section.split("\n"):
+            m = re.match(r"^- initialized:\s*(.+)$", line)
+            if m and m.group(1).strip():
+                check_result = "initialized"
+                break
+
+    print(check_result)
+    print("---")
+    print(content)
+
+
 def cmd_write(args: list[str]) -> None:
     """write <skill> <key> <value> [<key2> <value2> ...] — 写入 skill 状态。"""
     if len(args) < 3 or (len(args) - 1) % 2 != 0:
@@ -213,9 +286,7 @@ def cmd_write(args: list[str]) -> None:
     if "initialized" not in kvs:
         kvs["initialized"] = date.today().isoformat()
 
-    content = read_file()
-    content = update_section_kv(content, skill, kvs)
-    write_file(content)
+    atomic_read_modify_write(lambda c: update_section_kv(c, skill, kvs))
     print(f"已更新 ## {skill}")
 
 
@@ -229,9 +300,7 @@ def cmd_write_info(args: list[str]) -> None:
     for i in range(0, len(args), 2):
         kvs[args[i]] = args[i + 1]
 
-    content = read_file()
-    content = update_section_kv(content, "项目信息", kvs)
-    write_file(content)
+    atomic_read_modify_write(lambda c: update_section_kv(c, "项目信息", kvs))
     print("已更新 ## 项目信息")
 
 
@@ -242,21 +311,26 @@ def cmd_delete(args: list[str]) -> None:
         sys.exit(1)
 
     skill = args[0]
+    # 先检查段是否存在
     content = read_file()
-
     rng = find_section(content, skill)
     if rng is None:
         print(f"未找到 ## {skill} 段")
         return
 
-    content = clear_section_values(content, skill)
-    write_file(content)
+    atomic_read_modify_write(lambda c: clear_section_values(c, skill))
     print(f"已重置 ## {skill}")
+
+
+def cmd_delete_info(_args: list[str]) -> None:
+    """delete-info — 清空项目信息段的值（保留结构，用于 xbase reinit）。"""
+    atomic_read_modify_write(lambda c: clear_section_values(c, "项目信息"))
+    print("已重置 ## 项目信息")
 
 
 def cmd_reset_all(_args: list[str]) -> None:
     """reset-all — 恢复模板，清空所有 skill 状态。"""
-    write_file(TEMPLATE)
+    atomic_read_modify_write(lambda _: TEMPLATE)
     print("已恢复模板，所有 skill 状态已重置")
 
 
@@ -271,9 +345,11 @@ def main() -> None:
     commands = {
         "check": cmd_check,
         "read": cmd_read,
+        "check-and-read": cmd_check_and_read,
         "write": cmd_write,
         "write-info": cmd_write_info,
         "delete": cmd_delete,
+        "delete-info": cmd_delete_info,
         "reset-all": cmd_reset_all,
     }
 

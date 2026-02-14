@@ -6,6 +6,8 @@
 
 构建、后台启动、日志捕获、停止。逐项检查，缺失的自动创建。
 
+> **创建职责**：run.sh 由 xdebug 独占创建。xtest 仅验证是否可用，不创建。如 xtest 先于 xdebug 执行且 run.sh 不存在，记录为"待 xdebug 创建"并跳过。
+
 ## 检查流程
 
 - **构建**：通常已有（从 CLAUDE.md 或构建配置推导），验证命令可执行
@@ -18,4 +20,6 @@
     - `logs [filter]` — 读取日志，支持过滤。根据项目日志格式实现：级别过滤（如 `warning` 显示 warning 及以上）、来源/模块过滤（如果日志格式中有来源标识）、任意关键词搜索
     - `status` — 检查运行状态
   - 脚本放在 `scripts/` 下，创建后不问用户
+  - 创建或发现运行脚本后，更新 SKILL-STATE.md：
+    `python3 .claude/skills/xbase/skill-state.py write-info 运行脚本 "<脚本路径>"`
 - **创建或修改后必须验证**：运行脚本的 `build` 和 `status`（或等价命令）确认可用。验证失败则修复后重试

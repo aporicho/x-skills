@@ -1,6 +1,7 @@
 ---
 name: xdebug
-description: 命令行调试工作流。用户输入 /xdebug 时激活。自动构建运行 App、捕获日志、引导复现、定位修复，全程选项驱动。
+description: 命令行调试工作流。用户输入 /xdebug 时激活。自动构建运行 App、捕获日志、引导复现、定位修复，全程选项驱动。当用户报告 Bug、请求调试、排查问题时也适用。
+user-invocable: true
 allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestion", "Task"]
 argument-hint: "[bug描述 | #issue编号 | reinit]"
 ---
@@ -24,9 +25,11 @@ argument-hint: "[bug描述 | #issue编号 | reinit]"
 
 ### 参数处理（`$ARGUMENTS`）
 
+> **执行顺序**：无论参数如何，阶段 0 的快速跳过检查始终先执行。参数仅影响阶段 1 及之后的跳转。
+
 - **空** → 正常走阶段 1 询问
-- **`reinit`** → 删除 SKILL-STATE.md 中 `## xdebug` 段（`python3 .claude/skills/xbase/skill-state.py delete xdebug`）+ 重新执行阶段 0
-- **以 `#` 开头**（如 `#003`）→ 从 TEST-ISSUES.md 取对应条目作为问题描述，用 `issues.py status` 设为 🟡，跳过阶段 1 直接进入阶段 2
+- **`reinit`** → 删除 SKILL-STATE.md 中 `## xdebug` 段（`python3 .claude/skills/xbase/skill-state.py delete xdebug`）+ 重新执行阶段 0（忽略预加载的 check 结果，delete 后强制执行完整阶段 0）
+- **以 `#` 开头**（如 `#003`）→ 从 SKILL-STATE.md `## xtest → test_issues` 读取 TEST-ISSUES.md 路径。如果字段为空（xtest 未初始化），提示用户"TEST-ISSUES.md 尚未创建，请先运行 /xtest"，回退到正常阶段 1 询问。路径有效则取对应条目作为问题描述，用 `issues.py status` 设为 🟡（修复中），跳过阶段 1 直接进入阶段 2
 - **其他文本** → 作为 bug 描述，跳过阶段 1 直接进入阶段 2
 
 ## 核心文件
@@ -34,37 +37,25 @@ argument-hint: "[bug描述 | #issue编号 | reinit]"
 | 文件 | 说明 | 格式规范 |
 |------|------|----------|
 | `DEBUG-LOG.md` | Bug 修复日志（症状→根因→解决） | `references/debug-log-format.md` |
-| `scripts/run.sh`（或等价物） | 调试运行脚本（构建/启动/停止/日志） | `references/infra-setup.md` |
+| `scripts/run.sh`（或等价物） | 调试运行脚本（构建/启动/停止/日志） | `../xbase/references/infra-setup.md` |
 
 ## 流程
 
 ### 预加载状态
-!`python3 .claude/skills/xbase/skill-state.py check xdebug 2>/dev/null`
-!`python3 .claude/skills/xbase/skill-state.py read 2>/dev/null`
+!`python3 .claude/skills/xbase/skill-state.py check-and-read xdebug 2>/dev/null`
 
 ### 阶段 0：探测项目
 
-> 按 `references/phase0-template.md` 标准流程执行。特有探测步骤：
+> 按 `../xbase/references/phase0-template.md` 标准流程执行。特有探测步骤：
 
-1. **验证并补齐调试基础设施**：按 `references/infra-setup.md` 中的流程检查四项能力（构建、后台启动、日志捕获、停止），缺失的自动创建。后续阶段的"构建""启动""读日志""停止"均通过此基础设施执行，不再各自拼命令。
+1. **验证并补齐调试基础设施**：按 `../xbase/references/infra-setup.md` 中的流程检查四项能力（构建、后台启动、日志捕获、停止），缺失的自动创建。后续阶段的"构建""启动""读日志""停止"均通过此基础设施执行，不再各自拼命令。
 2. **检测调试日志文件**（DEBUG-LOG.md），判断状态：
    - **不存在** → 在 `output_dir` 下创建（格式见 `references/debug-log-format.md`）
    - **存在但格式不符** → 用 AskUserQuestion 询问是否迁移（保留原始内容，套用新格式）
    - **存在且格式正确** → 跳过，无需操作
 3. **写入**：`python3 .claude/skills/xbase/skill-state.py write xdebug debug_log "<DEBUG-LOG.md 路径>"`
 
-4. **去重子步骤**（阶段 0 最后执行）：
-
-   产出物创建/确认就绪后，扫描 CLAUDE.md 和 MEMORY.md，将本 skill 产出物已覆盖的详细内容替换为指针。
-
-   **原则**：
-   - 每次对话都需要的**方法论/禁令/哲学** → 保留原文
-   - 已被产出物详细覆盖的**具体规范** → 替换为一句话 + 文件路径
-   - 修改前展示 diff 预览，等用户确认
-
-   **去重职责**：
-   - MEMORY.md 中 DEBUG_LOG.md 格式说明（如有）→ 替换为指向 DEBUG-LOG.md 文件顶部的指针
-   - CLAUDE.md 中「修复 Bug 必须更新 DEBUG_LOG.md」的规则 → **保留**（这是禁令/方法论）
+4. **去重子步骤**：按 `../xbase/references/dedup-protocol.md` 流程执行。xdebug 去重职责：MEMORY.md 中 DEBUG_LOG 格式说明 → 替换为指针；「修复 Bug 必须更新」→ **保留**（禁令）。
 
 ### 阶段 1：确认问题
 
@@ -73,9 +64,9 @@ argument-hint: "[bug描述 | #issue编号 | reinit]"
 ```
 问题：这次调试什么？
 选项：
-- 从 TEST-ISSUES.md 选取（→ 用 issues.py list 展示 🔴 项，用户选一个后 issues.py status 设为 🟡）
+- 从 TEST-ISSUES.md 选取（→ 先检查 SKILL-STATE.md `## xtest → test_issues` 是否有值。无值则不展示此选项。有值则用 issues.py list 展示 🔴 项，用户选一个后 issues.py status 设为 🟡（修复中））
 - 探索性测试（先跑起来看日志）
-- 继续上次调试
+- 继续上次调试（→ 从 TEST-ISSUES.md 找 🟡 条目，如无则提示无进行中的调试）
 - Other → 用户直接输入 Bug 描述
 ```
 
@@ -147,7 +138,7 @@ argument-hint: "[bug描述 | #issue编号 | reinit]"
 2. 在 DEBUG-LOG.md 追加本次 Bug 修复记录（格式见 `references/debug-log-format.md`）
 3. 如涉及技术决策且项目有决策记录文档，更新记录
 4. 如果本次修复来自 TEST-ISSUES.md：
-   - 用 `issues.py status` 将状态从 🟡 改为 🟢
+   - 用 `issues.py status` 将状态从 🟡（修复中）改为 🟢（已修复）：`python3 .claude/skills/xbase/issues.py status <path> <id> 已修复`
    - 用 Edit 工具在对应条目下写入修复说明
 5. 用 AskUserQuestion：
 
@@ -155,8 +146,8 @@ argument-hint: "[bug描述 | #issue编号 | reinit]"
 问题：修复完成。下一步？
 选项：
 - 继续修下一个（→ 如果 TEST-ISSUES.md 还有 🔴 条目，回阶段 1）
-- 提交变更（→ /xcommit）
-- 记录决策（→ /xdecide）
+- 提交变更（→ /xcommit，无需参数）
+- 记录决策（→ /xdecide，将技术决策背景作为参数）
 - Other → 用户描述新问题
 ```
 

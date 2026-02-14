@@ -19,7 +19,7 @@ argument-hint: "[init | status | reset | reinit]"
 - **空** 或 **`init`** → 阶段 1：全量初始化
 - **`status`** → 阶段 2：状态查看
 - **`reset`** → 阶段 3：全量重置
-- **`reinit`** → 删除 xbase 自身状态 + 重新执行阶段 1
+- **`reinit`** → 清空项目信息（`python3 .claude/skills/xbase/skill-state.py delete-info`）+ 重新执行阶段 1
 
 ## 预加载状态
 
@@ -33,14 +33,18 @@ argument-hint: "[init | status | reset | reinit]"
 
 如 `## 项目信息` 各字段已有值则跳过此步。
 
-按下方「项目探测标准流程」执行：扫描根目录、读 CLAUDE.md、确定项目类型/构建命令/运行脚本/日志位置。确定 output_dir（搜索 `docs/`/`doc/`/`document/` 等）。
-
-写入项目信息：
+使用 `project-detect.py` 自动探测并写入：
 ```bash
-python3 .claude/skills/xbase/skill-state.py write-info 类型 "<类型>" 构建命令 "<命令>" 运行脚本 "<脚本>" 日志位置 "<位置>" output_dir "<目录>"
+python3 .claude/skills/xbase/project-detect.py detect-and-write
 ```
+脚本自动扫描根目录、读 CLAUDE.md、确定项目关键信息并写入 SKILL-STATE.md。未找到文档目录时自动创建 `docs/`。
 
 ### 步骤 2 — 并行执行各 skill 阶段 0（产出物创建）
+
+先写入跳过去重标记（步骤 3 统一处理去重，各 skill 阶段 0 的去重子步骤检查此标记后跳过）：
+```bash
+python3 .claude/skills/xbase/skill-state.py write-info skip_dedup true
+```
 
 各 skill 的产出物创建互不依赖，全部通过 Task 子 agent 并行执行。
 
@@ -55,12 +59,20 @@ python3 .claude/skills/xbase/skill-state.py write-info 类型 "<类型>" 构建�
 
 ### 步骤 3 — 串行去重
 
-产出物全部就绪后，依次执行各 skill 的去重逻辑（因为多个 skill 可能修改同一个文件如 CLAUDE.md）。
+产出物全部就绪后，清除跳过去重标记：
+```bash
+python3 .claude/skills/xbase/skill-state.py write-info skip_dedup ""
+```
+
+依次执行各 skill 的去重逻辑（因为多个 skill 可能修改同一个文件如 CLAUDE.md）。
 
 对每个有去重职责的 skill：
-1. 读取该 skill 的 SKILL.md 中定义的去重规则
-2. 扫描 CLAUDE.md / MEMORY.md 中对应的重复内容
-3. 展示 diff 预览，等用户确认后替换为指针
+1. 运行 `dedup-scan.py` 一次性扫描所有 skill 的重复内容：
+   ```bash
+   python3 .claude/skills/xbase/dedup-scan.py scan-all --claude-md <CLAUDE.md路径> [--memory-md <MEMORY.md路径>]
+   ```
+2. 解析 JSON 输出，按 skill 分组展示匹配项
+3. 逐项展示 diff 预览，等用户确认后用 Edit 替换为指针
 
 ### 步骤 4 — 汇总展示
 
@@ -199,7 +211,7 @@ python3 .claude/skills/xbase/issues.py next-id <file_path>
 
 ### 文件路径
 
-TEST-ISSUES.md 路径记录在 SKILL-STATE.md `## 项目信息` 中的 `issues_file` 字段，由 xtest 阶段 0 写入。
+TEST-ISSUES.md 路径记录在 SKILL-STATE.md `## xtest` 中的 `test_issues` 字段，由 xtest 阶段 0 写入。
 
 ### 格式规范
 

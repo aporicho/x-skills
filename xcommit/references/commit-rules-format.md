@@ -43,6 +43,7 @@
 | 变更类型 | 判断依据 | 应更新的文档 | 来源 |
 |----------|----------|-------------|------|
 | Bug 修复 | diff 含修复逻辑 | DEBUG-LOG.md | [CLAUDE.md / 项目扫描] |
+| Bug 修复（来自 TEST-ISSUES） | diff 含修复逻辑 + TEST-ISSUES 条目 | DEBUG-LOG.md + TEST-ISSUES.md 状态更新 | [项目扫描] |
 | 架构/决策 | 新增/删除模块 | DECIDE-LOG.md | [CLAUDE.md / 项目扫描] |
 | 新功能 | 新增文件/函数 | [对应功能文档] | [项目扫描] |
 

@@ -4,20 +4,21 @@
 
 ## 预加载状态
 
-在 SKILL.md 的流程段开头添加两行自动执行命令：
+在 SKILL.md 的流程段开头添加一行自动执行命令：
 
 ```
-!`python3 .claude/skills/xbase/skill-state.py check <skill名> 2>/dev/null`
-!`python3 .claude/skills/xbase/skill-state.py read 2>/dev/null`
+!`python3 .claude/skills/xbase/skill-state.py check-and-read <skill名> 2>/dev/null`
 ```
+
+输出格式：第一行为 check 结果（`initialized` / `not_found`），`---` 分隔，后续为完整状态内容。
 
 ## 快速跳过逻辑
 
 查看预加载结果：
-- 输出 `initialized` → 已有状态信息可用 → **跳过整个阶段 0**
+- 第一行输出 `initialized` → 已有状态信息可用 → **跳过整个阶段 0**
 - `## 项目信息` 段已存在（其他 skill 写入）→ 直接复用项目类型、构建命令等，不再重复探测
 - `## 项目信息` 中有 `运行脚本` 字段 → 跳过基础设施检查（如有）
-- 输出 `not_found` → 执行完整探测流程
+- 第一行输出 `not_found` → 执行完整探测流程
 
 ## SKILL.md 结构约定
 
@@ -34,21 +35,31 @@
 
 2. **references/ 目录** — 存放产出物的格式规范文件（`*-format.md`），阶段 0 生成产出物时参照。
 
-无产出物的 skill（如 xcommit、xdoc）不需要以上结构。
+所有工作流 skill 均有产出物（xcommit 有 COMMIT-RULES.md、xdoc 有 DOC-RULES.md 等），需要以上结构。
 
 ## 完整探测流程
 
-1. **项目探测**：按 xbase SKILL.md 中的标准流程执行（扫描项目根目录、读 CLAUDE.md、确定项目关键信息）
+1. **项目探测**：优先使用 `project-detect.py`：
+   ```bash
+   python3 .claude/skills/xbase/project-detect.py detect-and-write
+   ```
+   脚本自动扫描项目根目录、读 CLAUDE.md、确定项目关键信息并写入 SKILL-STATE.md。
 
-2. **确定产出物目录**：读取 SKILL-STATE.md 的 `output_dir` 字段。如为空（首个 skill），探测项目文档目录（搜索 `docs/`/`doc/`/`document/` 等），写入 `output_dir`
+   > **fallback**：未找到文档目录时，`project-detect.py` 会自动创建 `docs/` 作为默认 output_dir。
+
+2. **确定产出物目录**：读取 SKILL-STATE.md 的 `output_dir` 字段（已由步骤 1 写入）。
 
 3. **（各 skill 在此插入特有探测步骤）**
-   - 有产出物的 skill：在 `output_dir` 下对核心文件做**三态检测**（不存在→生成 / 格式不符→问迁移 / 已就绪→跳过）
+   - 有产出物的 skill：使用 `artifact-check.py` 做**三态检测**：
+     ```bash
+     python3 .claude/skills/xbase/artifact-check.py check <artifact_name> <expected_path>
+     ```
+     - `not_found` → 生成（可用 `artifact-check.py create` 创建骨架，再用 Edit 填充内容）
+     - `format_mismatch` → 问迁移
+     - `ready` → 跳过
 
-4. **写入 SKILL-STATE.md**：用脚本写入项目信息（如尚未写入）和 skill 特有字段：
+4. **写入 SKILL-STATE.md**：用脚本写入 skill 特有字段：
    ```bash
-   # 项目信息（首个 skill 写入，后续复用）
-   python3 .claude/skills/xbase/skill-state.py write-info 类型 "<类型>" 构建命令 "<命令>" output_dir "<目录>" ...
    # skill 特有字段（含产出物路径）
    python3 .claude/skills/xbase/skill-state.py write <skill名> <key> <value> ...
    ```

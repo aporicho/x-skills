@@ -11,6 +11,7 @@
 
 import sys
 import re
+import fcntl
 from pathlib import Path
 
 # 标题行正则：## D-NNN 标题文字
@@ -24,6 +25,30 @@ def read_file(path: str) -> str:
         print(f"文件不存在: {path}", file=sys.stderr)
         sys.exit(1)
     return p.read_text(encoding="utf-8")
+
+
+def atomic_read_modify_write(path: str, modify_fn):
+    """在文件锁保护下执行 read → modify → write，返回修改后的内容。
+
+    modify_fn: 接收当前文件内容(str)，返回修改后的内容(str)。
+    """
+    p = Path(path)
+    if not p.exists():
+        print(f"文件不存在: {path}", file=sys.stderr)
+        sys.exit(1)
+
+    with open(p, "r+b") as fd:
+        fcntl.flock(fd, fcntl.LOCK_EX)
+        try:
+            content = fd.read().decode("utf-8")
+            new_content = modify_fn(content)
+            fd.seek(0)
+            fd.truncate()
+            fd.write(new_content.encode("utf-8"))
+            fd.flush()
+            return new_content
+        finally:
+            fcntl.flock(fd, fcntl.LOCK_UN)
 
 
 def parse_decisions(content: str) -> list[tuple[str, str]]:
@@ -71,19 +96,34 @@ def cmd_list(args: list[str]) -> None:
 
 
 def cmd_next_id(args: list[str]) -> None:
-    """next-id <file_path> — 获取下一个可用编号。"""
+    """next-id <file_path> — 原子获取下一个编号并写入占位行。"""
     if len(args) != 1:
         print("用法: decision-log.py next-id <file_path>", file=sys.stderr)
         sys.exit(1)
 
-    content = read_file(args[0])
-    max_id = 0
-    for line in content.split("\n"):
-        m = TITLE_RE.match(line)
-        if m:
-            max_id = max(max_id, int(m.group(1)))
+    next_id_holder = {"value": 0}
 
-    print(f"{max_id + 1:03d}")
+    def do_reserve(content: str) -> str:
+        max_id = 0
+        last_placeholder_id = 0
+        for line in content.split("\n"):
+            m = TITLE_RE.match(line)
+            if m:
+                d_id = int(m.group(1))
+                max_id = max(max_id, d_id)
+                if "[待填入]" in line:
+                    last_placeholder_id = d_id
+        if last_placeholder_id > 0:
+            next_id_holder["value"] = last_placeholder_id
+            return content  # 不修改，复用已有占位
+        next_id = max_id + 1
+        next_id_holder["value"] = next_id
+        # 追加占位行
+        placeholder = f"\n## D-{next_id:03d} [待填入]\n"
+        return content.rstrip("\n") + placeholder
+
+    atomic_read_modify_write(args[0], do_reserve)
+    print(f"{next_id_holder['value']:03d}")
 
 
 def cmd_search(args: list[str]) -> None:

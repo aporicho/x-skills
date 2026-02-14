@@ -1,6 +1,7 @@
 ---
 name: xcommit
-description: 提交工作流。用户输入 /xcommit 时激活。基于 COMMIT-RULES.md 自动预检 + 文档完整性检查 + 规范化提交。
+description: 提交工作流。用户输入 /xcommit 时激活。基于 COMMIT-RULES.md 自动预检 + 文档完整性检查 + 规范化提交。当用户要提交代码、保存变更时也适用。
+user-invocable: true
 allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestion"]
 argument-hint: "[commit消息 | reinit]"
 ---
@@ -22,8 +23,10 @@ argument-hint: "[commit消息 | reinit]"
 
 ### 参数处理（`$ARGUMENTS`）
 
+> **执行顺序**：无论参数如何，阶段 0 的快速跳过检查始终先执行。参数仅影响阶段 1 及之后的跳转。
+
 - **空** → 正常走全流程（自动生成 commit message）
-- **`reinit`** → 删除 SKILL-STATE.md 中 `## xcommit` 段（`python3 .claude/skills/xbase/skill-state.py delete xcommit`）+ 重新执行阶段 0
+- **`reinit`** → 删除 SKILL-STATE.md 中 `## xcommit` 段（`python3 .claude/skills/xbase/skill-state.py delete xcommit`）+ 重新执行阶段 0（忽略预加载的 check 结果，delete 后强制执行完整阶段 0）
 - **其他文本** → 作为 commit message 候选，跳到阶段 1（阶段 4 时优先使用此消息）
 
 ## 核心文件
@@ -35,12 +38,11 @@ argument-hint: "[commit消息 | reinit]"
 ## 流程
 
 ### 预加载状态
-!`python3 .claude/skills/xbase/skill-state.py check xcommit 2>/dev/null`
-!`python3 .claude/skills/xbase/skill-state.py read 2>/dev/null`
+!`python3 .claude/skills/xbase/skill-state.py check-and-read xcommit 2>/dev/null`
 
 ### 阶段 0：探测项目
 
-> 按 `references/phase0-template.md` 标准流程执行。特有探测步骤：
+> 按 `../xbase/references/phase0-template.md` 标准流程执行。特有探测步骤：
 
 1. **COMMIT-RULES.md 三态检测**：
    - **不存在** → 在 `output_dir` 下生成（执行步骤 2）
@@ -65,23 +67,15 @@ argument-hint: "[commit消息 | reinit]"
 
 3. **写入状态**：`python3 .claude/skills/xbase/skill-state.py write xcommit commit_rules <COMMIT-RULES.md路径>`
 
-4. **去重子步骤**（阶段 0 最后执行）：
-
-   产出物创建/确认就绪后，扫描 CLAUDE.md 和 MEMORY.md，将本 skill 产出物已覆盖的详细内容替换为指针。
-
-   **原则**：
-   - 每次对话都需要的**方法论/禁令/哲学** → 保留原文
-   - 已被产出物详细覆盖的**具体规范** → 替换为一句话 + 文件路径
-   - 修改前展示 diff 预览，等用户确认
-
-   **去重职责**：
-   - CLAUDE.md `## Git 提交规范` 段中的详细规则（每次提交必须包含所有变更、禁止部分提交、提交前展示完整文件列表）→ 已被 COMMIT-RULES.md 覆盖，替换为：`Git 提交规范详见 COMMIT-RULES.md（路径见 SKILL-STATE.md）`
-   - CLAUDE.md 中「禁止部分提交」「提交前展示完整文件列表」等 → 属于具体规范，已迁移到 COMMIT-RULES.md
+4. **去重子步骤**：按 `../xbase/references/dedup-protocol.md` 流程执行。xcommit 去重职责：CLAUDE.md `## Git 提交规范` 段 → 替换为指向 COMMIT-RULES.md 的指针。
 
 ### 阶段 1：检查变更
 
-1. 运行 `git status` 查看工作区状态
-2. 运行 `git diff --stat` 查看变更概览
+1. 运行 git-context.py 收集上下文：
+   ```bash
+   python3 .claude/skills/xbase/git-context.py commit-context
+   ```
+   输出包含 status、diff_stat、cached_diff、recent_log、commit_style 等。
 
 **分支判断**：
 - **无变更（工作区干净）** → 提示"无变更需要提交"，结束

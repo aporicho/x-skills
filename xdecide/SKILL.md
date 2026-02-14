@@ -1,6 +1,7 @@
 ---
 name: xdecide
-description: 决策记录工作流。用户输入 /xdecide 时激活。引导决策过程、快速录入、回顾修订，维护决策记录文件。
+description: 决策记录工作流。用户输入 /xdecide 时激活。引导决策过程、快速录入、回顾修订，维护决策记录文件。当用户要做技术决策、记录决策、回顾历史决策时也适用。
+user-invocable: true
 allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestion"]
 argument-hint: "[决策描述 | review | reinit]"
 ---
@@ -23,8 +24,10 @@ argument-hint: "[决策描述 | review | reinit]"
 
 ### 参数处理（`$ARGUMENTS`）
 
+> **执行顺序**：无论参数如何，阶段 0 的快速跳过检查始终先执行。参数仅影响阶段 1 及之后的跳转。
+
 - **空** → 正常走阶段 1 询问
-- **`reinit`** → 删除 SKILL-STATE.md 中 `## xdecide` 段（`python3 .claude/skills/xbase/skill-state.py delete xdecide`）+ 重新执行阶段 0
+- **`reinit`** → 删除 SKILL-STATE.md 中 `## xdecide` 段（`python3 .claude/skills/xbase/skill-state.py delete xdecide`）+ 重新执行阶段 0（忽略预加载的 check 结果，delete 后强制执行完整阶段 0）
 - **`review`** → 跳过阶段 1，直接进入阶段 2c 回顾修订
 - **其他文本** → 作为决策描述，跳过阶段 1 直接进入阶段 2a 引导式决策（背景自动跳过）
 
@@ -37,12 +40,11 @@ argument-hint: "[决策描述 | review | reinit]"
 ## 流程
 
 ### 预加载状态
-!`python3 .claude/skills/xbase/skill-state.py check xdecide 2>/dev/null`
-!`python3 .claude/skills/xbase/skill-state.py read 2>/dev/null`
+!`python3 .claude/skills/xbase/skill-state.py check-and-read xdecide 2>/dev/null`
 
 ### 阶段 0：探测项目
 
-> 按 `references/phase0-template.md` 标准流程执行。特有探测步骤：
+> 按 `../xbase/references/phase0-template.md` 标准流程执行。特有探测步骤：
 
 1. **探测 DECIDE-LOG.md**：搜索 `DECIDE-LOG.md` 或文件名含 `决策记录`、`decision`、`ADR` 等关键词的文件（搜索范围：文档目录及项目根目录）。找到已有文件时优先使用，不强制重命名。
 2. **三态检测**：
@@ -51,18 +53,7 @@ argument-hint: "[决策描述 | review | reinit]"
    - **已就绪** → 用 `decision-log.py list` 获取现有条目，展示概览
 3. **写入**：`python3 .claude/skills/xbase/skill-state.py write xdecide decision_log "<路径>"`
 
-4. **去重子步骤**（阶段 0 最后执行）：
-
-   产出物创建/确认就绪后，扫描 CLAUDE.md 和 MEMORY.md，将本 skill 产出物已覆盖的详细内容替换为指针。
-
-   **原则**：
-   - 每次对话都需要的**方法论/禁令/哲学** → 保留原文
-   - 已被产出物详细覆盖的**具体规范** → 替换为一句话 + 文件路径
-   - 修改前展示 diff 预览，等用户确认
-
-   **去重职责**：
-   - MEMORY.md 中决策记录格式说明（如有）→ 替换为指向 DECIDE-LOG.md 文件顶部的指针
-   - CLAUDE.md 中「任何产品/技术决策必须记录到 DECIDE-LOG.md」→ **保留**（这是禁令/方法论）
+4. **去重子步骤**：按 `../xbase/references/dedup-protocol.md` 流程执行。xdecide 去重职责：MEMORY.md 中决策记录格式说明 → 替换为指针；「任何决策必须记录」→ **保留**（禁令）。
 
 ### 阶段 1：选择模式
 

@@ -52,20 +52,6 @@ xdecide ──→ xcommit              (决策记录后 → 提交)
 
 所有衔接通过 AskUserQuestion 选项触发，不自动跳转。
 
-## 知识 Skill（非工作流）
-
-以下 skill 不可直接调用（`user-invocable: false`），由 Claude Code 根据上下文自动匹配激活：
-
-| Skill | 用途 |
-|-------|------|
-| appkit | AppKit/SwiftUI 平台专家 |
-| calayer | CALayer/Core Animation 专家 |
-| doc-sync | 文档维护专员 |
-| logging | 日志补全专家 |
-| rust-ffi | Rust FFI 专家 |
-| sandbox | macOS 沙盒专家 |
-| uiux | UI/UX 架构师 |
-
 ## 共享基础（xbase）
 
 `/xbase` 既是可调用命令（一键初始化、查看状态、重置），也是所有 skill 引用的共享基础（项目探测流程、状态规范、衔接协议）。未运行 `/xbase` 时，各 skill 仍可独立初始化。
@@ -182,7 +168,7 @@ xdecide/
 | `argument-hint` | `/` 菜单中显示参数提示 | 所有工作流 skill |
 | `$ARGUMENTS` | 接收用户传入的参数，快捷跳过阶段 | 所有工作流 skill |
 | `!`command`` | Skill 加载时自动执行命令，预注入状态 | 所有工作流 skill |
-| `user-invocable` | 控制 skill 是否可被用户直接调用 | 知识 skill 设为 false |
+| `user-invocable` | 控制 skill 是否可被用户直接调用 | 所有工作流 skill 设为 true |
 | `allowed-tools` | 限制 skill 可使用的工具集 | 所有 skill |
 
 ## 设计原则

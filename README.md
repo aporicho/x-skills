@@ -24,8 +24,8 @@ Claude Code 自定义工作流 skill 集合 — 用 `/x*` 命令驱动调试、�
 
 ```
 ┌──────────────────────────────────────────────────────┐
-│  7 个工作流 skill（用户直接交互）                       │
-│  xdebug  xtest  xlog  xreview  xcommit  xdoc  xdecide │
+│  7 个工作流 skill（按使用顺序）                          │
+│  xtest → xdebug → xlog → xreview → xdecide → xdoc → xcommit │
 ├──────────────────────────────────────────────────────┤
 │  xbase — 共享基础设施                                  │
 │  状态管理 · 项目探测 · 产出物检测 · 去重 · Git 上下文     │
@@ -51,30 +51,35 @@ Claude Code 自定义工作流 skill 集合 — 用 `/x*` 命令驱动调试、�
 
 ## 每个 Skill 详解
 
-### xdebug — 调试
+> 按**典型使用顺序**排列：先初始化 → 测试发现问题 → 调试修复 → (补日志) → 审查代码 → (记录决策) → (维护文档) → 提交。括号内的 skill 是按需触发，不一定每次都用。
 
-**做什么**：引导式调试循环 — 加日志 → 构建运行 → 引导用户操作 → 分析日志 → 修复 → 验证。
+### 0. xbase — 初始化与状态管理（前置：一切的起点）
 
-**阶段**：
-| 阶段 | 做什么 | 是否需要用户参与 |
-|------|--------|---------------|
-| 0 | 探测项目 + 创建 DEBUG-LOG.md + 验证调试基础设施 | 否（自动） |
-| 1 | 确认要调试什么（从 issue 选 / 探索 / 描述） | 选项 |
-| 2 | 判断日志是否足够 → 不够则启动 xlog 子 agent 补 → 构建运行 | 否（自动） |
-| 3 | 给用户**具体操作步骤**去复现 Bug | 选项 |
-| 4 | 读取日志分析根因 | 选项（确认分析） |
-| 5 | 修改代码修复 → 重新构建运行 → 引导验证 | 选项（确认修复） |
-| 6 | 更新 DEBUG-LOG.md + TEST-ISSUES.md 状态 → 衔接下一步 | 选项 |
+**做什么**：一键初始化所有 skill 的运行环境（探测项目 → 创建产出物 → 去重），管理共享状态，提供所有 skill 复用的 Python 工具。
 
-**产出物**：`DEBUG-LOG.md`（Bug 修复日志）、`scripts/run.sh`（调试运行脚本）
+**典型触发时机**：首次使用 xSkills 时运行 `/xbase init`；之后各 skill 首次使用会自动初始化，不需要手动再跑。
 
-**关键设计**："先加日志后改代码，不盲猜"。阶段 2 自动调用 xlog 补日志，阶段 4 基于日志分析，不靠猜。
+**命令**：
+| 命令 | 做什么 |
+|------|--------|
+| `/xbase init` | 探测项目 → 并行初始化 7 个 skill 的阶段 0 → 串行去重 |
+| `/xbase status` | 查看所有 skill 的初始化状态 + 产出物健康度 |
+| `/xbase reset` | 清空状态重新来过（会确认） |
+| `/xbase reinit <skill>` | 重新初始化单个 skill |
+
+**管理的共享资源**：
+- `SKILL-STATE.md` — 所有 skill 的运行时状态（项目类型、路径、初始化日期）
+- 7 个 Python 工具 — 项目探测、状态管理、产出物检测、去重扫描、Git 上下文、Bug 队列、决策记录
+
+**关键设计**：xbase 自身不创建任何工作产出物，只做编排 — "谁的产出物谁负责创建"。`/xbase init` 启动 7 个并行 Task 子 agent，各自执行自己的阶段 0。
 
 ---
 
-### xtest — 测试
+### 1. xtest — 测试（入口：发现问题）
 
 **做什么**：自动化测试 + 手动逐项验证，维护测试清单和 Bug 队列。
+
+**典型触发时机**：开发完功能后验证、日常回归测试、修复后复测。
 
 **阶段**：
 | 阶段 | 做什么 | 是否需要用户参与 |
@@ -90,11 +95,40 @@ Claude Code 自定义工作流 skill 集合 — 用 `/x*` 命令驱动调试、�
 
 **关键设计**：首次生成清单时用**并行子 agent** 扫描不同代码区域加速；增量更新时只扫描 `git diff` 变更文件。
 
+**下一步去哪**：测试失败 → 选"立即修复" → 进入 **xdebug**
+
 ---
 
-### xlog — 日志补全
+### 2. xdebug — 调试（核心：定位修复）
+
+**做什么**：引导式调试循环 — 加日志 → 构建运行 → 引导用户操作 → 分析日志 → 修复 → 验证。
+
+**典型触发时机**：xtest 发现 Bug 后衔接过来、用户直接报告问题。
+
+**阶段**：
+| 阶段 | 做什么 | 是否需要用户参与 |
+|------|--------|---------------|
+| 0 | 探测项目 + 创建 DEBUG-LOG.md + 验证调试基础设施 | 否（自动） |
+| 1 | 确认要调试什么（从 issue 选 / 探索 / 描述） | 选项 |
+| 2 | 判断日志是否足够 → 不够则启动 **xlog** 子 agent 补 → 构建运行 | 否（自动） |
+| 3 | 给用户**具体操作步骤**去复现 Bug | 选项 |
+| 4 | 读取日志分析根因 | 选项（确认分析） |
+| 5 | 修改代码修复 → 重新构建运行 → 引导验证 | 选项（确认修复） |
+| 6 | 更新 DEBUG-LOG.md + TEST-ISSUES.md 状态 → 衔接下一步 | 选项 |
+
+**产出物**：`DEBUG-LOG.md`（Bug 修复日志）、`scripts/run.sh`（调试运行脚本）
+
+**关键设计**："先加日志后改代码，不盲猜"。阶段 2 自动调用 xlog 补日志，阶段 4 基于日志分析，不靠猜。
+
+**下一步去哪**：修复完成 → 选"提交变更" → **xcommit**；涉及技术决策 → **xdecide**
+
+---
+
+### 3. xlog — 日志补全（辅助：通常由 xdebug 自动调用）
 
 **做什么**：建立日志规范，扫描代码补充诊断日志、纠正不规范日志。
+
+**典型触发时机**：xdebug 阶段 2 发现日志不足时**自动**启动 xlog 子 agent；也可独立使用给特定模块补日志。
 
 **阶段**：
 | 阶段 | 做什么 | 是否需要用户参与 |
@@ -106,13 +140,15 @@ Claude Code 自定义工作流 skill 集合 — 用 `/x*` 命令驱动调试、�
 
 **产出物**：`LOG-RULES.md`（日志规范）、`LOG-COVERAGE.md`（覆盖度跟踪）
 
-**关键设计**：也被 xdebug 作为子 agent 调用 — xdebug 阶段 2 判断日志不足时，自动启动 xlog 子 agent 给目标区域补日志。
+**关键设计**：被 xdebug 调用时以 Task 子 agent 运行，自动完成后返回，不打断调试主流程。
 
 ---
 
-### xreview — 代码审查
+### 4. xreview — 代码审查（质量：修复后检查）
 
 **做什么**：基于 REVIEW-RULES.md 进行三维度审查（规范合规 / 架构质量 / 安全健壮），逐项决策。
+
+**典型触发时机**：修复完 Bug 后审查代码质量、提交前代码检查、定期代码审计。
 
 **阶段**：
 | 阶段 | 做什么 | 是否需要用户参与 |
@@ -126,48 +162,15 @@ Claude Code 自定义工作流 skill 集合 — 用 `/x*` 命令驱动调试、�
 
 **关键设计**：规则来源两层 — CLAUDE.md 提取禁忌/必须/架构约束 + 代码扫描推导缩进/命名/注释语言等。每条规则标注来源。
 
----
-
-### xcommit — 提交
-
-**做什么**：预检脚本 + 文档完整性检查 + 规范化 commit。
-
-**阶段**：
-| 阶段 | 做什么 | 是否需要用户参与 |
-|------|--------|---------------|
-| 0 | 分析 git log + CLAUDE.md → 生成 COMMIT-RULES.md | 否（自动） |
-| 1 | 检查变更（未暂存文件处理） | 选项 |
-| 2 | 运行 COMMIT-RULES.md 中列出的预检脚本 | 选项（失败时） |
-| 3 | 文档完整性检查（Bug 修复是否更新了 DEBUG-LOG.md 等） | 选项（提醒，不阻断） |
-| 4 | 生成 commit message + 确认 + 执行提交 | 选项 |
-
-**产出物**：`COMMIT-RULES.md`（提交规范）
-
-**关键设计**：文档完整性检查是建议不是阻断 — 只提醒"看起来是 Bug 修复但 DEBUG-LOG.md 没更新"，用户可选择忽略。
+**下一步去哪**：发现架构问题 → **xdecide**；审查通过 → **xcommit**
 
 ---
 
-### xdoc — 文档维护
-
-**做什么**：文档健康检查（断链 / 格式 / 结构）+ 代码-文档一致性验证。
-
-**阶段**：
-| 阶段 | 做什么 | 是否需要用户参与 |
-|------|--------|---------------|
-| 0 | 扫描文档目录 + 检查脚本 → 生成 DOC-RULES.md | 否（自动） |
-| 1 | 选择任务（健康检查 / 一致性验证 / 指定文件） | 选项 |
-| 2a | 运行检查脚本 + 格式规范检查 | 否（自动） |
-| 2b | 对比 git log 和代码-文档映射，找不一致 | 否（自动） |
-| 3 | 逐项修复（自动修 / 跳过 / 忽略） | 逐项选项 |
-| 4 | 汇报 → 衔接 xcommit | 选项 |
-
-**产出物**：`DOC-RULES.md`（文档规范）
-
----
-
-### xdecide — 决策记录
+### 5. xdecide — 决策记录（按需：涉及技术决策时）
 
 **做什么**：引导式决策（分析方案 + 利弊权衡 + 结论记录）+ 快速录入 + 回顾修订。
+
+**典型触发时机**：xdebug 修复涉及架构选择、xreview 发现需要决策的问题、独立的技术方案讨论。
 
 **阶段**：
 | 阶段 | 做什么 | 是否需要用户参与 |
@@ -182,6 +185,51 @@ Claude Code 自定义工作流 skill 集合 — 用 `/x*` 命令驱动调试、�
 **产出物**：`DECIDE-LOG.md`（决策记录）
 
 **关键设计**：新决策前搜索历史决策，避免重复或矛盾。修订不删除原文，保留决策演化历史。
+
+**下一步去哪**：记录完成 → **xcommit**
+
+---
+
+### 6. xdoc — 文档维护（按需：文档不同步时）
+
+**做什么**：文档健康检查（断链 / 格式 / 结构）+ 代码-文档一致性验证。
+
+**典型触发时机**：代码改了但文档没跟上、定期文档清理、发布前检查。
+
+**阶段**：
+| 阶段 | 做什么 | 是否需要用户参与 |
+|------|--------|---------------|
+| 0 | 扫描文档目录 + 检查脚本 → 生成 DOC-RULES.md | 否（自动） |
+| 1 | 选择任务（健康检查 / 一致性验证 / 指定文件） | 选项 |
+| 2a | 运行检查脚本 + 格式规范检查 | 否（自动） |
+| 2b | 对比 git log 和代码-文档映射，找不一致 | 否（自动） |
+| 3 | 逐项修复（自动修 / 跳过 / 忽略） | 逐项选项 |
+| 4 | 汇报 → 衔接 xcommit | 选项 |
+
+**产出物**：`DOC-RULES.md`（文档规范）
+
+**下一步去哪**：文档修复后 → **xcommit**
+
+---
+
+### 7. xcommit — 提交（出口：所有变更的终点）
+
+**做什么**：预检脚本 + 文档完整性检查 + 规范化 commit。
+
+**典型触发时机**：任何 skill 完成工作后的最后一步，也可独立使用。几乎所有 skill 的收尾选项都能衔接到这里。
+
+**阶段**：
+| 阶段 | 做什么 | 是否需要用户参与 |
+|------|--------|---------------|
+| 0 | 分析 git log + CLAUDE.md → 生成 COMMIT-RULES.md | 否（自动） |
+| 1 | 检查变更（未暂存文件处理） | 选项 |
+| 2 | 运行 COMMIT-RULES.md 中列出的预检脚本 | 选项（失败时） |
+| 3 | 文档完整性检查（Bug 修复是否更新了 DEBUG-LOG.md 等） | 选项（提醒，不阻断） |
+| 4 | 生成 commit message + 确认 + 执行提交 | 选项 |
+
+**产出物**：`COMMIT-RULES.md`（提交规范）
+
+**关键设计**：文档完整性检查是建议不是阻断 — 只提醒"看起来是 Bug 修复但 DEBUG-LOG.md 没更新"，用户可选择忽略。
 
 ---
 
@@ -361,80 +409,280 @@ xcommit、xreview、xdoc、xlog 在生成规范类产出物时采用两层规则
 
 ---
 
-## Python 工具 API 参考
+## Python 工具详解
 
-所有工具在 `xbase/` 目录下，被各 skill 共同复用。
+所有工具在 `xbase/` 目录下，被各 skill 共同复用。下面按**初始化阶段的调用顺序**排列，然后是工作阶段的工具。
 
-### skill-state.py — 状态管理
+### 初始化阶段（阶段 0 按顺序调用）
 
+---
+
+#### 1. project-detect.py — 项目探测
+
+**解决什么问题**：skill 需要知道"这是什么项目、怎么构建、文档放哪"，但不能硬编码。这个脚本自动扫描项目根目录，识别出所有关键信息。
+
+**谁调用**：`/xbase init` 步骤 1 调用 `detect-and-write`；各 skill 阶段 0 在项目信息段为空时也会调用。
+
+**怎么工作**：
+1. 扫描根目录的标志文件（Cargo.toml → Rust、package.json → JS/TS、*.xcodeproj → Swift 等）
+2. 读取 CLAUDE.md 提取构建命令、日志系统等额外信息
+3. 探测文档目录（依次找 `docs/`、`doc/`、`document/` 等）
+4. 推导项目类型（GUI 应用 / CLI 工具 / Web 服务 / 库）
+
+**API**：
 ```bash
-python3 .claude/skills/xbase/skill-state.py check <skill>            # → "initialized" / "not_found"
-python3 .claude/skills/xbase/skill-state.py check-and-read <skill>   # check + read 合并（省一次进程启动）
-python3 .claude/skills/xbase/skill-state.py read                     # 输出完整状态
-python3 .claude/skills/xbase/skill-state.py write <skill> <k> <v> [...]  # 写入 skill 段（自动加 initialized 日期）
-python3 .claude/skills/xbase/skill-state.py write-info <k> <v> [...]     # 写入项目信息段
-python3 .claude/skills/xbase/skill-state.py delete <skill>           # 清空 skill 段的值（reinit 用）
-python3 .claude/skills/xbase/skill-state.py delete-info              # 清空项目信息段
-python3 .claude/skills/xbase/skill-state.py reset-all                # 恢复初始模板（清空所有）
+# 只探测，输出 JSON（不写文件）
+python3 .claude/skills/xbase/project-detect.py detect [--project-root <path>]
+
+# 探测 + 自动写入 SKILL-STATE.md 的项目信息段
+python3 .claude/skills/xbase/project-detect.py detect-and-write [--project-root <path>]
 ```
 
-### issues.py — TEST-ISSUES.md 操作
-
-```bash
-python3 .claude/skills/xbase/issues.py list <path>                    # 列出全部
-python3 .claude/skills/xbase/issues.py list <path> --status <状态>    # 按状态过滤（待修/修复中/已修复/复测通过）
-python3 .claude/skills/xbase/issues.py stats <path>                   # 各状态计数
-python3 .claude/skills/xbase/issues.py status <path> <id> <new>       # 更新状态（支持 emoji 别名如 🟡）
-python3 .claude/skills/xbase/issues.py next-id <path>                 # 获取下一个编号（自动检测未填占位行）
+**输出示例**（`detect`）：
+```json
+{
+  "languages": ["Rust", "Swift"],
+  "project_type": "GUI 应用",
+  "build_commands": ["cargo build"],
+  "output_dir": "document",
+  "xcodeproj": "macos/Entro.xcodeproj",
+  "has_claude_md": true
+}
 ```
 
-所有写操作使用 `fcntl.LOCK_EX` 文件锁，原子执行。`next-id` 会检测是否有未填入的 `[待填入]` 占位行，避免重复追加。
+---
 
-### decision-log.py — DECIDE-LOG.md 操作
+#### 2. skill-state.py — 状态管理
 
+**解决什么问题**：所有 skill 需要共享状态（项目信息、各 skill 的初始化状态和产出物路径），而且要支持并行写入不冲突。这个脚本是 SKILL-STATE.md 的唯一读写接口。
+
+**谁调用**：**所有 skill** 都调用 — 阶段 0 开头 `check` 判断是否跳过，结尾 `write` 写入状态；`/xbase init` 用 `write-info` 写项目信息；`reinit` 用 `delete` 清空。
+
+**怎么工作**：
+- SKILL-STATE.md 是**模板预置**的（所有段和字段已定义好，值留空）
+- `check` 看 `initialized` 字段是否有值 → 有值返回 `initialized`，无值返回 `not_found`
+- `write` 写入时自动添加 `initialized: 当前日期`
+- 所有写操作使用 `fcntl.LOCK_EX` 排他锁，`/xbase init` 并行启动 7 个 skill 时不会冲突
+
+**API**：
 ```bash
-python3 .claude/skills/xbase/decision-log.py list <path>              # 列出全部
-python3 .claude/skills/xbase/decision-log.py next-id <path>           # 下一个编号（自动检测未填占位行）
-python3 .claude/skills/xbase/decision-log.py search <path> <关键词>   # 搜索
+# 检查 skill 是否已初始化（最常用，每个 skill 阶段 0 第一步就调它）
+python3 .claude/skills/xbase/skill-state.py check <skill>
+# → 输出 "initialized" 或 "not_found"
+
+# check + read 合并（省一次进程启动，用于预加载）
+python3 .claude/skills/xbase/skill-state.py check-and-read <skill>
+
+# 读取完整状态文件
+python3 .claude/skills/xbase/skill-state.py read
+
+# 写入 skill 段（支持多个 key-value 对，自动添加 initialized 日期）
+python3 .claude/skills/xbase/skill-state.py write <skill> <key> <value> [<key2> <value2> ...]
+# 例：write xdebug debug_log document/90-开发/DEBUG-LOG.md
+
+# 写入项目信息段
+python3 .claude/skills/xbase/skill-state.py write-info <key> <value> [<key2> <value2> ...]
+# 例：write-info 类型 "GUI 应用" output_dir document/90-开发
+
+# 清空某个 skill 段的值（reinit 时用，保留段结构）
+python3 .claude/skills/xbase/skill-state.py delete <skill>
+
+# 清空项目信息段
+python3 .claude/skills/xbase/skill-state.py delete-info
+
+# 恢复初始模板（全量重置，/xbase reset 调用）
+python3 .claude/skills/xbase/skill-state.py reset-all
 ```
 
-### artifact-check.py — 产出物三态检测 + 骨架创建
+---
 
+#### 3. artifact-check.py — 产出物三态检测 + 骨架创建
+
+**解决什么问题**：每个 skill 的阶段 0 需要判断"我的产出物文件已存在？格式对不对？需要创建吗？"。这个脚本统一处理这个逻辑，避免每个 skill 各写一套。
+
+**谁调用**：各 skill 阶段 0 的"产出物三态检测"步骤。`/xbase status` 也用 `batch-check` 查看全部状态。
+
+**怎么工作**：
+1. 动态扫描所有 `references/*-format.md` 文件，从 H1 标题提取产出物文件名，从 H2 标题提取必需段落标记
+2. `check` 时：文件不存在 → `not_found`；存在但缺少必需段落 → `format_mismatch`；段落齐全 → `ready`
+3. `create` 时：读取 format 文件，提取标题结构生成骨架文件
+4. 如果 format 文件的 H1 不是标准命名，会从**文件名 fallback 推导**（如 `commit-rules-format.md` → `COMMIT-RULES.md`）
+
+**新增 skill 如何适配**：只需在 `references/` 目录放一个 `xxx-format.md` 文件，artifact-check.py 会自动发现并纳入检测。不需要改任何代码。
+
+**API**：
 ```bash
-python3 .claude/skills/xbase/artifact-check.py check <name> <path>        # → "ready" / "format_mismatch" / "not_found"
-python3 .claude/skills/xbase/artifact-check.py create <name> <path>        # 从 format 文件生成骨架
-python3 .claude/skills/xbase/artifact-check.py batch-check <output_dir>    # JSON 汇总所有产出物状态
+# 检测单个产出物状态
+python3 .claude/skills/xbase/artifact-check.py check <artifact_name> <expected_path>
+# → 输出 "ready" / "format_mismatch" / "not_found"
+# 例：check commit-rules document/90-开发/COMMIT-RULES.md
+
+# 从 format 文件生成骨架
+python3 .claude/skills/xbase/artifact-check.py create <artifact_name> <target_path>
+# 例：create commit-rules document/90-开发/COMMIT-RULES.md
+
+# 批量检测所有已知产出物（JSON 输出）
+python3 .claude/skills/xbase/artifact-check.py batch-check <output_dir>
+# 例：batch-check document/90-开发
 ```
 
-动态扫描 `references/*-format.md` 建立 artifact → format 映射。新增 skill 只需放格式文件即可自动适配。
+---
 
-### dedup-scan.py — 去重扫描
+#### 4. dedup-scan.py — 去重扫描
 
+**解决什么问题**：CLAUDE.md 里可能写了"Git 提交规范"的详细规则，xcommit 又生成了 COMMIT-RULES.md 覆盖同样内容。两处维护容易不同步。这个脚本找出这些重复，建议替换为指针。
+
+**谁调用**：各 skill 阶段 0 末尾的"去重子步骤"；`/xbase init` 步骤 3 串行去重时用 `scan-all` 一次扫描所有 skill。
+
+**怎么工作**：
+1. 每个 skill 有预定义的去重规则（关键词 + 目标段落 + 替换指针文本）
+2. 扫描 CLAUDE.md / MEMORY.md 中匹配关键词的行
+3. 匹配到的行如果**命中 KEEP_PATTERNS**（禁令/方法论）→ 保留不替换
+4. 其余匹配行 → 输出为 JSON，skill 拿到后展示 diff 预览让用户确认
+
+**KEEP_PATTERNS（9 条保护规则）**：
+- `禁止.*print` / `修复 Bug.*必须.*更新` / `任何.*决策.*必须.*记录`
+- `日志规范详见.*skill` / `先加日志.*不要盲猜` / `绝对不修改.*pbxproj`
+- `禁止部分提交` / `文档优先` / `先规划后执行`
+
+**API**：
 ```bash
+# 扫描单个 skill 的重复内容
 python3 .claude/skills/xbase/dedup-scan.py scan --skill <name> --claude-md <path> [--memory-md <path>]
+# 例：scan --skill xcommit --claude-md CLAUDE.md --memory-md ~/.claude/.../MEMORY.md
+
+# 一次扫描所有 skill（/xbase init 步骤 3 用）
 python3 .claude/skills/xbase/dedup-scan.py scan-all --claude-md <path> [--memory-md <path>]
 ```
 
-扫描 CLAUDE.md / MEMORY.md 中与产出物重复的内容，输出 JSON。内置 `KEEP_PATTERNS` 保护禁令/方法论行。
-
-### git-context.py — Git 上下文收集
-
-```bash
-python3 .claude/skills/xbase/git-context.py commit-context                           # xcommit 全流程所需（含提交风格分析）
-python3 .claude/skills/xbase/git-context.py diff-context [--scope staged|unstaged|both]  # xreview 差异
-python3 .claude/skills/xbase/git-context.py changed-files [--scope staged|recent]    # xtest 增量
+**输出示例**：
+```json
+{
+  "matches": [
+    {
+      "skill": "xcommit",
+      "file": "CLAUDE.md",
+      "lines": [45, 46, 47],
+      "action": "replace",
+      "pointer": "Git 提交规范详见 COMMIT-RULES.md（路径见 SKILL-STATE.md）"
+    }
+  ]
+}
 ```
 
-一次调用收集多个 git 命令输出（JSON），替代多次 Bash 调用。
+### 工作阶段（skill 执行具体任务时调用）
 
-### project-detect.py — 项目探测
+---
 
+#### 5. git-context.py — Git 上下文收集
+
+**解决什么问题**：xcommit 需要 `git status` + `git diff` + `git log` 等多个命令的输出；xreview 需要 diff；xtest 需要变更文件列表。每次单独调 Bash 很慢（每次一个进程），这个脚本一次调用收集所有需要的 git 信息。
+
+**谁调用**：
+- **xcommit** 阶段 1 调用 `commit-context` — 获取 status、diff、最近 log、提交风格分析
+- **xreview** 阶段 1 调用 `diff-context` — 获取 staged/unstaged diff
+- **xtest** 阶段 0 调用 `changed-files` — 获取变更文件列表做增量更新
+
+**API**：
 ```bash
-python3 .claude/skills/xbase/project-detect.py detect [--project-root <path>]            # JSON 输出探测结果
-python3 .claude/skills/xbase/project-detect.py detect-and-write [--project-root <path>]  # 探测并写入 SKILL-STATE.md
+# xcommit 用：收集 status + diff + staged diff + 最近 10 条 log + 分析提交风格
+python3 .claude/skills/xbase/git-context.py commit-context
+
+# xreview 用：收集 diff（可选 staged/unstaged/both）
+python3 .claude/skills/xbase/git-context.py diff-context [--scope staged|unstaged|both]
+
+# xtest 用：收集变更文件列表（staged 或最近 5 次提交）
+python3 .claude/skills/xbase/git-context.py changed-files [--scope staged|recent]
 ```
 
-扫描项目根目录标志文件（Cargo.toml、package.json、*.xcodeproj 等）识别语言/框架/构建命令，读取 CLAUDE.md 提取日志系统等额外信息。
+**commit-context 输出示例**：
+```json
+{
+  "status": "M  README.md\nA  new-file.py",
+  "cached_diff": "diff --git a/...",
+  "recent_log": ["abc1234 上一次提交消息", "def5678 再上一次"],
+  "commit_style": {
+    "language": "zh",
+    "prefix_pattern": "none",
+    "avg_length": 25
+  },
+  "has_staged": true,
+  "has_unstaged": false
+}
+```
+
+**异常处理**：git 未安装返回空字符串（`FileNotFoundError`）；大仓库超时 30 秒也返回空（`TimeoutExpired`），不会抛异常。
+
+---
+
+#### 6. issues.py — Bug 队列管理（TEST-ISSUES.md）
+
+**解决什么问题**：xtest 发现测试失败时需要写入 Bug 条目，xdebug 修复后需要更新状态。这涉及编号分配、状态流转、并发写入等问题。这个脚本封装了所有 TEST-ISSUES.md 的读写操作。
+
+**谁调用**：
+- **xtest** 阶段 3 — `next-id` 获取编号 + Edit 写入 🔴 条目；阶段 4 — `list --status 已修复` 找 🟢 条目做复测；`status` 改为 ✅
+- **xdebug** 阶段 1 — `list --status 待修` 展示可修复的条目；`status` 改为 🟡（修复中）；阶段 6 — `status` 改为 🟢（已修复）
+- **`/xbase status`** — `stats` 展示各状态计数
+
+**状态流转**：`🔴 待修 → 🟡 修复中 → 🟢 已修复 → ✅ 复测通过`
+
+**API**：
+```bash
+# 列出全部问题
+python3 .claude/skills/xbase/issues.py list <path>
+# 输出：#001 🔴 待修 — 拖拽偏移问题
+
+# 按状态过滤（待修 / 修复中 / 已修复 / 复测通过）
+python3 .claude/skills/xbase/issues.py list <path> --status 待修
+
+# 各状态计数统计
+python3 .claude/skills/xbase/issues.py stats <path>
+# 输出：🔴 3 / 🟡 1 / 🟢 2 / ✅ 5 / 总计 11
+
+# 更新问题状态（原子操作，文件锁保护）
+python3 .claude/skills/xbase/issues.py status <path> <id> <new_status>
+# 例：status document/90-开发/TEST-ISSUES.md 003 修复中
+# 也支持 emoji 别名：status ... 003 🟡
+# 输出：#003: 🔴 待修 → 🟡 修复中
+
+# 获取下一个可用编号并写入占位行（原子操作）
+python3 .claude/skills/xbase/issues.py next-id <path>
+# 输出：012（三位数编号）
+# 文件末尾追加：### #012 🔴 [待填入]
+# 如果上次的占位行还没填入，会复用已有编号，不重复追加
+```
+
+**并发安全**：所有写操作（`status`、`next-id`）使用 `fcntl.LOCK_EX` 文件锁 + read-modify-write 原子操作。多个 skill 同时操作同一个文件不会数据丢失。
+
+---
+
+#### 7. decision-log.py — 决策记录管理（DECIDE-LOG.md）
+
+**解决什么问题**：和 issues.py 类似，封装 DECIDE-LOG.md 的读写操作 — 编号分配、搜索、列表展示。
+
+**谁调用**：
+- **xdecide** 阶段 2a — `next-id` 获取编号；阶段 2c — `list` 展示 + `search` 搜索
+- **xdecide** 阶段 2a 步骤 2 — `search` 搜索历史相关决策，避免重复
+- **xcommit** 阶段 3 — `list` 检查是否有未记录的决策
+
+**API**：
+```bash
+# 列出所有决策
+python3 .claude/skills/xbase/decision-log.py list <path>
+# 输出：D-001 双模型设计
+#        D-002 命令系统放 Rust 侧
+
+# 获取下一个可用编号（原子操作，复用未填占位行）
+python3 .claude/skills/xbase/decision-log.py next-id <path>
+# 输出：003
+
+# 按关键词搜索决策段落（搜索完整段落内容，不只是标题）
+python3 .claude/skills/xbase/decision-log.py search <path> <关键词>
+# 例：search document/90-开发/DECIDE-LOG.md 动画
+# 输出匹配的决策条目标题
+```
+
+**并发安全**：同 issues.py，写操作使用文件锁保护。
 
 ---
 
@@ -445,7 +693,7 @@ python3 .claude/skills/xbase/project-detect.py detect-and-write [--project-root 
 ├── README.md                 # 本文档
 ├── PRINCIPLES.md             # 设计原则
 │
-├── xbase/                    # 共享基础设施
+├── xbase/                    # ⓪ 共享基础设施（初始化入口）
 │   ├── SKILL.md              # 初始化编排（/xbase init/status/reset）
 │   ├── SKILL-STATE.md        # 运行时状态（模板预置，skill 初始化时填值）
 │   ├── skill-state.py        # 状态管理（check/read/write/delete/reset-all）
@@ -461,41 +709,41 @@ python3 .claude/skills/xbase/project-detect.py detect-and-write [--project-root 
 │       ├── dedup-protocol.md     # 去重流程模板
 │       └── test-issues-format.md # TEST-ISSUES.md 格式规范
 │
-├── xdebug/                   # 调试工作流
-│   ├── SKILL.md              # 6 个阶段：确认问题→加日志→引导操作→分析→修复→收尾
-│   └── references/
-│       └── debug-log-format.md   # DEBUG-LOG.md 格式规范
-│
-├── xtest/                    # 测试工作流
+├── xtest/                    # ① 测试（入口）
 │   ├── SKILL.md              # 自动化 + 手动逐项验证
 │   └── references/
 │       └── checklist-format.md   # TEST-CHECKLIST.md 格式规范
 │
-├── xlog/                     # 日志补全
+├── xdebug/                   # ② 调试（核心）
+│   ├── SKILL.md              # 6 个阶段：确认问题→加日志→引导操作→分析→修复→收尾
+│   └── references/
+│       └── debug-log-format.md   # DEBUG-LOG.md 格式规范
+│
+├── xlog/                     # ③ 日志补全（辅助，常被 xdebug 自动调用）
 │   ├── SKILL.md              # 扫描 + 补盲区 + 纠正不规范
 │   └── references/
 │       ├── log-rules-format.md      # LOG-RULES.md 格式规范
 │       └── log-coverage-format.md   # LOG-COVERAGE.md 格式规范
 │
-├── xreview/                  # 代码审查
+├── xreview/                  # ④ 代码审查
 │   ├── SKILL.md              # 三维度审查（规范/架构/安全）
 │   └── references/
 │       └── review-rules-format.md   # REVIEW-RULES.md 格式规范
 │
-├── xcommit/                  # 提交工作流
-│   ├── SKILL.md              # 预检 + 文档完整性 + 规范化提交
+├── xdecide/                  # ⑤ 决策记录（按需）
+│   ├── SKILL.md              # 引导式决策 + 快速录入 + 回顾修订
 │   └── references/
-│       └── commit-rules-format.md   # COMMIT-RULES.md 格式规范
+│       └── decision-format.md       # DECIDE-LOG.md 格式规范
 │
-├── xdoc/                     # 文档维护
+├── xdoc/                     # ⑥ 文档维护（按需）
 │   ├── SKILL.md              # 健康检查 + 一致性验证
 │   └── references/
 │       └── doc-rules-format.md      # DOC-RULES.md 格式规范
 │
-└── xdecide/                  # 决策记录
-    ├── SKILL.md              # 引导式决策 + 快速录入 + 回顾修订
+└── xcommit/                  # ⑦ 提交（出口）
+    ├── SKILL.md              # 预检 + 文档完整性 + 规范化提交
     └── references/
-        └── decision-format.md       # DECIDE-LOG.md 格式规范
+        └── commit-rules-format.md   # COMMIT-RULES.md 格式规范
 ```
 
 ---

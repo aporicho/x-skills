@@ -1,12 +1,109 @@
 ---
 name: xbase
-description: xdebug/xtest/xlog/xcommit/xreview/xdoc/xdecide 的共享基础。项目探测流程、SKILL-STATE.md 规范、衔接协议。不可直接调用。
-user-invocable: false
+description: xSkills 初始化与状态管理。一键初始化所有工作流 skill 的产出物，查看状态，重置。也是共享基础（项目探测、状态规范、衔接协议）。(xSkills init, status, reset, shared base)
+user-invocable: true
+allowed-tools: ["Bash", "Read", "Edit", "Write", "Glob", "Grep", "AskUserQuestion", "Task"]
+argument-hint: "[init | status | reset | reinit]"
 ---
 
-# xbase — 共享基础
+# xbase — 初始化与状态管理 + 共享基础
 
-> 本 skill 不可直接调用。xdebug/xtest/xlog/xcommit/xreview/xdoc/xdecide 引用此处的共享逻辑。
+> `/xbase` 是可选的便捷入口，不是必须前置步骤。未运行 `/xbase` 时，各 skill 仍可独立初始化。
+
+---
+
+## 参数处理
+
+根据 `$ARGUMENTS` 分发：
+
+- **空** 或 **`init`** → 阶段 1：全量初始化
+- **`status`** → 阶段 2：状态查看
+- **`reset`** → 阶段 3：全量重置
+- **`reinit`** → 删除 xbase 自身状态 + 重新执行阶段 1
+
+## 预加载状态
+
+!`python3 .claude/skills/xbase/skill-state.py read 2>/dev/null`
+
+---
+
+## 阶段 1：全量初始化
+
+### 步骤 1 — 项目探测
+
+如 `## 项目信息` 各字段已有值则跳过此步。
+
+按下方「项目探测标准流程」执行：扫描根目录、读 CLAUDE.md、确定项目类型/构建命令/运行脚本/日志位置。确定 output_dir（搜索 `docs/`/`doc/`/`document/` 等）。
+
+写入项目信息：
+```bash
+python3 .claude/skills/xbase/skill-state.py write-info 类型 "<类型>" 构建命令 "<命令>" 运行脚本 "<脚本>" 日志位置 "<位置>" output_dir "<目录>"
+```
+
+### 步骤 2 — 并行执行各 skill 阶段 0（产出物创建）
+
+各 skill 的产出物创建互不依赖，全部通过 Task 子 agent 并行执行。
+
+**并行组**（同时启动）：xdebug、xtest、xlog、xcommit、xreview、xdoc、xdecide
+
+每个子 agent 的执行方式：
+1. 读取该 skill 的 `SKILL.md`
+2. 执行其「阶段 0」中的产出物创建步骤（项目探测已在步骤 1 完成，会被自动跳过）
+3. **不执行去重子步骤**（由步骤 3 统一处理）
+
+等待所有子 agent 完成，逐个展示结果（✅ / ⏭️ 跳过）。
+
+### 步骤 3 — 串行去重
+
+产出物全部就绪后，依次执行各 skill 的去重逻辑（因为多个 skill 可能修改同一个文件如 CLAUDE.md）。
+
+对每个有去重职责的 skill：
+1. 读取该 skill 的 SKILL.md 中定义的去重规则
+2. 扫描 CLAUDE.md / MEMORY.md 中对应的重复内容
+3. 展示 diff 预览，等用户确认后替换为指针
+
+### 步骤 4 — 汇总展示
+
+展示所有产出物的创建结果和项目信息概览。
+
+---
+
+## 阶段 2：状态查看
+
+1. 运行 `python3 .claude/skills/xbase/skill-state.py read` 获取当前状态
+2. 对每个 skill，检查 `initialized` 字段是否有值
+3. 对每个产出物路径，用 Glob 检查文件是否实际存在
+4. 展示汇总表：
+
+```
+xSkills 状态：
+
+项目信息：
+- 类型：[值 / 未探测]
+- 构建命令：[值 / 未探测]
+- output_dir：[值 / 未探测]
+
+Skill 状态：
+| Skill | 已初始化 | 产出物 | 文件存在 |
+|-------|---------|--------|---------|
+| xdebug | ✅ 2026-02-14 | DEBUG-LOG.md | ✅ |
+| xtest | ❌ | TEST-CHECKLIST.md | ❌ |
+| ... | | | |
+```
+
+---
+
+## 阶段 3：全量重置
+
+1. AskUserQuestion 确认：
+   - 问题：将重置所有 skill 的初始化状态。产出物文件不会被删除。确认？
+   - 选项：确认重置 / 取消
+
+2. 确认后运行：`python3 .claude/skills/xbase/skill-state.py reset-all`
+
+3. 展示重置后状态
+
+---
 
 ## 项目探测标准流程
 
@@ -145,7 +242,7 @@ python3 .claude/skills/xbase/decision-log.py search <file_path> <keyword>
 
 ### 格式规范
 
-详见 `references/decision-format.md`。
+详见 `../xdecide/references/decision-format.md`。
 
 ## 跨 skill 衔接
 

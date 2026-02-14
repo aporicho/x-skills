@@ -1,6 +1,7 @@
 ---
 name: calayer
-description: CALayer/Core Animation 专家。渲染管线优化、层级管理、GPU 性能、动画系统。
+description: CALayer/Core Animation 专家。渲染管线优化、层级管理、GPU 性能、动画系统。(CALayer, Core Animation, rendering pipeline, GPU performance, animation)
+user-invocable: false
 ---
 
 # CALayer/Core Animation 专家

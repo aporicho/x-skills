@@ -1,6 +1,7 @@
 ---
 name: logging
-description: 日志补全专家。按规范为 Swift/Rust 代码补充调试日志，覆盖日志盲区、提升可调试性。
+description: 日志补全专家。按规范为 Swift/Rust 代码补充调试日志，覆盖日志盲区、提升可调试性。(logging, debug log, Swift Log, Rust log, diagnostics)
+user-invocable: false
 ---
 
 # 日志补全专家

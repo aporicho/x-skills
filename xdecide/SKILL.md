@@ -51,6 +51,19 @@ argument-hint: "[决策描述 | review | reinit]"
    - **已就绪** → 用 `decision-log.py list` 获取现有条目，展示概览
 3. **写入**：`python3 .claude/skills/xbase/skill-state.py write xdecide decision_log "<路径>"`
 
+4. **去重子步骤**（阶段 0 最后执行）：
+
+   产出物创建/确认就绪后，扫描 CLAUDE.md 和 MEMORY.md，将本 skill 产出物已覆盖的详细内容替换为指针。
+
+   **原则**：
+   - 每次对话都需要的**方法论/禁令/哲学** → 保留原文
+   - 已被产出物详细覆盖的**具体规范** → 替换为一句话 + 文件路径
+   - 修改前展示 diff 预览，等用户确认
+
+   **去重职责**：
+   - MEMORY.md 中决策记录格式说明（如有）→ 替换为指向 DECIDE-LOG.md 文件顶部的指针
+   - CLAUDE.md 中「任何产品/技术决策必须记录到 DECIDE-LOG.md」→ **保留**（这是禁令/方法论）
+
 ### 阶段 1：选择模式
 
 用 AskUserQuestion：

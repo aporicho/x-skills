@@ -1,6 +1,7 @@
 ---
 name: uiux
-description: UI/UX 架构师。交互设计理论、动效设计、macOS HIG、画布应用 UX 专家。
+description: UI/UX 架构师。交互设计理论、动效设计、macOS HIG、画布应用 UX 专家。(UI/UX, interaction design, motion design, HIG, canvas app UX)
+user-invocable: false
 ---
 
 # UI/UX 架构师

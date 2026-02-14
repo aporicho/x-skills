@@ -70,6 +70,18 @@ argument-hint: "[健康检查 | 一致性 | reinit]"
 
 3. **写入状态**：`python3 .claude/skills/xbase/skill-state.py write xdoc doc_rules <DOC-RULES.md路径>`
 
+4. **去重子步骤**（阶段 0 最后执行）：
+
+   产出物创建/确认就绪后，扫描 CLAUDE.md 和 MEMORY.md，将本 skill 产出物已覆盖的详细内容替换为指针。
+
+   **原则**：
+   - 每次对话都需要的**方法论/禁令/哲学** → 保留原文
+   - 已被产出物详细覆盖的**具体规范** → 替换为一句话 + 文件路径
+   - 修改前展示 diff 预览，等用户确认
+
+   **去重职责**：
+   - xdoc 当前无对应的 CLAUDE.md / MEMORY.md 重复内容 → **跳过**
+
 ### 阶段 1：选择任务
 
 用 AskUserQuestion：

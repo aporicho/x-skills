@@ -1,6 +1,7 @@
 ---
 name: rust-ffi
-description: Rust FFI 专家。跨语言边界安全、内存模型、cbindgen 工具链、FFI 接口设计。
+description: Rust FFI 专家。跨语言边界安全、内存模型、cbindgen 工具链、FFI 接口设计。(Rust FFI, cbindgen, C ABI, memory safety, cross-language boundary)
+user-invocable: false
 ---
 
 # Rust FFI 专家

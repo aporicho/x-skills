@@ -65,6 +65,19 @@ argument-hint: "[commit消息 | reinit]"
 
 3. **写入状态**：`python3 .claude/skills/xbase/skill-state.py write xcommit commit_rules <COMMIT-RULES.md路径>`
 
+4. **去重子步骤**（阶段 0 最后执行）：
+
+   产出物创建/确认就绪后，扫描 CLAUDE.md 和 MEMORY.md，将本 skill 产出物已覆盖的详细内容替换为指针。
+
+   **原则**：
+   - 每次对话都需要的**方法论/禁令/哲学** → 保留原文
+   - 已被产出物详细覆盖的**具体规范** → 替换为一句话 + 文件路径
+   - 修改前展示 diff 预览，等用户确认
+
+   **去重职责**：
+   - CLAUDE.md `## Git 提交规范` 段中的详细规则（每次提交必须包含所有变更、禁止部分提交、提交前展示完整文件列表）→ 已被 COMMIT-RULES.md 覆盖，替换为：`Git 提交规范详见 COMMIT-RULES.md（路径见 SKILL-STATE.md）`
+   - CLAUDE.md 中「禁止部分提交」「提交前展示完整文件列表」等 → 属于具体规范，已迁移到 COMMIT-RULES.md
+
 ### 阶段 1：检查变更
 
 1. 运行 `git status` 查看工作区状态

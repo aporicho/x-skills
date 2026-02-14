@@ -1,6 +1,7 @@
 ---
 name: doc-sync
-description: 文档维护专员。代码变更后同步更新文档，维护文档体系准确性，文档健康检查。
+description: 文档维护专员。代码变更后同步更新文档，维护文档体系准确性，文档健康检查。(documentation sync, doc maintenance, code-doc consistency)
+user-invocable: false
 ---
 
 # 文档维护专员

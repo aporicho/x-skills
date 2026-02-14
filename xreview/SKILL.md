@@ -68,6 +68,19 @@ argument-hint: "[文件/目录路径 | reinit]"
 
 3. **写入状态**：`python3 .claude/skills/xbase/skill-state.py write xreview review_rules <REVIEW-RULES.md路径>`
 
+4. **去重子步骤**（阶段 0 最后执行）：
+
+   产出物创建/确认就绪后，扫描 CLAUDE.md 和 MEMORY.md，将本 skill 产出物已覆盖的详细内容替换为指针。
+
+   **原则**：
+   - 每次对话都需要的**方法论/禁令/哲学** → 保留原文
+   - 已被产出物详细覆盖的**具体规范** → 替换为一句话 + 文件路径
+   - 修改前展示 diff 预览，等用户确认
+
+   **去重职责**：
+   - CLAUDE.md `## 代码规范` 段中的具体条目（4 空格缩进、中文注释、guard 提前退出、MARK 组织、避免强制解包）→ 已被 REVIEW-RULES.md 覆盖，替换为：`代码规范详见 REVIEW-RULES.md（路径见 SKILL-STATE.md）`
+   - CLAUDE.md 中「避免强制解包」「禁止 print()」等 → 「禁止 print()」是禁令需**保留**，其余具体规范条目已迁移
+
 ### 阶段 1：确定范围
 
 用 AskUserQuestion：

@@ -13,7 +13,7 @@ Claude Code 自定义工作流 skill 集合。通过 `/x*` 命令调用，引导
 | xcommit | `/xcommit` | `[commit消息 \| reinit]` | 提交：基于 COMMIT-RULES.md 预检 + 文档完整性 + 规范化 | COMMIT-RULES.md |
 | xdoc | `/xdoc` | `[健康检查 \| 一致性 \| reinit]` | 文档维护：基于 DOC-RULES.md 健康检查 + 一致性验证 | DOC-RULES.md |
 | xdecide | `/xdecide` | `[决策描述 \| review \| reinit]` | 决策记录：引导式决策 + 快速录入 + 回顾修订 | DECIDE-LOG.md |
-| xbase | — | — | 共享基础（不可直接调用） | SKILL-STATE.md |
+| xbase | `/xbase` | `[init \| status \| reset \| reinit]` | 初始化与状态管理 + 共享基础 | SKILL-STATE.md |
 
 所有 skill 共享 `reinit` 参数：强制重新初始化（删除状态 + 重新探测项目）。
 
@@ -52,11 +52,50 @@ xdecide ──→ xcommit              (决策记录后 → 提交)
 
 所有衔接通过 AskUserQuestion 选项触发，不自动跳转。
 
+## 知识 Skill（非工作流）
+
+以下 skill 不可直接调用（`user-invocable: false`），由 Claude Code 根据上下文自动匹配激活：
+
+| Skill | 用途 |
+|-------|------|
+| appkit | AppKit/SwiftUI 平台专家 |
+| calayer | CALayer/Core Animation 专家 |
+| doc-sync | 文档维护专员 |
+| logging | 日志补全专家 |
+| rust-ffi | Rust FFI 专家 |
+| sandbox | macOS 沙盒专家 |
+| uiux | UI/UX 架构师 |
+
 ## 共享基础（xbase）
+
+`/xbase` 既是可调用命令（一键初始化、查看状态、重置），也是所有 skill 引用的共享基础（项目探测流程、状态规范、衔接协议）。未运行 `/xbase` 时，各 skill 仍可独立初始化。
+
+### 初始化架构
+
+`/xbase init` 采用**编排模式**：xbase 自身只做项目探测，产出物创建委派给各 skill：
+
+```
+步骤 1：项目探测（xbase 直接执行）
+步骤 2：并行执行各 skill 阶段 0（7 个 Task 子 agent 同时启动）
+步骤 3：串行去重（逐个 skill 清理 CLAUDE.md / MEMORY.md 中的重复内容）
+步骤 4：汇总展示
+```
+
+### 去重机制
+
+各 skill 在阶段 0 末尾有**去重子步骤**：将 CLAUDE.md / MEMORY.md 中已被产出物覆盖的具体规范替换为指针，保留方法论/禁令。谁创建产出物，谁负责清理对应的重复内容。
+
+| Skill | 可替换内容 |
+|-------|-----------|
+| xcommit | CLAUDE.md `## Git 提交规范` → 指向 COMMIT-RULES.md |
+| xreview | CLAUDE.md `## 代码规范` → 指向 REVIEW-RULES.md |
+| xdebug | MEMORY.md 中 DEBUG_LOG 格式说明 → 指向 DEBUG-LOG.md |
+| xdecide | MEMORY.md 中决策记录格式说明 → 指向 DECIDE-LOG.md |
+| xlog | MEMORY.md 中日志规则重复部分 → 指向 LOG-RULES.md |
 
 ### 状态管理（skill-state.py）
 
-各 skill 在阶段 0 探测项目后将结果写入 `SKILL-STATE.md`，后续 session 直接复用，避免重复探测。
+各 skill 在阶段 0 探测项目后将结果写入 `SKILL-STATE.md`，后续 session 直接复用，避免重复探测。也可通过 `/xbase init` 一次性完成所有 skill 的初始化。
 
 ```bash
 python3 .claude/skills/xbase/skill-state.py check <skill>       # initialized / not_found
@@ -92,15 +131,15 @@ python3 .claude/skills/xbase/decision-log.py search <path> <关键词>   # 搜�
 
 ```
 xbase/
-├── SKILL.md                  # 共享规范（项目探测、状态格式、衔接协议）
+├── SKILL.md                  # 初始化编排 + 共享规范（项目探测、状态格式、衔接协议）
 ├── skill-state.py            # 状态管理脚本
 ├── issues.py                 # TEST-ISSUES.md 操作脚本
 ├── decision-log.py           # 决策记录操作脚本
 ├── SKILL-STATE.md            # 运行时状态（模板预置，skill 初始化时填值）
 └── references/
     ├── infra-setup.md        # 调试基础设施检查流程（xdebug/xtest 共享）
-    ├── test-issues-format.md      # TEST-ISSUES.md 格式规范
-    └── decision-format.md    # 决策记录格式规范
+    ├── phase0-template.md    # 阶段 0 标准流程模板
+    └── test-issues-format.md # TEST-ISSUES.md 格式规范
 
 xdebug/
 ├── SKILL.md
@@ -133,7 +172,7 @@ xdoc/
 xdecide/
 ├── SKILL.md
 └── references/
-    └── decision-format.md       # 决策记录格式规范
+    └── decision-format.md   # 决策记录格式规范
 ```
 
 ## 使用的 Claude Code 官方特性
@@ -142,8 +181,8 @@ xdecide/
 |------|------|----------|
 | `argument-hint` | `/` 菜单中显示参数提示 | 所有工作流 skill |
 | `$ARGUMENTS` | 接收用户传入的参数，快捷跳过阶段 | 所有工作流 skill |
-| `!`command`` | Skill 加载时自动执行命令，预注入状态 | xdebug/xtest/xlog |
-| `disable-model-invocation` | 禁止模型自动触发，仅限手动调用 | xdebug |
+| `!`command`` | Skill 加载时自动执行命令，预注入状态 | 所有工作流 skill |
+| `user-invocable` | 控制 skill 是否可被用户直接调用 | 知识 skill 设为 false |
 | `allowed-tools` | 限制 skill 可使用的工具集 | 所有 skill |
 
 ## 设计原则

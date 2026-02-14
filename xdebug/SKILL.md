@@ -53,6 +53,19 @@ argument-hint: "[bug描述 | #issue编号 | reinit]"
    - **存在且格式正确** → 跳过，无需操作
 3. **写入**：`python3 .claude/skills/xbase/skill-state.py write xdebug debug_log "<DEBUG-LOG.md 路径>"`
 
+4. **去重子步骤**（阶段 0 最后执行）：
+
+   产出物创建/确认就绪后，扫描 CLAUDE.md 和 MEMORY.md，将本 skill 产出物已覆盖的详细内容替换为指针。
+
+   **原则**：
+   - 每次对话都需要的**方法论/禁令/哲学** → 保留原文
+   - 已被产出物详细覆盖的**具体规范** → 替换为一句话 + 文件路径
+   - 修改前展示 diff 预览，等用户确认
+
+   **去重职责**：
+   - MEMORY.md 中 DEBUG_LOG.md 格式说明（如有）→ 替换为指向 DEBUG-LOG.md 文件顶部的指针
+   - CLAUDE.md 中「修复 Bug 必须更新 DEBUG_LOG.md」的规则 → **保留**（这是禁令/方法论）
+
 ### 阶段 1：确认问题
 
 用 AskUserQuestion，一步到位。**同时后台启动构建**（用户思考的时间不浪费）：

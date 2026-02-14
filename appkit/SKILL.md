@@ -1,6 +1,7 @@
 ---
 name: appkit
-description: AppKit/SwiftUI 平台专家。事件系统、坐标系、NSView 生命周期、已知 bug 和 workaround、Swift 常见陷阱。
+description: AppKit/SwiftUI 平台专家。事件系统、坐标系、NSView 生命周期、已知 bug 和 workaround、Swift 常见陷阱。(AppKit, SwiftUI, NSView lifecycle, event system, coordinate system, Swift pitfalls)
+user-invocable: false
 ---
 
 # AppKit/SwiftUI 平台专家

@@ -1,6 +1,7 @@
 ---
 name: sandbox
-description: macOS 沙盒专家。沙盒机制、签名公证、文件协调、App Store 审核。
+description: macOS 沙盒专家。沙盒机制、签名公证、文件协调、App Store 审核。(macOS sandbox, code signing, notarization, App Store review, entitlements)
+user-invocable: false
 ---
 
 # macOS 沙盒专家

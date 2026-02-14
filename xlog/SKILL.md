@@ -54,6 +54,20 @@ argument-hint: "[文件/模块路径 | reinit]"
    - **LOG-COVERAGE.md**：同上三态检测（格式见 `references/log-coverage-format.md`）
 4. **写入**：`python3 .claude/skills/xbase/skill-state.py write xlog log_rules "<LOG-RULES.md 路径>" log_coverage "<LOG-COVERAGE.md 路径>"`
 
+5. **去重子步骤**（阶段 0 最后执行）：
+
+   产出物创建/确认就绪后，扫描 CLAUDE.md 和 MEMORY.md，将本 skill 产出物已覆盖的详细内容替换为指针。
+
+   **原则**：
+   - 每次对话都需要的**方法论/禁令/哲学** → 保留原文
+   - 已被产出物详细覆盖的**具体规范** → 替换为一句话 + 文件路径
+   - 修改前展示 diff 预览，等用户确认
+
+   **去重职责**：
+   - MEMORY.md 中日志规则的重复部分（如有）→ 替换为指向 LOG-RULES.md 的指针
+   - CLAUDE.md 中「禁止 print()」的规则 → **保留**（这是禁令）
+   - CLAUDE.md 中「日志规范详见 /logging skill」→ **保留**（已是指针形式）
+
 ### 阶段 1：选择范围
 
 > 从 `/xdebug` 子 agent 调用时，目标信息在 Task prompt 中传入，跳过此阶段直接进入阶段 2。

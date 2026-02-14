@@ -1,7 +1,8 @@
 ---
 name: xlog
 description: 日志补全。用户输入 /xlog 时激活，或由 /xdebug 子 agent 自动调用。建立日志规范，扫描代码补充诊断日志。
-allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "Task"]
+allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestion", "Task"]
+argument-hint: "[文件/模块路径 | reinit]"
 ---
 
 # 日志补全
@@ -17,8 +18,13 @@ allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "Task"]
 ## 启动方式
 
 - 用户输入 `/xlog` 时激活
-- `/xlog reinit` — 强制重新初始化（删除 SKILL-STATE.md 中 `## xlog` 段 + 重新执行阶段 0）
 - `/xdebug` 阶段 2 加日志时，子 agent 读取本 SKILL.md 执行完整 `/xlog` 流程
+
+### 参数处理（`$ARGUMENTS`）
+
+- **空** → 正常走阶段 1 询问
+- **`reinit`** → 删除 SKILL-STATE.md 中 `## xlog` 段（`python3 .claude/skills/xbase/skill-state.py delete xlog`）+ 重新执行阶段 0
+- **其他文本** → 作为目标文件/模块路径，跳过阶段 1 直接进入阶段 2
 
 ## 核心文件
 
@@ -29,10 +35,14 @@ allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "Task"]
 
 ## 流程
 
+### 预加载状态
+!`python3 .claude/skills/xbase/skill-state.py check xlog 2>/dev/null`
+!`python3 .claude/skills/xbase/skill-state.py read 2>/dev/null`
+
 ### 阶段 0：探测项目日志系统
 
-> **快速跳过**：运行 `python3 .claude/skills/xbase/skill-state.py check xlog`。
-> - 输出 `initialized` → 运行 `python3 .claude/skills/xbase/skill-state.py read` 获取已有信息 → **跳过整个阶段 0**
+> **快速跳过**：查看上方预加载结果。
+> - 输出 `initialized` → 已有状态信息可用 → **跳过整个阶段 0**
 > - `## 项目信息` 段已存在（其他 skill 写入）→ 直接复用，不再重复探测
 > - 输出 `not_found` → 执行下方完整探测流程
 

@@ -96,6 +96,12 @@ python3 .claude/skills/xbase/skill-state.py delete <skill>
 # 列出所有问题及状态
 python3 .claude/skills/xbase/issues.py list <file_path>
 
+# 按状态过滤列出（可用状态: 待修 / 修复中 / 已修复 / 复测通过）
+python3 .claude/skills/xbase/issues.py list <file_path> --status <状态>
+
+# 输出各状态计数统计
+python3 .claude/skills/xbase/issues.py stats <file_path>
+
 # 更新问题状态（标题行 emoji 替换）
 python3 .claude/skills/xbase/issues.py status <file_path> <id> <new_status>
 # new_status: 待修 / 修复中 / 已修复 / 复测通过

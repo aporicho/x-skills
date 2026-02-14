@@ -1,7 +1,9 @@
 ---
 name: xdebug
-description: 命令行调试工作流。用户描述 Bug 或输入 /xdebug 时激活。自动构建运行 App、捕获日志、引导复现、定位修复，全程选项驱动。
+description: 命令行调试工作流。用户输入 /xdebug 时激活。自动构建运行 App、捕获日志、引导复现、定位修复，全程选项驱动。
 allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestion", "Task"]
+argument-hint: "[bug描述 | #issue编号 | reinit]"
+disable-model-invocation: true
 ---
 
 # 命令行调试工作流
@@ -19,35 +21,29 @@ allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestio
 
 ## 启动方式
 
-- 用户输入 `/xdebug` 或描述一个 Bug 时激活
-- `/xdebug reinit` — 强制重新初始化（删除 SKILL-STATE.md 中 `## xdebug` 段 + 重新执行阶段 0）
+- 用户输入 `/xdebug` 时激活
+
+### 参数处理（`$ARGUMENTS`）
+
+- **空** → 正常走阶段 1 询问
+- **`reinit`** → 删除 SKILL-STATE.md 中 `## xdebug` 段（`python3 .claude/skills/xbase/skill-state.py delete xdebug`）+ 重新执行阶段 0
+- **以 `#` 开头**（如 `#003`）→ 从 ISSUES.md 取对应条目作为问题描述，用 `issues.py status` 设为 🟡，跳过阶段 1 直接进入阶段 2
+- **其他文本** → 作为 bug 描述，跳过阶段 1 直接进入阶段 2
 
 ## 流程
 
+### 预加载状态
+!`python3 .claude/skills/xbase/skill-state.py check xdebug 2>/dev/null`
+!`python3 .claude/skills/xbase/skill-state.py read 2>/dev/null`
+
 ### 阶段 0：探测项目
 
-> **快速跳过**：运行 `python3 .claude/skills/xbase/skill-state.py check xdebug`。
-> - 输出 `initialized` → 运行 `python3 .claude/skills/xbase/skill-state.py read` 获取已有信息 → **跳过整个阶段 0**
+> **快速跳过**：查看上方预加载结果。
+> - 输出 `initialized` → 已有状态信息可用 → **跳过整个阶段 0**
 > - 输出 `not_found` → 执行下方完整探测流程
 
 1. **项目探测**：按 xbase skill 中的标准流程执行（扫描项目、读 CLAUDE.md、确定项目关键信息）
-2. **验证并补齐调试基础设施**：
-
-   后续阶段需要四项能力：构建、后台启动、日志捕获、停止。逐项检查，缺失的自动创建：
-
-   - **构建**：通常已有（从 CLAUDE.md 或构建配置推导），验证命令可执行
-   - **后台启动 + 日志捕获 + 停止**：检查是否有调试运行脚本（如 `scripts/run.sh`）
-     - **已有且功能完备**（支持启动、日志捕获、停止）→ 直接使用
-     - **缺失或不完备** → 根据项目类型自动创建，需支持：
-       - `build` — 完整构建流程
-       - `start` — 后台启动项目，日志捕获到文件（根据日志系统：stdout → 重定向；系统日志 → 过滤+重定向；日志框架 → 配置文件输出）。以能捕获输出的方式启动（如直接运行二进制而非 GUI launcher）
-       - `stop` — 停止项目及相关后台进程
-       - `logs [filter]` — 读取日志，支持过滤。根据项目日志格式实现：级别过滤（如 `warning` 显示 warning 及以上）、来源/模块过滤（如果日志格式中有来源标识）、任意关键词搜索
-       - `status` — 检查运行状态
-     - 脚本放在 `scripts/` 下，创建后不问用户
-   - **创建或修改后必须验证**：运行脚本的 `build` 和 `status`（或等价命令）确认可用。验证失败则修复后重试
-
-   后续阶段的"构建""启动""读日志""停止"均通过此基础设施执行，不再各自拼命令。
+2. **验证并补齐调试基础设施**：按 `references/infra-setup.md` 中的流程检查四项能力（构建、后台启动、日志捕获、停止），缺失的自动创建。后续阶段的"构建""启动""读日志""停止"均通过此基础设施执行，不再各自拼命令。
 
 3. 检测调试日志文件（DEBUG_LOG.md），判断状态：
    - **不存在** → 在项目文档目录创建（格式见 `references/debug-log-format.md`）

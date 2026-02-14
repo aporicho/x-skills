@@ -4,9 +4,10 @@
 供 xtest/xdebug skill 使用，管理跨 session Bug 队列。
 
 用法:
-    python3 .claude/skills/xbase/issues.py list <file_path>
+    python3 .claude/skills/xbase/issues.py list <file_path> [--status <状态>]
     python3 .claude/skills/xbase/issues.py status <file_path> <id> <new_status>
     python3 .claude/skills/xbase/issues.py next-id <file_path>
+    python3 .claude/skills/xbase/issues.py stats <file_path>
 """
 
 import sys
@@ -41,24 +42,53 @@ def write_file(path: str, content: str) -> None:
     Path(path).write_text(content, encoding="utf-8")
 
 
-def cmd_list(args: list[str]) -> None:
-    """list <file_path> — 列出所有问题及状态。"""
-    if len(args) != 1:
-        print("用法: issues.py list <file_path>", file=sys.stderr)
-        sys.exit(1)
-
-    content = read_file(args[0])
-    found = False
+def parse_issues(content: str) -> list[tuple[str, str, str]]:
+    """解析所有问题条目，返回 [(id, emoji, title), ...]。"""
+    results = []
     for line in content.split("\n"):
         m = TITLE_RE.match(line)
         if m:
-            issue_id, emoji, title = m.group(1), m.group(2), m.group(3)
-            label = EMOJI_TO_LABEL.get(emoji, "?")
-            print(f"#{issue_id} {emoji} {label} — {title}")
-            found = True
+            results.append((m.group(1), m.group(2), m.group(3)))
+    return results
+
+
+def cmd_list(args: list[str]) -> None:
+    """list <file_path> [--status <状态>] — 列出问题及状态。"""
+    if len(args) < 1:
+        print("用法: issues.py list <file_path> [--status <状态>]", file=sys.stderr)
+        sys.exit(1)
+
+    file_path = args[0]
+    status_filter = None
+
+    # 解析 --status 参数
+    i = 1
+    while i < len(args):
+        if args[i] == "--status" and i + 1 < len(args):
+            status_filter = args[i + 1]
+            if status_filter not in STATUS_MAP:
+                print(f"未知状态: {status_filter}", file=sys.stderr)
+                print(f"可用状态: {', '.join(STATUS_MAP.keys())}", file=sys.stderr)
+                sys.exit(1)
+            i += 2
+        else:
+            print(f"未知参数: {args[i]}", file=sys.stderr)
+            sys.exit(1)
+
+    content = read_file(file_path)
+    issues = parse_issues(content)
+    filter_emoji = STATUS_MAP.get(status_filter) if status_filter else None
+
+    found = False
+    for issue_id, emoji, title in issues:
+        if filter_emoji and emoji != filter_emoji:
+            continue
+        label = EMOJI_TO_LABEL.get(emoji, "?")
+        print(f"#{issue_id} {emoji} {label} — {title}")
+        found = True
 
     if not found:
-        print("(无问题记录)")
+        print("(无匹配记录)")
 
 
 def cmd_status(args: list[str]) -> None:
@@ -115,6 +145,24 @@ def cmd_next_id(args: list[str]) -> None:
     print(f"{max_id + 1:03d}")
 
 
+def cmd_stats(args: list[str]) -> None:
+    """stats <file_path> — 输出各状态计数统计。"""
+    if len(args) != 1:
+        print("用法: issues.py stats <file_path>", file=sys.stderr)
+        sys.exit(1)
+
+    content = read_file(args[0])
+    issues = parse_issues(content)
+
+    counts = {"🔴": 0, "🟡": 0, "🟢": 0, "✅": 0}
+    for _, emoji, _ in issues:
+        if emoji in counts:
+            counts[emoji] += 1
+
+    total = sum(counts.values())
+    print(f"🔴 {counts['🔴']} / 🟡 {counts['🟡']} / 🟢 {counts['🟢']} / ✅ {counts['✅']} / 总计 {total}")
+
+
 def main() -> None:
     if len(sys.argv) < 2:
         print(__doc__.strip())
@@ -127,6 +175,7 @@ def main() -> None:
         "list": cmd_list,
         "status": cmd_status,
         "next-id": cmd_next_id,
+        "stats": cmd_stats,
     }
 
     if cmd not in commands:

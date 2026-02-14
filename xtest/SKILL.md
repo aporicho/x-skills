@@ -2,6 +2,7 @@
 name: xtest
 description: 测试工作流。用户输入 /xtest 时激活。自动化测试 + 手动逐项验证，维护 TEST-CHECKLIST.md，失败自动衔接 /xdebug。
 allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestion", "Task"]
+argument-hint: "[自动化 | 手动 | reinit]"
 ---
 
 # 测试工作流
@@ -19,7 +20,13 @@ allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestio
 ## 启动方式
 
 - 用户输入 `/xtest` 时激活
-- `/xtest reinit` — 强制重新初始化（删除 SKILL-STATE.md 中 `## xtest` 段 + 重新执行阶段 0）
+
+### 参数处理（`$ARGUMENTS`）
+
+- **空** → 正常走阶段 1 询问
+- **`reinit`** → 删除 SKILL-STATE.md 中 `## xtest` 段（`python3 .claude/skills/xbase/skill-state.py delete xtest`）+ 重新执行阶段 0
+- **`自动化`** → 跳过阶段 1，直接进入阶段 2a
+- **`手动`** → 跳过阶段 1，直接进入阶段 2b
 
 ## 核心文件
 
@@ -27,17 +34,21 @@ allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestio
 
 ## 流程
 
+### 预加载状态
+!`python3 .claude/skills/xbase/skill-state.py check xtest 2>/dev/null`
+!`python3 .claude/skills/xbase/skill-state.py read 2>/dev/null`
+
 ### 阶段 0：初始化
 
-> **快速跳过**：运行 `python3 .claude/skills/xbase/skill-state.py check xtest`。
-> - 输出 `initialized` → 运行 `python3 .claude/skills/xbase/skill-state.py read` 获取已有信息 → **跳过步骤 1-2**，直接进入步骤 3 检测 TEST-CHECKLIST.md
+> **快速跳过**：查看上方预加载结果。
+> - 输出 `initialized` → 已有状态信息可用 → **跳过步骤 1-2**，直接进入步骤 3 检测 TEST-CHECKLIST.md
 > - `## 项目信息` 段已存在（其他 skill 写入）→ 直接复用项目类型、构建命令、运行脚本等，不再重复探测
 > - `## 项目信息` 中有 `运行脚本` 字段 → 跳过基础设施检查（步骤 2）
 > - 输出 `not_found` → 执行下方完整流程
 
 1. **项目探测**：按 xbase skill 中的标准流程执行（扫描项目、读 CLAUDE.md、确定项目关键信息）
 
-2. **验证调试基础设施**（手动测试需要）：检查项目是否有调试运行脚本支持构建、后台启动、日志捕获和停止。缺失则根据项目类型自动创建（逻辑同 `/xdebug` 阶段 0 步骤 2）。
+2. **验证调试基础设施**（手动测试需要）：按 `references/infra-setup.md` 中的流程检查四项能力（构建、后台启动、日志捕获、停止），缺失的自动创建。
 
 3. **检测 TEST-CHECKLIST.md 和 ISSUES.md**，判断状态（两个文件独立做三态检测）：
    - **TEST-CHECKLIST.md**：

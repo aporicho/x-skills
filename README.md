@@ -705,15 +705,15 @@ python3 .claude/skills/xdecide/scripts/decision-log.py search <path> <关键词>
 │   └── references/
 │       ├── phase0-template.md    # 阶段 0 标准流程模板（所有 skill 共享）
 │       ├── infra-setup.md        # 调试基础设施检查流程（xdebug/xtest 共享）
-│       ├── dedup-protocol.md     # 去重流程模板
-│       └── test-issues-format.md # TEST-ISSUES.md 格式规范
+│       └── dedup-protocol.md     # 去重流程模板
 │
 ├── xtest/                    # ① 测试（入口）
 │   ├── SKILL.md              # 自动化 + 手动逐项验证
 │   ├── scripts/
 │   │   └── issues.py             # TEST-ISSUES.md 操作（list/status/next-id/stats）
 │   └── references/
-│       └── checklist-format.md   # TEST-CHECKLIST.md 格式规范
+│       ├── checklist-format.md       # TEST-CHECKLIST.md 格式规范
+│       └── test-issues-format.md     # TEST-ISSUES.md 格式规范
 │
 ├── xdebug/                   # ② 调试（核心）
 │   ├── SKILL.md              # 6 个阶段：确认问题→加日志→引导操作→分析→修复→收尾

@@ -215,7 +215,7 @@ TEST-ISSUES.md 路径记录在 SKILL-STATE.md `## xtest` 中的 `test_issues` �
 
 ### 格式规范
 
-详见 `references/test-issues-format.md`。
+详见 `../xtest/references/test-issues-format.md`。
 
 ## 决策记录协作协议
 

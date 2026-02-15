@@ -704,7 +704,6 @@ python3 .claude/skills/xdecide/scripts/decision-log.py search <path> <关键词>
 │   │   └── dedup-scan.py         # 去重扫描（CLAUDE.md/MEMORY.md 重复检测）
 │   └── references/
 │       ├── phase0-template.md    # 阶段 0 标准流程模板（所有 skill 共享）
-│       ├── infra-setup.md        # 调试基础设施检查流程（xdebug/xtest 共享）
 │       └── dedup-protocol.md     # 去重流程模板
 │
 ├── xtest/                    # ① 测试（入口）
@@ -718,7 +717,8 @@ python3 .claude/skills/xdecide/scripts/decision-log.py search <path> <关键词>
 ├── xdebug/                   # ② 调试（核心）
 │   ├── SKILL.md              # 6 个阶段：确认问题→加日志→引导操作→分析→修复→收尾
 │   └── references/
-│       └── debug-log-format.md   # DEBUG-LOG.md 格式规范
+│       ├── debug-log-format.md   # DEBUG-LOG.md 格式规范
+│       └── infra-setup.md        # 调试基础设施检查流程（xtest 也引用）
 │
 ├── xlog/                     # ③ 日志补全（辅助，常被 xdebug 自动调用）
 │   ├── SKILL.md              # 扫描 + 补盲区 + 纠正不规范

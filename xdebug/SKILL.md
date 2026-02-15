@@ -37,7 +37,7 @@ argument-hint: "[bug描述 | #issue编号 | reinit]"
 | 文件 | 说明 | 格式规范 |
 |------|------|----------|
 | `DEBUG-LOG.md` | Bug 修复日志（症状→根因→解决） | `references/debug-log-format.md` |
-| `scripts/run.sh`（或等价物） | 调试运行脚本（构建/启动/停止/日志） | `../xbase/references/infra-setup.md` |
+| `scripts/run.sh`（或等价物） | 调试运行脚本（构建/启动/停止/日志） | `references/infra-setup.md` |
 
 ## 流程
 
@@ -48,7 +48,7 @@ argument-hint: "[bug描述 | #issue编号 | reinit]"
 
 > 按 `../xbase/references/phase0-template.md` 标准流程执行。特有探测步骤：
 
-1. **验证并补齐调试基础设施**：按 `../xbase/references/infra-setup.md` 中的流程检查四项能力（构建、后台启动、日志捕获、停止），缺失的自动创建。后续阶段的"构建""启动""读日志""停止"均通过此基础设施执行，不再各自拼命令。
+1. **验证并补齐调试基础设施**：按 `references/infra-setup.md` 中的流程检查四项能力（构建、后台启动、日志捕获、停止），缺失的自动创建。后续阶段的"构建""启动""读日志""停止"均通过此基础设施执行，不再各自拼命令。
 2. **检测调试日志文件**（DEBUG-LOG.md），判断状态：
    - **不存在** → 在 `output_dir` 下创建（格式见 `references/debug-log-format.md`）
    - **存在但格式不符** → 用 AskUserQuestion 询问是否迁移（保留原始内容，套用新格式）

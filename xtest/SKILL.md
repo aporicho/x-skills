@@ -47,7 +47,7 @@ argument-hint: "[自动化 | 手动 | reinit]"
 
 > 按 `../xbase/references/phase0-template.md` 标准流程执行。特有探测步骤：
 
-1. **验证调试基础设施**（手动测试需要）：按 `../xbase/references/infra-setup.md` 中的流程检查四项能力（构建、后台启动、日志捕获、停止），缺失的自动创建。
+1. **验证调试基础设施**（手动测试需要）：按 `../xdebug/references/infra-setup.md` 中的流程检查四项能力（构建、后台启动、日志捕获、停止），缺失的自动创建。
 
 2. **检测 TEST-CHECKLIST.md 和 TEST-ISSUES.md**，判断状态（两个文件独立做三态检测）：
    - **TEST-CHECKLIST.md**：

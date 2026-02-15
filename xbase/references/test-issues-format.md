@@ -58,11 +58,11 @@ TEST-ISSUES.md 的状态管理通过 `issues.py` 脚本完成，富文本内容�
 
 ```bash
 # 列出所有问题
-python3 .claude/skills/xbase/issues.py list <file_path>
+python3 .claude/skills/xtest/scripts/issues.py list <file_path>
 
 # 更新状态
-python3 .claude/skills/xbase/issues.py status <file_path> <id> <new_status>
+python3 .claude/skills/xtest/scripts/issues.py status <file_path> <id> <new_status>
 
 # 获取下一个编号
-python3 .claude/skills/xbase/issues.py next-id <file_path>
+python3 .claude/skills/xtest/scripts/issues.py next-id <file_path>
 ```

@@ -10,7 +10,7 @@
 
 1. **扫描**：使用 `dedup-scan.py` 扫描 CLAUDE.md 和 MEMORY.md：
    ```bash
-   python3 .claude/skills/xbase/dedup-scan.py scan --skill <skill名> --claude-md <CLAUDE.md路径> [--memory-md <MEMORY.md路径>]
+   python3 .claude/skills/xbase/scripts/dedup-scan.py scan --skill <skill名> --claude-md <CLAUDE.md路径> [--memory-md <MEMORY.md路径>]
    ```
 
 2. **判断**：解析 JSON 输出中的 `matches` 数组：

@@ -19,11 +19,11 @@ argument-hint: "[init | status | reset | reinit]"
 - **空** 或 **`init`** → 阶段 1：全量初始化
 - **`status`** → 阶段 2：状态查看
 - **`reset`** → 阶段 3：全量重置
-- **`reinit`** → 清空项目信息（`python3 .claude/skills/xbase/skill-state.py delete-info`）+ 重新执行阶段 1
+- **`reinit`** → 清空项目信息（`python3 .claude/skills/xbase/scripts/skill-state.py delete-info`）+ 重新执行阶段 1
 
 ## 预加载状态
 
-!`python3 .claude/skills/xbase/skill-state.py read 2>/dev/null`
+!`python3 .claude/skills/xbase/scripts/skill-state.py read 2>/dev/null`
 
 ---
 
@@ -35,7 +35,7 @@ argument-hint: "[init | status | reset | reinit]"
 
 使用 `project-detect.py` 自动探测并写入：
 ```bash
-python3 .claude/skills/xbase/project-detect.py detect-and-write
+python3 .claude/skills/xbase/scripts/project-detect.py detect-and-write
 ```
 脚本自动扫描根目录、读 CLAUDE.md、确定项目关键信息并写入 SKILL-STATE.md。未找到文档目录时自动创建 `docs/`。
 
@@ -43,7 +43,7 @@ python3 .claude/skills/xbase/project-detect.py detect-and-write
 
 先写入跳过去重标记（步骤 3 统一处理去重，各 skill 阶段 0 的去重子步骤检查此标记后跳过）：
 ```bash
-python3 .claude/skills/xbase/skill-state.py write-info skip_dedup true
+python3 .claude/skills/xbase/scripts/skill-state.py write-info skip_dedup true
 ```
 
 各 skill 的产出物创建互不依赖，全部通过 Task 子 agent 并行执行。
@@ -61,7 +61,7 @@ python3 .claude/skills/xbase/skill-state.py write-info skip_dedup true
 
 产出物全部就绪后，清除跳过去重标记：
 ```bash
-python3 .claude/skills/xbase/skill-state.py write-info skip_dedup ""
+python3 .claude/skills/xbase/scripts/skill-state.py write-info skip_dedup ""
 ```
 
 依次执行各 skill 的去重逻辑（因为多个 skill 可能修改同一个文件如 CLAUDE.md）。
@@ -69,7 +69,7 @@ python3 .claude/skills/xbase/skill-state.py write-info skip_dedup ""
 对每个有去重职责的 skill：
 1. 运行 `dedup-scan.py` 一次性扫描所有 skill 的重复内容：
    ```bash
-   python3 .claude/skills/xbase/dedup-scan.py scan-all --claude-md <CLAUDE.md路径> [--memory-md <MEMORY.md路径>]
+   python3 .claude/skills/xbase/scripts/dedup-scan.py scan-all --claude-md <CLAUDE.md路径> [--memory-md <MEMORY.md路径>]
    ```
 2. 解析 JSON 输出，按 skill 分组展示匹配项
 3. 逐项展示 diff 预览，等用户确认后用 Edit 替换为指针
@@ -82,7 +82,7 @@ python3 .claude/skills/xbase/skill-state.py write-info skip_dedup ""
 
 ## 阶段 2：状态查看
 
-1. 运行 `python3 .claude/skills/xbase/skill-state.py read` 获取当前状态
+1. 运行 `python3 .claude/skills/xbase/scripts/skill-state.py read` 获取当前状态
 2. 对每个 skill，检查 `initialized` 字段是否有值
 3. 对每个产出物路径，用 Glob 检查文件是否实际存在
 4. 展示汇总表：
@@ -111,7 +111,7 @@ Skill 状态：
    - 问题：将重置所有 skill 的初始化状态。产出物文件不会被删除。确认？
    - 选项：确认重置 / 取消
 
-2. 确认后运行：`python3 .claude/skills/xbase/skill-state.py reset-all`
+2. 确认后运行：`python3 .claude/skills/xbase/scripts/skill-state.py reset-all`
 
 3. 展示重置后状态
 
@@ -139,27 +139,27 @@ Skill 状态：
 
 ### 读写方式
 
-使用 `.claude/skills/xbase/skill-state.py` 脚本操作：
+使用 `.claude/skills/xbase/scripts/skill-state.py` 脚本操作：
 
 ```bash
 # 检查 skill 是否已初始化（看 initialized 字段是否有值）
-python3 .claude/skills/xbase/skill-state.py check <skill>
+python3 .claude/skills/xbase/scripts/skill-state.py check <skill>
 # 输出: "initialized" 或 "not_found"
 
 # 读取完整状态
-python3 .claude/skills/xbase/skill-state.py read
+python3 .claude/skills/xbase/scripts/skill-state.py read
 
 # 写入/更新 skill 状态（自动添加 initialized 日期）
-python3 .claude/skills/xbase/skill-state.py write <skill> <key> <value> [<key2> <value2> ...]
+python3 .claude/skills/xbase/scripts/skill-state.py write <skill> <key> <value> [<key2> <value2> ...]
 
 # 写入/更新项目信息
-python3 .claude/skills/xbase/skill-state.py write-info <key> <value> [<key2> <value2> ...]
+python3 .claude/skills/xbase/scripts/skill-state.py write-info <key> <value> [<key2> <value2> ...]
 
 # 清空 skill 段的值（保留结构，用于 reinit）
-python3 .claude/skills/xbase/skill-state.py delete <skill>
+python3 .claude/skills/xbase/scripts/skill-state.py delete <skill>
 
 # 恢复模板（清空所有 skill 状态）
-python3 .claude/skills/xbase/skill-state.py reset-all
+python3 .claude/skills/xbase/scripts/skill-state.py reset-all
 ```
 
 ### 模板结构
@@ -172,8 +172,8 @@ python3 .claude/skills/xbase/skill-state.py reset-all
 ### 快速跳过逻辑
 
 每个 skill 阶段 0 的入口：
-1. 运行 `python3 .claude/skills/xbase/skill-state.py check <skill>`
-2. 输出 `initialized` → 运行 `python3 .claude/skills/xbase/skill-state.py read` 获取已有信息 → 跳过探测
+1. 运行 `python3 .claude/skills/xbase/scripts/skill-state.py check <skill>`
+2. 输出 `initialized` → 运行 `python3 .claude/skills/xbase/scripts/skill-state.py read` 获取已有信息 → 跳过探测
 3. 输出 `not_found` → 执行完整探测流程 → 完成后用 `write` / `write-info` 写入
 
 ## TEST-ISSUES.md 协作协议
@@ -182,20 +182,20 @@ python3 .claude/skills/xbase/skill-state.py reset-all
 
 ```bash
 # 列出所有问题及状态
-python3 .claude/skills/xbase/issues.py list <file_path>
+python3 .claude/skills/xtest/scripts/issues.py list <file_path>
 
 # 按状态过滤列出（可用状态: 待修 / 修复中 / 已修复 / 复测通过）
-python3 .claude/skills/xbase/issues.py list <file_path> --status <状态>
+python3 .claude/skills/xtest/scripts/issues.py list <file_path> --status <状态>
 
 # 输出各状态计数统计
-python3 .claude/skills/xbase/issues.py stats <file_path>
+python3 .claude/skills/xtest/scripts/issues.py stats <file_path>
 
 # 更新问题状态（标题行 emoji 替换）
-python3 .claude/skills/xbase/issues.py status <file_path> <id> <new_status>
+python3 .claude/skills/xtest/scripts/issues.py status <file_path> <id> <new_status>
 # new_status: 待修 / 修复中 / 已修复 / 复测通过
 
 # 获取下一个可用编号
-python3 .claude/skills/xbase/issues.py next-id <file_path>
+python3 .claude/skills/xtest/scripts/issues.py next-id <file_path>
 ```
 
 ### 职责分工
@@ -223,13 +223,13 @@ TEST-ISSUES.md 路径记录在 SKILL-STATE.md `## xtest` 中的 `test_issues` �
 
 ```bash
 # 列出所有决策
-python3 .claude/skills/xbase/decision-log.py list <file_path>
+python3 .claude/skills/xdecide/scripts/decision-log.py list <file_path>
 
 # 获取下一个可用编号
-python3 .claude/skills/xbase/decision-log.py next-id <file_path>
+python3 .claude/skills/xdecide/scripts/decision-log.py next-id <file_path>
 
 # 按关键词搜索决策段落
-python3 .claude/skills/xbase/decision-log.py search <file_path> <keyword>
+python3 .claude/skills/xdecide/scripts/decision-log.py search <file_path> <keyword>
 ```
 
 ### 职责分工

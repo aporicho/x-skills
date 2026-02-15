@@ -7,11 +7,11 @@ Claude Code 自定义工作流 skill 集合 — 用 `/x*` 命令驱动调试、�
 ## Quick Start
 
 ```bash
-/xbase init          # 一键初始化所有 skill（探测项目 → 并行创建产出物 → 去重）
-/xdebug 拖拽偏移      # 直接开始调试一个 bug
-/xtest 手动           # 启动手动测试流程
-/xcommit             # 预检 + 文档完整性 + 规范化提交
-/xbase status        # 查看所有 skill 的初始化状态
+/xbase   init          # 一键初始化所有 skill（探测项目 → 并行创建产出物 → 去重）
+/xdebug  拖拽偏移      # 直接开始调试一个 bug
+/xtest   手动          # 启动手动测试流程
+/xcommit               # 预检 + 文档完整性 + 规范化提交
+/xbase   status        # 查看所有 skill 的初始化状态
 ```
 
 各 skill 可独立运行（首次使用时自动初始化），`/xbase init` 只是批量快捷入口。
@@ -23,19 +23,19 @@ Claude Code 自定义工作流 skill 集合 — 用 `/x*` 命令驱动调试、�
 ### 两层结构
 
 ```
-┌──────────────────────────────────────────────────────┐
-│  7 个工作流 skill（按使用顺序）                          │
-│  xtest → xdebug → xlog → xreview → xdecide → xdoc → xcommit │
-├──────────────────────────────────────────────────────┤
-│  xbase — 共享基础设施                                  │
-│  状态管理 · 项目探测 · 产出物检测 · 去重 · Git 上下文     │
-│  (skill-state.py · project-detect.py · artifact-check.py │
-│   dedup-scan.py · git-context.py · issues.py · ...)     │
-└──────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│  7 个工作流 skill（按使用顺序）                                     │
+│  xtest → xdebug → xlog → xreview → xdecide → xdoc → xcommit   │
+├─────────────────────────────────────────────────────────────────────┤
+│  xbase — 共享基础设施 + 各 skill 领域脚本                          │
+│  共享：状态管理 · 项目探测 · 产出物检测 · 去重 (xbase/scripts/)     │
+│  领域：Git 上下文 (xcommit/scripts/) · Bug 队列 (xtest/scripts/)    │
+│         决策记录 (xdecide/scripts/)                                 │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 - **上层**：7 个工作流 skill，每个有自己的 `SKILL.md`（定义阶段和流程）和 `references/` 目录（格式规范）
-- **下层**：xbase 提供共享 Python 工具，所有 skill 复用，不各自造轮子
+- **下层**：共享工具在 `xbase/scripts/`，领域工具在各 skill 的 `scripts/` 下（如 `xcommit/scripts/git-context.py`）
 
 ### 三类文件
 
@@ -69,7 +69,8 @@ Claude Code 自定义工作流 skill 集合 — 用 `/x*` 命令驱动调试、�
 
 **管理的共享资源**：
 - `SKILL-STATE.md` — 所有 skill 的运行时状态（项目类型、路径、初始化日期）
-- 7 个 Python 工具 — 项目探测、状态管理、产出物检测、去重扫描、Git 上下文、Bug 队列、决策记录
+- 4 个共享 Python 工具（`xbase/scripts/`）— 状态管理、项目探测、产出物检测、去重扫描
+- 3 个领域 Python 工具 — Git 上下文（`xcommit/scripts/`）、Bug 队列（`xtest/scripts/`）、决策记录（`xdecide/scripts/`）
 
 **关键设计**：xbase 自身不创建任何工作产出物，只做编排 — "谁的产出物谁负责创建"。`/xbase init` 启动 7 个并行 Task 子 agent，各自执行自己的阶段 0。
 
@@ -411,7 +412,7 @@ xcommit、xreview、xdoc、xlog 在生成规范类产出物时采用两层规则
 
 ## Python 工具详解
 
-所有工具在 `xbase/` 目录下，被各 skill 共同复用。下面按**初始化阶段的调用顺序**排列，然后是工作阶段的工具。
+共享工具在 `xbase/scripts/`，领域工具在各自 skill 的 `scripts/` 下。下面按**初始化阶段的调用顺序**排列，然后是工作阶段的工具。
 
 ### 初始化阶段（阶段 0 按顺序调用）
 
@@ -432,10 +433,10 @@ xcommit、xreview、xdoc、xlog 在生成规范类产出物时采用两层规则
 **API**：
 ```bash
 # 只探测，输出 JSON（不写文件）
-python3 .claude/skills/xbase/project-detect.py detect [--project-root <path>]
+python3 .claude/skills/xbase/scripts/project-detect.py detect [--project-root <path>]
 
 # 探测 + 自动写入 SKILL-STATE.md 的项目信息段
-python3 .claude/skills/xbase/project-detect.py detect-and-write [--project-root <path>]
+python3 .claude/skills/xbase/scripts/project-detect.py detect-and-write [--project-root <path>]
 ```
 
 **输出示例**（`detect`）：
@@ -467,31 +468,31 @@ python3 .claude/skills/xbase/project-detect.py detect-and-write [--project-root 
 **API**：
 ```bash
 # 检查 skill 是否已初始化（最常用，每个 skill 阶段 0 第一步就调它）
-python3 .claude/skills/xbase/skill-state.py check <skill>
+python3 .claude/skills/xbase/scripts/skill-state.py check <skill>
 # → 输出 "initialized" 或 "not_found"
 
 # check + read 合并（省一次进程启动，用于预加载）
-python3 .claude/skills/xbase/skill-state.py check-and-read <skill>
+python3 .claude/skills/xbase/scripts/skill-state.py check-and-read <skill>
 
 # 读取完整状态文件
-python3 .claude/skills/xbase/skill-state.py read
+python3 .claude/skills/xbase/scripts/skill-state.py read
 
 # 写入 skill 段（支持多个 key-value 对，自动添加 initialized 日期）
-python3 .claude/skills/xbase/skill-state.py write <skill> <key> <value> [<key2> <value2> ...]
+python3 .claude/skills/xbase/scripts/skill-state.py write <skill> <key> <value> [<key2> <value2> ...]
 # 例：write xdebug debug_log document/90-开发/DEBUG-LOG.md
 
 # 写入项目信息段
-python3 .claude/skills/xbase/skill-state.py write-info <key> <value> [<key2> <value2> ...]
+python3 .claude/skills/xbase/scripts/skill-state.py write-info <key> <value> [<key2> <value2> ...]
 # 例：write-info 类型 "GUI 应用" output_dir document/90-开发
 
 # 清空某个 skill 段的值（reinit 时用，保留段结构）
-python3 .claude/skills/xbase/skill-state.py delete <skill>
+python3 .claude/skills/xbase/scripts/skill-state.py delete <skill>
 
 # 清空项目信息段
-python3 .claude/skills/xbase/skill-state.py delete-info
+python3 .claude/skills/xbase/scripts/skill-state.py delete-info
 
 # 恢复初始模板（全量重置，/xbase reset 调用）
-python3 .claude/skills/xbase/skill-state.py reset-all
+python3 .claude/skills/xbase/scripts/skill-state.py reset-all
 ```
 
 ---
@@ -513,16 +514,16 @@ python3 .claude/skills/xbase/skill-state.py reset-all
 **API**：
 ```bash
 # 检测单个产出物状态
-python3 .claude/skills/xbase/artifact-check.py check <artifact_name> <expected_path>
+python3 .claude/skills/xbase/scripts/artifact-check.py check <artifact_name> <expected_path>
 # → 输出 "ready" / "format_mismatch" / "not_found"
 # 例：check commit-rules document/90-开发/COMMIT-RULES.md
 
 # 从 format 文件生成骨架
-python3 .claude/skills/xbase/artifact-check.py create <artifact_name> <target_path>
+python3 .claude/skills/xbase/scripts/artifact-check.py create <artifact_name> <target_path>
 # 例：create commit-rules document/90-开发/COMMIT-RULES.md
 
 # 批量检测所有已知产出物（JSON 输出）
-python3 .claude/skills/xbase/artifact-check.py batch-check <output_dir>
+python3 .claude/skills/xbase/scripts/artifact-check.py batch-check <output_dir>
 # 例：batch-check document/90-开发
 ```
 
@@ -548,11 +549,11 @@ python3 .claude/skills/xbase/artifact-check.py batch-check <output_dir>
 **API**：
 ```bash
 # 扫描单个 skill 的重复内容
-python3 .claude/skills/xbase/dedup-scan.py scan --skill <name> --claude-md <path> [--memory-md <path>]
+python3 .claude/skills/xbase/scripts/dedup-scan.py scan --skill <name> --claude-md <path> [--memory-md <path>]
 # 例：scan --skill xcommit --claude-md CLAUDE.md --memory-md ~/.claude/.../MEMORY.md
 
 # 一次扫描所有 skill（/xbase init 步骤 3 用）
-python3 .claude/skills/xbase/dedup-scan.py scan-all --claude-md <path> [--memory-md <path>]
+python3 .claude/skills/xbase/scripts/dedup-scan.py scan-all --claude-md <path> [--memory-md <path>]
 ```
 
 **输出示例**：
@@ -586,13 +587,13 @@ python3 .claude/skills/xbase/dedup-scan.py scan-all --claude-md <path> [--memory
 **API**：
 ```bash
 # xcommit 用：收集 status + diff + staged diff + 最近 10 条 log + 分析提交风格
-python3 .claude/skills/xbase/git-context.py commit-context
+python3 .claude/skills/xcommit/scripts/git-context.py commit-context
 
 # xreview 用：收集 diff（可选 staged/unstaged/both）
-python3 .claude/skills/xbase/git-context.py diff-context [--scope staged|unstaged|both]
+python3 .claude/skills/xcommit/scripts/git-context.py diff-context [--scope staged|unstaged|both]
 
 # xtest 用：收集变更文件列表（staged 或最近 5 次提交）
-python3 .claude/skills/xbase/git-context.py changed-files [--scope staged|recent]
+python3 .claude/skills/xcommit/scripts/git-context.py changed-files [--scope staged|recent]
 ```
 
 **commit-context 输出示例**：
@@ -629,24 +630,24 @@ python3 .claude/skills/xbase/git-context.py changed-files [--scope staged|recent
 **API**：
 ```bash
 # 列出全部问题
-python3 .claude/skills/xbase/issues.py list <path>
+python3 .claude/skills/xtest/scripts/issues.py list <path>
 # 输出：#001 🔴 待修 — 拖拽偏移问题
 
 # 按状态过滤（待修 / 修复中 / 已修复 / 复测通过）
-python3 .claude/skills/xbase/issues.py list <path> --status 待修
+python3 .claude/skills/xtest/scripts/issues.py list <path> --status 待修
 
 # 各状态计数统计
-python3 .claude/skills/xbase/issues.py stats <path>
+python3 .claude/skills/xtest/scripts/issues.py stats <path>
 # 输出：🔴 3 / 🟡 1 / 🟢 2 / ✅ 5 / 总计 11
 
 # 更新问题状态（原子操作，文件锁保护）
-python3 .claude/skills/xbase/issues.py status <path> <id> <new_status>
+python3 .claude/skills/xtest/scripts/issues.py status <path> <id> <new_status>
 # 例：status document/90-开发/TEST-ISSUES.md 003 修复中
 # 也支持 emoji 别名：status ... 003 🟡
 # 输出：#003: 🔴 待修 → 🟡 修复中
 
 # 获取下一个可用编号并写入占位行（原子操作）
-python3 .claude/skills/xbase/issues.py next-id <path>
+python3 .claude/skills/xtest/scripts/issues.py next-id <path>
 # 输出：012（三位数编号）
 # 文件末尾追加：### #012 🔴 [待填入]
 # 如果上次的占位行还没填入，会复用已有编号，不重复追加
@@ -668,16 +669,16 @@ python3 .claude/skills/xbase/issues.py next-id <path>
 **API**：
 ```bash
 # 列出所有决策
-python3 .claude/skills/xbase/decision-log.py list <path>
+python3 .claude/skills/xdecide/scripts/decision-log.py list <path>
 # 输出：D-001 双模型设计
 #        D-002 命令系统放 Rust 侧
 
 # 获取下一个可用编号（原子操作，复用未填占位行）
-python3 .claude/skills/xbase/decision-log.py next-id <path>
+python3 .claude/skills/xdecide/scripts/decision-log.py next-id <path>
 # 输出：003
 
 # 按关键词搜索决策段落（搜索完整段落内容，不只是标题）
-python3 .claude/skills/xbase/decision-log.py search <path> <关键词>
+python3 .claude/skills/xdecide/scripts/decision-log.py search <path> <关键词>
 # 例：search document/90-开发/DECIDE-LOG.md 动画
 # 输出匹配的决策条目标题
 ```
@@ -696,13 +697,11 @@ python3 .claude/skills/xbase/decision-log.py search <path> <关键词>
 ├── xbase/                    # ⓪ 共享基础设施（初始化入口）
 │   ├── SKILL.md              # 初始化编排（/xbase init/status/reset）
 │   ├── SKILL-STATE.md        # 运行时状态（模板预置，skill 初始化时填值）
-│   ├── skill-state.py        # 状态管理（check/read/write/delete/reset-all）
-│   ├── project-detect.py     # 项目探测（语言/框架/构建命令自动识别）
-│   ├── artifact-check.py     # 产出物三态检测 + 骨架创建
-│   ├── dedup-scan.py         # 去重扫描（CLAUDE.md/MEMORY.md 重复检测）
-│   ├── git-context.py        # Git 上下文收集（commit/diff/changed-files）
-│   ├── issues.py             # TEST-ISSUES.md 操作（list/status/next-id/stats）
-│   ├── decision-log.py       # DECIDE-LOG.md 操作（list/next-id/search）
+│   ├── scripts/
+│   │   ├── skill-state.py        # 状态管理（check/read/write/delete/reset-all）
+│   │   ├── project-detect.py     # 项目探测（语言/框架/构建命令自动识别）
+│   │   ├── artifact-check.py     # 产出物三态检测 + 骨架创建
+│   │   └── dedup-scan.py         # 去重扫描（CLAUDE.md/MEMORY.md 重复检测）
 │   └── references/
 │       ├── phase0-template.md    # 阶段 0 标准流程模板（所有 skill 共享）
 │       ├── infra-setup.md        # 调试基础设施检查流程（xdebug/xtest 共享）
@@ -711,6 +710,8 @@ python3 .claude/skills/xbase/decision-log.py search <path> <关键词>
 │
 ├── xtest/                    # ① 测试（入口）
 │   ├── SKILL.md              # 自动化 + 手动逐项验证
+│   ├── scripts/
+│   │   └── issues.py             # TEST-ISSUES.md 操作（list/status/next-id/stats）
 │   └── references/
 │       └── checklist-format.md   # TEST-CHECKLIST.md 格式规范
 │
@@ -732,6 +733,8 @@ python3 .claude/skills/xbase/decision-log.py search <path> <关键词>
 │
 ├── xdecide/                  # ⑤ 决策记录（按需）
 │   ├── SKILL.md              # 引导式决策 + 快速录入 + 回顾修订
+│   ├── scripts/
+│   │   └── decision-log.py       # DECIDE-LOG.md 操作（list/next-id/search）
 │   └── references/
 │       └── decision-format.md       # DECIDE-LOG.md 格式规范
 │
@@ -742,6 +745,8 @@ python3 .claude/skills/xbase/decision-log.py search <path> <关键词>
 │
 └── xcommit/                  # ⑦ 提交（出口）
     ├── SKILL.md              # 预检 + 文档完整性 + 规范化提交
+    ├── scripts/
+    │   └── git-context.py        # Git 上下文收集（commit/diff/changed-files）
     └── references/
         └── commit-rules-format.md   # COMMIT-RULES.md 格式规范
 ```

@@ -26,7 +26,7 @@ argument-hint: "[commit消息 | reinit]"
 > **执行顺序**：无论参数如何，阶段 0 的快速跳过检查始终先执行。参数仅影响阶段 1 及之后的跳转。
 
 - **空** → 正常走全流程（自动生成 commit message）
-- **`reinit`** → 删除 SKILL-STATE.md 中 `## xcommit` 段（`python3 .claude/skills/xbase/skill-state.py delete xcommit`）+ 重新执行阶段 0（忽略预加载的 check 结果，delete 后强制执行完整阶段 0）
+- **`reinit`** → 删除 SKILL-STATE.md 中 `## xcommit` 段（`python3 .claude/skills/xbase/scripts/skill-state.py delete xcommit`）+ 重新执行阶段 0（忽略预加载的 check 结果，delete 后强制执行完整阶段 0）
 - **其他文本** → 作为 commit message 候选，跳到阶段 1（阶段 4 时优先使用此消息）
 
 ## 核心文件
@@ -38,7 +38,7 @@ argument-hint: "[commit消息 | reinit]"
 ## 流程
 
 ### 预加载状态
-!`python3 .claude/skills/xbase/skill-state.py check-and-read xcommit 2>/dev/null`
+!`python3 .claude/skills/xbase/scripts/skill-state.py check-and-read xcommit 2>/dev/null`
 
 ### 阶段 0：探测项目
 
@@ -65,7 +65,7 @@ argument-hint: "[commit消息 | reinit]"
 
    来源标记：每条规则标注来源为 `CLAUDE.md` 或 `项目扫描`，便于维护。
 
-3. **写入状态**：`python3 .claude/skills/xbase/skill-state.py write xcommit commit_rules <COMMIT-RULES.md路径>`
+3. **写入状态**：`python3 .claude/skills/xbase/scripts/skill-state.py write xcommit commit_rules <COMMIT-RULES.md路径>`
 
 4. **去重子步骤**：按 `../xbase/references/dedup-protocol.md` 流程执行。xcommit 去重职责：CLAUDE.md `## Git 提交规范` 段 → 替换为指向 COMMIT-RULES.md 的指针。
 
@@ -73,7 +73,7 @@ argument-hint: "[commit消息 | reinit]"
 
 1. 运行 git-context.py 收集上下文：
    ```bash
-   python3 .claude/skills/xbase/git-context.py commit-context
+   python3 .claude/skills/xcommit/scripts/git-context.py commit-context
    ```
    输出包含 status、diff_stat、cached_diff、recent_log、commit_style 等。
 

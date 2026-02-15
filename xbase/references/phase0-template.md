@@ -7,7 +7,7 @@
 在 SKILL.md 的流程段开头添加一行自动执行命令：
 
 ```
-!`python3 .claude/skills/xbase/skill-state.py check-and-read <skill名> 2>/dev/null`
+!`python3 .claude/skills/xbase/scripts/skill-state.py check-and-read <skill名> 2>/dev/null`
 ```
 
 输出格式：第一行为 check 结果（`initialized` / `not_found`），`---` 分隔，后续为完整状态内容。
@@ -41,7 +41,7 @@
 
 1. **项目探测**：优先使用 `project-detect.py`：
    ```bash
-   python3 .claude/skills/xbase/project-detect.py detect-and-write
+   python3 .claude/skills/xbase/scripts/project-detect.py detect-and-write
    ```
    脚本自动扫描项目根目录、读 CLAUDE.md、确定项目关键信息并写入 SKILL-STATE.md。
 
@@ -52,7 +52,7 @@
 3. **（各 skill 在此插入特有探测步骤）**
    - 有产出物的 skill：使用 `artifact-check.py` 做**三态检测**：
      ```bash
-     python3 .claude/skills/xbase/artifact-check.py check <artifact_name> <expected_path>
+     python3 .claude/skills/xbase/scripts/artifact-check.py check <artifact_name> <expected_path>
      ```
      - `not_found` → 生成（可用 `artifact-check.py create` 创建骨架，再用 Edit 填充内容）
      - `format_mismatch` → 问迁移
@@ -61,5 +61,5 @@
 4. **写入 SKILL-STATE.md**：用脚本写入 skill 特有字段：
    ```bash
    # skill 特有字段（含产出物路径）
-   python3 .claude/skills/xbase/skill-state.py write <skill名> <key> <value> ...
+   python3 .claude/skills/xbase/scripts/skill-state.py write <skill名> <key> <value> ...
    ```

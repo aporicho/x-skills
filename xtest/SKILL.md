@@ -27,7 +27,7 @@ argument-hint: "[自动化 | 手动 | reinit]"
 > **执行顺序**：无论参数如何，阶段 0 的快速跳过检查始终先执行。参数仅影响阶段 1 及之后的跳转。
 
 - **空** → 正常走阶段 1 询问
-- **`reinit`** → 删除 SKILL-STATE.md 中 `## xtest` 段（`python3 .claude/skills/xbase/skill-state.py delete xtest`）+ 重新执行阶段 0（忽略预加载的 check 结果，delete 后强制执行完整阶段 0）
+- **`reinit`** → 删除 SKILL-STATE.md 中 `## xtest` 段（`python3 .claude/skills/xbase/scripts/skill-state.py delete xtest`）+ 重新执行阶段 0（忽略预加载的 check 结果，delete 后强制执行完整阶段 0）
 - **`自动化`** → 跳过阶段 1，直接进入阶段 2a
 - **`手动`** → 跳过阶段 1，直接进入阶段 2b
 
@@ -41,7 +41,7 @@ argument-hint: "[自动化 | 手动 | reinit]"
 ## 流程
 
 ### 预加载状态
-!`python3 .claude/skills/xbase/skill-state.py check-and-read xtest 2>/dev/null`
+!`python3 .claude/skills/xbase/scripts/skill-state.py check-and-read xtest 2>/dev/null`
 
 ### 阶段 0：初始化
 
@@ -74,7 +74,7 @@ argument-hint: "[自动化 | 手动 | reinit]"
    - 👤 手动：需要启动 App 操作验证（UI 交互、视觉效果、动画等）
    - 🤝 结合：机器准备场景，人验证结果
 
-6. **写入**：`python3 .claude/skills/xbase/skill-state.py write xtest test_checklist "<TEST-CHECKLIST.md 路径>" test_issues "<TEST-ISSUES.md 路径>"`
+6. **写入**：`python3 .claude/skills/xbase/scripts/skill-state.py write xtest test_checklist "<TEST-CHECKLIST.md 路径>" test_issues "<TEST-ISSUES.md 路径>"`
 
 7. **去重子步骤**：按 `../xbase/references/dedup-protocol.md` 流程执行。xtest 当前无对应重复内容 → **跳过**。
 
@@ -142,7 +142,7 @@ argument-hint: "[自动化 | 手动 | reinit]"
 3. 写入 TEST-ISSUES.md 一条 🔴 条目：
    ```bash
    # 获取下一个编号
-   python3 .claude/skills/xbase/issues.py next-id <TEST-ISSUES.md 路径>
+   python3 .claude/skills/xtest/scripts/issues.py next-id <TEST-ISSUES.md 路径>
    ```
    然后用 Edit 工具在 TEST-ISSUES.md 末尾追加问题记录（格式见 `../xbase/references/test-issues-format.md`），包含复现步骤、实际/预期表现
 4. 继续下一个测试项

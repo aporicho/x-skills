@@ -25,7 +25,7 @@ argument-hint: "[文件/目录路径 | reinit]"
 > **执行顺序**：无论参数如何，阶段 0 的快速跳过检查始终先执行。参数仅影响阶段 1 及之后的跳转。
 
 - **空** → 正常走阶段 1 询问
-- **`reinit`** → 删除 SKILL-STATE.md 中 `## xreview` 段（`python3 .claude/skills/xbase/skill-state.py delete xreview`）+ 重新执行阶段 0（忽略预加载的 check 结果，delete 后强制执行完整阶段 0）
+- **`reinit`** → 删除 SKILL-STATE.md 中 `## xreview` 段（`python3 .claude/skills/xbase/scripts/skill-state.py delete xreview`）+ 重新执行阶段 0（忽略预加载的 check 结果，delete 后强制执行完整阶段 0）
 - **其他文本** → 作为审查目标路径，跳过阶段 1 直接进入阶段 2
 
 ## 核心文件
@@ -37,7 +37,7 @@ argument-hint: "[文件/目录路径 | reinit]"
 ## 流程
 
 ### 预加载状态
-!`python3 .claude/skills/xbase/skill-state.py check-and-read xreview 2>/dev/null`
+!`python3 .claude/skills/xbase/scripts/skill-state.py check-and-read xreview 2>/dev/null`
 
 ### 阶段 0：探测项目
 
@@ -68,7 +68,7 @@ argument-hint: "[文件/目录路径 | reinit]"
 
    来源标记：每条规则标注来源为 `CLAUDE.md` 或 `代码扫描`，便于维护。
 
-3. **写入状态**：`python3 .claude/skills/xbase/skill-state.py write xreview review_rules <REVIEW-RULES.md路径>`
+3. **写入状态**：`python3 .claude/skills/xbase/scripts/skill-state.py write xreview review_rules <REVIEW-RULES.md路径>`
 
 4. **去重子步骤**：按 `../xbase/references/dedup-protocol.md` 流程执行。xreview 去重职责：CLAUDE.md `## 代码规范` 段 → 替换为指向 REVIEW-RULES.md 的指针；「禁止 print()」→ **保留**（禁令）。
 

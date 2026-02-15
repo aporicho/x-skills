@@ -83,11 +83,11 @@ xdecide 阶段 0 对决策记录文件做三态检测：
 
 ```bash
 # 列出所有决策
-python3 .claude/skills/xbase/decision-log.py list <file_path>
+python3 .claude/skills/xdecide/scripts/decision-log.py list <file_path>
 
 # 获取下一个编号
-python3 .claude/skills/xbase/decision-log.py next-id <file_path>
+python3 .claude/skills/xdecide/scripts/decision-log.py next-id <file_path>
 
 # 按关键词搜索
-python3 .claude/skills/xbase/decision-log.py search <file_path> <keyword>
+python3 .claude/skills/xdecide/scripts/decision-log.py search <file_path> <keyword>
 ```

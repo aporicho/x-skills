@@ -27,7 +27,7 @@ argument-hint: "[健康检查 | 一致性 | reinit]"
 > **执行顺序**：无论参数如何，阶段 0 的快速跳过检查始终先执行。参数仅影响阶段 1 及之后的跳转。
 
 - **空** → 正常走阶段 1 询问
-- **`reinit`** → 删除 SKILL-STATE.md 中 `## xdoc` 段（`python3 .claude/skills/xbase/skill-state.py delete xdoc`）+ 重新执行阶段 0（忽略预加载的 check 结果，delete 后强制执行完整阶段 0）
+- **`reinit`** → 删除 SKILL-STATE.md 中 `## xdoc` 段（`python3 .claude/skills/xbase/scripts/skill-state.py delete xdoc`）+ 重新执行阶段 0（忽略预加载的 check 结果，delete 后强制执行完整阶段 0）
 - **`健康检查`** → 跳过阶段 1，直接进入阶段 2a
 - **`一致性`** → 跳过阶段 1，直接进入阶段 2b
 - **其他文本** → 作为指定文件/目录路径，执行该路径的健康检查
@@ -41,7 +41,7 @@ argument-hint: "[健康检查 | 一致性 | reinit]"
 ## 流程
 
 ### 预加载状态
-!`python3 .claude/skills/xbase/skill-state.py check-and-read xdoc 2>/dev/null`
+!`python3 .claude/skills/xbase/scripts/skill-state.py check-and-read xdoc 2>/dev/null`
 
 ### 阶段 0：探测项目
 
@@ -70,7 +70,7 @@ argument-hint: "[健康检查 | 一致性 | reinit]"
 
    来源标记：每条规则标注来源为 `CLAUDE.md` 或 `项目扫描`，便于维护。
 
-3. **写入状态**：`python3 .claude/skills/xbase/skill-state.py write xdoc doc_rules <DOC-RULES.md路径>`
+3. **写入状态**：`python3 .claude/skills/xbase/scripts/skill-state.py write xdoc doc_rules <DOC-RULES.md路径>`
 
 4. **去重子步骤**：按 `../xbase/references/dedup-protocol.md` 流程执行。xdoc 当前无对应重复内容 → **跳过**。
 

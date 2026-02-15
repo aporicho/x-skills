@@ -21,5 +21,5 @@
     - `status` — 检查运行状态
   - 脚本放在 `scripts/` 下，创建后不问用户
   - 创建或发现运行脚本后，更新 SKILL-STATE.md：
-    `python3 .claude/skills/xbase/skill-state.py write-info 运行脚本 "<脚本路径>"`
+    `python3 .claude/skills/xbase/scripts/skill-state.py write-info 运行脚本 "<脚本路径>"`
 - **创建或修改后必须验证**：运行脚本的 `build` 和 `status`（或等价命令）确认可用。验证失败则修复后重试

@@ -26,7 +26,7 @@ argument-hint: "[文件/模块路径 | reinit]"
 > **执行顺序**：无论参数如何，阶段 0 的快速跳过检查始终先执行。参数仅影响阶段 1 及之后的跳转。
 
 - **空** → 正常走阶段 1 询问
-- **`reinit`** → 删除 SKILL-STATE.md 中 `## xlog` 段（`python3 .claude/skills/xbase/skill-state.py delete xlog`）+ 重新执行阶段 0（忽略预加载的 check 结果，delete 后强制执行完整阶段 0）
+- **`reinit`** → 删除 SKILL-STATE.md 中 `## xlog` 段（`python3 .claude/skills/xbase/scripts/skill-state.py delete xlog`）+ 重新执行阶段 0（忽略预加载的 check 结果，delete 后强制执行完整阶段 0）
 - **其他文本** → 作为目标文件/模块路径，跳过阶段 1 直接进入阶段 2
 
 ## 核心文件
@@ -41,7 +41,7 @@ argument-hint: "[文件/模块路径 | reinit]"
 ## 流程
 
 ### 预加载状态
-!`python3 .claude/skills/xbase/skill-state.py check-and-read xlog 2>/dev/null`
+!`python3 .claude/skills/xbase/scripts/skill-state.py check-and-read xlog 2>/dev/null`
 
 ### 阶段 0：探测项目日志系统
 
@@ -56,7 +56,7 @@ argument-hint: "[文件/模块路径 | reinit]"
 3. 检测两个核心文件：
    - **LOG-RULES.md**：不存在 → 基于扫描结果生成（格式见 `references/log-rules-format.md`）；存在但格式不符 → 问是否迁移；已就绪 → 跳过
    - **LOG-COVERAGE.md**：同上三态检测（格式见 `references/log-coverage-format.md`）
-4. **写入**：`python3 .claude/skills/xbase/skill-state.py write xlog log_rules "<LOG-RULES.md 路径>" log_coverage "<LOG-COVERAGE.md 路径>"`
+4. **写入**：`python3 .claude/skills/xbase/scripts/skill-state.py write xlog log_rules "<LOG-RULES.md 路径>" log_coverage "<LOG-COVERAGE.md 路径>"`
 
 5. **去重子步骤**：按 `../xbase/references/dedup-protocol.md` 流程执行。xlog 去重职责：MEMORY.md 中日志规则重复部分 → 替换为指针；「禁止 print()」「日志规范详见 /logging」→ **保留**。
 

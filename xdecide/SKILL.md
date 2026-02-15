@@ -27,7 +27,7 @@ argument-hint: "[决策描述 | review | reinit]"
 > **执行顺序**：无论参数如何，阶段 0 的快速跳过检查始终先执行。参数仅影响阶段 1 及之后的跳转。
 
 - **空** → 正常走阶段 1 询问
-- **`reinit`** → 删除 SKILL-STATE.md 中 `## xdecide` 段（`python3 .claude/skills/xbase/skill-state.py delete xdecide`）+ 重新执行阶段 0（忽略预加载的 check 结果，delete 后强制执行完整阶段 0）
+- **`reinit`** → 删除 SKILL-STATE.md 中 `## xdecide` 段（`python3 .claude/skills/xbase/scripts/skill-state.py delete xdecide`）+ 重新执行阶段 0（忽略预加载的 check 结果，delete 后强制执行完整阶段 0）
 - **`review`** → 跳过阶段 1，直接进入阶段 2c 回顾修订
 - **其他文本** → 作为决策描述，跳过阶段 1 直接进入阶段 2a 引导式决策（背景自动跳过）
 
@@ -40,7 +40,7 @@ argument-hint: "[决策描述 | review | reinit]"
 ## 流程
 
 ### 预加载状态
-!`python3 .claude/skills/xbase/skill-state.py check-and-read xdecide 2>/dev/null`
+!`python3 .claude/skills/xbase/scripts/skill-state.py check-and-read xdecide 2>/dev/null`
 
 ### 阶段 0：探测项目
 
@@ -51,7 +51,7 @@ argument-hint: "[决策描述 | review | reinit]"
    - **不存在** → 在 `output_dir` 下创建 `DECIDE-LOG.md`（格式见 `references/decision-format.md`）
    - **存在但格式不符**（无 `## D-NNN` 标题行）→ AskUserQuestion 询问是否迁移
    - **已就绪** → 用 `decision-log.py list` 获取现有条目，展示概览
-3. **写入**：`python3 .claude/skills/xbase/skill-state.py write xdecide decision_log "<路径>"`
+3. **写入**：`python3 .claude/skills/xbase/scripts/skill-state.py write xdecide decision_log "<路径>"`
 
 4. **去重子步骤**：按 `../xbase/references/dedup-protocol.md` 流程执行。xdecide 去重职责：MEMORY.md 中决策记录格式说明 → 替换为指针；「任何决策必须记录」→ **保留**（禁令）。
 
@@ -109,7 +109,7 @@ argument-hint: "[决策描述 | review | reinit]"
 获取下一个编号，格式化预览完整决策：
 
 ```bash
-python3 .claude/skills/xbase/decision-log.py next-id <决策记录路径>
+python3 .claude/skills/xdecide/scripts/decision-log.py next-id <决策记录路径>
 ```
 
 用 AskUserQuestion：

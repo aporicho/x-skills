@@ -301,10 +301,9 @@ check 返回 initialized? ──→ 是：跳过整个阶段 0
     ↓
 确定产出物目录（output_dir）
     ↓
-产出物三态检测（artifact-check.py）
-    ├─ 不存在 → 按 references/*-format.md 生成
-    ├─ 格式不符 → 问用户是否迁移
-    └─ 已就绪 → 跳过
+产出物搜索（Claude 全项目搜索同类文件）
+    ├─ 找到 → 迁移到 output_dir + 改造格式
+    └─ 没找到 → artifact-create.py 创建骨架
     ↓
 写入状态（skill-state.py write）
     ↓
@@ -314,7 +313,7 @@ check 返回 initialized? ──→ 是：跳过整个阶段 0
 **为什么这样设计**：
 - **`check` 快速跳过**：已初始化的 skill 只需一次进程调用就知道可以跳过，不做任何多余工作
 - **项目信息共享**：第一个初始化的 skill 写入项目信息，后续 skill 直接复用
-- **三态检测**：兼容已有文件 — 如果用户已经手写了 REVIEW-RULES.md，不会覆盖
+- **全项目搜索**：兼容已有文件 — 无论用户的文件叫什么名字、放在哪里，只要内容用途匹配就会迁移复用，不会从零覆盖
 
 ### 2. 状态管理 — SKILL-STATE.md
 
@@ -478,34 +477,26 @@ python3 .claude/skills/xbase/scripts/skill-state.py reset-all
 
 ---
 
-#### 3. artifact-check.py — 产出物三态检测 + 骨架创建
+#### 3. artifact-create.py — 产出物骨架创建
 
-**解决什么问题**：每个 skill 的阶段 0 需要判断"我的产出物文件已存在？格式对不对？需要创建吗？"。这个脚本统一处理这个逻辑，避免每个 skill 各写一套。
+**解决什么问题**：当全项目搜索后确认没有同类文件时，需要从零创建产出物。这个脚本从 `references/*-format.md` 自动提取格式结构，生成骨架文件。
 
-**谁调用**：各 skill 阶段 0 的"产出物三态检测"步骤。`/xbase status` 也用 `batch-check` 查看全部状态。
+**谁调用**：各 skill 阶段 0，在 Claude 全项目搜索确认无同类文件后调用。
 
 **怎么工作**：
-1. 动态扫描所有 `references/*-format.md` 文件，从 H1 标题提取产出物文件名，从 H2 标题提取必需段落标记
-2. `check` 时：文件不存在 → `not_found`；存在但缺少必需段落 → `format_mismatch`；段落齐全 → `ready`
-3. `create` 时：读取 format 文件，提取标题结构生成骨架文件
-4. 如果 format 文件的 H1 不是标准命名，会从**文件名 fallback 推导**（如 `commit-rules-format.md` → `COMMIT-RULES.md`）
+1. 动态扫描所有 `references/*-format.md`，从 H1 提取文件名，从 H2 提取段落结构
+2. 生成包含正确标题和段落骨架的文件，Claude 再用 Edit 填充内容
 
-**新增 skill 如何适配**：只需在 `references/` 目录放一个 `xxx-format.md` 文件，artifact-check.py 会自动发现并纳入检测。不需要改任何代码。
+**新增 skill 如何适配**：只需在 `references/` 放一个 `xxx-format.md`，脚本自动发现。
 
 **API**：
 ```bash
-# 检测单个产出物状态
-python3 .claude/skills/xbase/scripts/artifact-check.py check <artifact_name> <expected_path>
-# → 输出 "ready" / "format_mismatch" / "not_found"
-# 例：check commit-rules document/90-开发/COMMIT-RULES.md
+# 创建骨架文件
+python3 .claude/skills/xbase/scripts/artifact-create.py <artifact_name> <target_path>
+# 例：artifact-create.py commit-rules document/90-开发/COMMIT-RULES.md
 
-# 从 format 文件生成骨架
-python3 .claude/skills/xbase/scripts/artifact-check.py create <artifact_name> <target_path>
-# 例：create commit-rules document/90-开发/COMMIT-RULES.md
-
-# 批量检测所有已知产出物（JSON 输出）
-python3 .claude/skills/xbase/scripts/artifact-check.py batch-check <output_dir>
-# 例：batch-check document/90-开发
+# 列出所有可创建的产出物
+python3 .claude/skills/xbase/scripts/artifact-create.py --list
 ```
 
 ---
@@ -680,7 +671,7 @@ python3 .claude/skills/xdecide/scripts/decision-log.py search <path> <关键词>
 │   ├── SKILL-STATE.md        # 运行时状态（模板预置，skill 初始化时填值）
 │   ├── scripts/
 │   │   ├── skill-state.py        # 状态管理（check/read/write/delete/reset-all）
-│   │   ├── artifact-check.py     # 产出物三态检测 + 骨架创建
+│   │   ├── artifact-create.py    # 产出物骨架创建（从 format 模板生成）
 │   │   └── dedup-scan.py         # 去重扫描（CLAUDE.md/MEMORY.md 重复检测）
 │   └── references/
 │       ├── phase0-template.md    # 阶段 0 标准流程模板（所有 skill 共享）

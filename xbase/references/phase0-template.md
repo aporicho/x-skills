@@ -51,13 +51,12 @@
 2. **确定产出物目录**：读取 SKILL-STATE.md 的 `output_dir` 字段（已由步骤 1 写入）。
 
 3. **（各 skill 在此插入特有探测步骤）**
-   - 有产出物的 skill：使用 `artifact-check.py` 做**三态检测**：
-     ```bash
-     python3 .claude/skills/xbase/scripts/artifact-check.py check <artifact_name> <expected_path>
-     ```
-     - `not_found` → 生成（可用 `artifact-check.py create` 创建骨架，再用 Edit 填充内容）
-     - `format_mismatch` → 问迁移
-     - `ready` → 跳过
+   - 有产出物的 skill：Claude 在全项目搜索用途相似的已有文件（不限文件名、位置、格式）：
+     - **找到** → 读取内容，迁移到 `output_dir` 并改造为预设格式（参照 `references/*-format.md`）
+     - **没找到** → 用 `artifact-create.py` 创建骨架，再用 Edit 填充内容：
+       ```bash
+       python3 .claude/skills/xbase/scripts/artifact-create.py <artifact_name> <target_path>
+       ```
 
 4. **写入 SKILL-STATE.md**：用脚本写入 skill 特有字段：
    ```bash

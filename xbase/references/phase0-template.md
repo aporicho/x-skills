@@ -39,13 +39,14 @@
 
 ## 完整探测流程
 
-1. **项目探测**：优先使用 `project-detect.py`：
-   ```bash
-   python3 .claude/skills/xbase/scripts/project-detect.py detect-and-write
-   ```
-   脚本自动扫描项目根目录、读 CLAUDE.md、确定项目关键信息并写入 SKILL-STATE.md。
-
-   > **fallback**：未找到文档目录时，`project-detect.py` 会自动创建 `docs/` 作为默认 output_dir。
+1. **项目探测**（Claude 直接执行，不依赖脚本）：
+   1. 用 Glob 扫描项目根目录，识别标志文件（Cargo.toml、Package.swift、*.xcodeproj、package.json 等）
+   2. 读 CLAUDE.md，提取构建命令、项目类型、日志系统等信息
+   3. 找到文档目录（`document/`、`docs/`、`doc/` 等），未找到则创建 `docs/`
+   4. 用 `skill-state.py write-info` 写入结果：
+      ```bash
+      python3 .claude/skills/xbase/scripts/skill-state.py write-info 类型 "<项目类型>" 构建命令 "<构建命令>" output_dir "<文档目录>"
+      ```
 
 2. **确定产出物目录**：读取 SKILL-STATE.md 的 `output_dir` 字段（已由步骤 1 写入）。
 

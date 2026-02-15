@@ -69,7 +69,7 @@ Claude Code 自定义工作流 skill 集合 — 用 `/x*` 命令驱动调试、�
 
 **管理的共享资源**：
 - `SKILL-STATE.md` — 所有 skill 的运行时状态（项目类型、路径、初始化日期）
-- 4 个共享 Python 工具（`xbase/scripts/`）— 状态管理、项目探测、产出物检测、去重扫描
+- 3 个共享 Python 工具（`xbase/scripts/`）— 状态管理、产出物检测、去重扫描
 - 3 个领域 Python 工具 — Git 上下文（`xcommit/scripts/`）、Bug 队列（`xtest/scripts/`）、决策记录（`xdecide/scripts/`）
 
 **关键设计**：xbase 自身不创建任何工作产出物，只做编排 — "谁的产出物谁负责创建"。`/xbase init` 启动 7 个并行 Task 子 agent，各自执行自己的阶段 0。
@@ -297,7 +297,7 @@ check 返回 initialized? ──→ 是：跳过整个阶段 0
     ↓ 否
 项目信息段已有值? ──→ 是：复用，不重复探测
     ↓ 否
-项目探测（project-detect.py）
+项目探测（Claude 直接执行）
     ↓
 确定产出物目录（output_dir）
     ↓
@@ -352,7 +352,7 @@ check 返回 initialized? ──→ 是：跳过整个阶段 0
 `/xbase init` 采用**编排模式**，xbase 自身只做项目探测，产出物创建全部委派给各 skill：
 
 ```
-步骤 1：项目探测（xbase 直接执行 project-detect.py）
+步骤 1：项目探测（Claude 直接扫描根目录 + 读 CLAUDE.md）
 步骤 2：并行执行各 skill 阶段 0（7 个 Task 子 agent 同时启动）
 步骤 3：串行去重（逐个 skill 清理 CLAUDE.md / MEMORY.md 中的重复内容）
 步骤 4：汇总展示
@@ -418,38 +418,19 @@ xcommit、xreview、xdoc、xlog 在生成规范类产出物时采用两层规则
 
 ---
 
-#### 1. project-detect.py — 项目探测
+#### 1. 项目探测（Claude 直接执行，无脚本）
 
-**解决什么问题**：skill 需要知道"这是什么项目、怎么构建、文档放哪"，但不能硬编码。这个脚本自动扫描项目根目录，识别出所有关键信息。
+**解决什么问题**：skill 需要知道"这是什么项目、怎么构建、文档放哪"，但不能硬编码。
 
-**谁调用**：`/xbase init` 步骤 1 调用 `detect-and-write`；各 skill 阶段 0 在项目信息段为空时也会调用。
+**谁执行**：`/xbase init` 步骤 1；各 skill 阶段 0 在项目信息段为空时也会执行。
 
 **怎么工作**：
-1. 扫描根目录的标志文件（Cargo.toml → Rust、package.json → JS/TS、*.xcodeproj → Swift 等）
-2. 读取 CLAUDE.md 提取构建命令、日志系统等额外信息
-3. 探测文档目录（依次找 `docs/`、`doc/`、`document/` 等）
-4. 推导项目类型（GUI 应用 / CLI 工具 / Web 服务 / 库）
+1. 用 Glob 扫描项目根目录，识别标志文件（Cargo.toml、Package.swift、*.xcodeproj、package.json 等）
+2. 读 CLAUDE.md，提取构建命令、项目类型、日志系统等信息
+3. 找到文档目录（`document/`、`docs/`、`doc/` 等），未找到则创建 `docs/`
+4. 用 `skill-state.py write-info` 写入 SKILL-STATE.md
 
-**API**：
-```bash
-# 只探测，输出 JSON（不写文件）
-python3 .claude/skills/xbase/scripts/project-detect.py detect [--project-root <path>]
-
-# 探测 + 自动写入 SKILL-STATE.md 的项目信息段
-python3 .claude/skills/xbase/scripts/project-detect.py detect-and-write [--project-root <path>]
-```
-
-**输出示例**（`detect`）：
-```json
-{
-  "languages": ["Rust", "Swift"],
-  "project_type": "GUI 应用",
-  "build_commands": ["cargo build"],
-  "output_dir": "document",
-  "xcodeproj": "macos/Entro.xcodeproj",
-  "has_claude_md": true
-}
-```
+**为什么不用脚本**：项目探测是语义理解任务（需理解 CLAUDE.md 自然语言、识别混合技术栈、推断构建命令），Claude 直接执行比正则匹配更准确、更通用。
 
 ---
 
@@ -699,7 +680,6 @@ python3 .claude/skills/xdecide/scripts/decision-log.py search <path> <关键词>
 │   ├── SKILL-STATE.md        # 运行时状态（模板预置，skill 初始化时填值）
 │   ├── scripts/
 │   │   ├── skill-state.py        # 状态管理（check/read/write/delete/reset-all）
-│   │   ├── project-detect.py     # 项目探测（语言/框架/构建命令自动识别）
 │   │   ├── artifact-check.py     # 产出物三态检测 + 骨架创建
 │   │   └── dedup-scan.py         # 去重扫描（CLAUDE.md/MEMORY.md 重复检测）
 │   └── references/

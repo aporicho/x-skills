@@ -33,11 +33,14 @@ argument-hint: "[init | status | reset | reinit]"
 
 如 `## 项目信息` 各字段已有值则跳过此步。
 
-使用 `project-detect.py` 自动探测并写入：
+直接执行探测（不依赖脚本，Claude 语义理解更准确）：
+1. 用 Glob 扫描项目根目录，识别标志文件（Cargo.toml、Package.swift、*.xcodeproj、package.json 等）
+2. 读 CLAUDE.md，提取构建命令、项目类型、日志系统等信息
+3. 找到文档目录（`document/`、`docs/`、`doc/` 等），未找到则创建 `docs/`
+4. 用 `skill-state.py write-info` 写入结果：
 ```bash
-python3 .claude/skills/xbase/scripts/project-detect.py detect-and-write
+python3 .claude/skills/xbase/scripts/skill-state.py write-info 类型 "<项目类型>" 构建命令 "<构建命令>" output_dir "<文档目录>"
 ```
-脚本自动扫描根目录、读 CLAUDE.md、确定项目关键信息并写入 SKILL-STATE.md。未找到文档目录时自动创建 `docs/`。
 
 ### 步骤 2 — 并行执行各 skill 阶段 0（产出物创建）
 
@@ -119,9 +122,9 @@ Skill 状态：
 
 ## 项目探测标准流程
 
-所有 skill 在阶段 0 共享的探测逻辑：
+所有 skill 在阶段 0 共享的探测逻辑（由 Claude 直接执行，不依赖脚本）：
 
-1. **扫描项目根目录**，识别语言、框架、构建系统
+1. **扫描项目根目录**（用 Glob），识别语言、框架、构建系统
    - 识别依据：Cargo.toml、Package.swift、package.json、*.xcodeproj 等
 2. **阅读 CLAUDE.md** 了解构建命令、日志系统、调试规范、项目上下文
 3. **确定项目关键信息**（后续阶段均引用，不硬编码）：
@@ -130,6 +133,7 @@ Skill 状态：
    - 启动方式（直接运行二进制 / dev server / 测试命令 / 其他）
    - 日志输出位置（终端 stdout / 日志文件 / 浏览器控制台 等）
    - 停止方式（kill 进程 / Ctrl+C / 停止 dev server 等）
+4. **写入 SKILL-STATE.md**：用 `skill-state.py write-info` 写入以上信息
 
 ## SKILL-STATE.md 规范
 

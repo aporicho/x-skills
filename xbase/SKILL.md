@@ -1,15 +1,9 @@
 ---
 name: xbase
-description: xSkills 初始化与状态管理。一键初始化所有工作流 skill 的产出物，查看状态，重置。也是共享基础（项目探测、状态规范、衔接协议）。(xSkills init, status, reset, shared base)
+description: xSkills 初始化与状态管理。一键探测项目、创建所有核心文件、查看状态、重置。其他 skill 未初始化时自动调用 xbase。(xSkills init, status, reset, shared base)
 user-invocable: true
 allowed-tools: ["Bash", "Read", "Edit", "Write", "Glob", "Grep", "AskUserQuestion", "Task"]
 argument-hint: "[init | status | reset | reinit]"
----
-
-# xbase — 初始化与状态管理 + 共享基础
-
-> `/xbase` 是可选的便捷入口，不是必须前置步骤。未运行 `/xbase` 时，各 skill 仍可独立初始化。
-
 ---
 
 ## 参数处理
@@ -19,7 +13,7 @@ argument-hint: "[init | status | reset | reinit]"
 - **空** 或 **`init`** → 阶段 1：全量初始化
 - **`status`** → 阶段 2：状态查看
 - **`reset`** → 阶段 3：全量重置
-- **`reinit`** → 清空项目信息（`python3 .claude/skills/xbase/scripts/skill-state.py delete-info`）+ 重新执行阶段 1
+- **`reinit`** → AskUserQuestion 确认（问题：将清空所有 skill 的初始化记录并重新初始化，核心文件不会被删除。确认？选项：确认 / 取消）→ 确认后执行 `python3 .claude/skills/xbase/scripts/skill-state.py reset-all` + 重新执行阶段 1
 
 ## 预加载状态
 
@@ -29,89 +23,128 @@ argument-hint: "[init | status | reset | reinit]"
 
 ## 阶段 1：全量初始化
 
-### 步骤 1 — 项目探测
+### 步骤 1 — 全面探测
 
-如 `## 项目信息` 各字段已有值则跳过此步。
+> 一次性收集所有 skill 所需的项目信息和核心文件状态，后续步骤不重复探测。
 
-直接执行探测（不依赖脚本，Claude 语义理解更准确）：
-1. 用 Glob 扫描项目根目录，识别标志文件（Cargo.toml、Package.swift、*.xcodeproj、package.json 等）
-2. 读 CLAUDE.md，提取构建命令、项目类型、日志系统等信息
-3. 找到文档目录（`document/`、`docs/`、`doc/` 等），未找到则创建 `docs/`
-4. 用 `skill-state.py write-info` 写入结果：
-```bash
-python3 .claude/skills/xbase/scripts/skill-state.py write-info 类型 "<项目类型>" 构建命令 "<构建命令>" output_dir "<文档目录>"
+如 `## 项目信息` 的 `output_dir` 已有值 → 跳过 A 区，只做 B 区。
+
+**A. 项目信息**
+
+!`cat .claude/skills/xbase/references/detect-steps.md`
+
+> A 区探测完成后**立即执行 write-info 写入**（不等用户确认），B 区核心文件搜索依赖 `output_dir` 已就绪。
+
+**B. 核心文件状态**（三态判定：✅ 已就绪 / 🔄 可改造 / ❌ 需新建）
+
+对以下各 skill 声明的核心文件，在全项目范围搜索：
+
+!`cat .claude/skills/xdebug/references/core-files.md`
+
+!`cat .claude/skills/xtest/references/core-files.md`
+
+!`cat .claude/skills/xlog/references/core-files.md`
+
+!`cat .claude/skills/xcommit/references/core-files.md`
+
+!`cat .claude/skills/xreview/references/core-files.md`
+
+!`cat .claude/skills/xdoc/references/core-files.md`
+
+!`cat .claude/skills/xdecide/references/core-files.md`
+
+**展示探测结果**，等用户确认后进入步骤 2：
+
+```
+项目信息：
+| 字段 | 值 |
+|------|---|
+| 类型 | ... |
+| 构建命令 | ... |
+| ... | ... |
+
+核心文件状态：
+| Skill | 文件 | 状态 |
+|-------|------|------|
+| xdebug | DEBUG-LOG.md | ✅ / 🔄 ← 旧文件路径 / ❌ |
+| ... | ... | ... |
 ```
 
-### 步骤 2 — 并行执行各 skill 阶段 0（产出物创建）
+### 步骤 2 — 创建核心文件
 
-先写入跳过去重标记（步骤 3 统一处理去重，各 skill 阶段 0 的去重子步骤检查此标记后跳过）：
+写入跳过去重标记：
 ```bash
 python3 .claude/skills/xbase/scripts/skill-state.py write-info skip_dedup true
 ```
 
-各 skill 的产出物创建互不依赖，全部通过 Task 子 agent 并行执行。
+对每个核心文件，根据三态判定：
 
-**并行组**（同时启动）：xdebug、xtest、xlog、xcommit、xreview、xdoc、xdecide
+- **❌ 需新建** → 在 `output_dir` 下创建（格式见各 `core-files.md` 中的格式规范引用）
+- **🔄 可改造** → AskUserQuestion 询问是否迁移（保留内容，套用新格式）
+- **✅ 已就绪** → 跳过创建
 
-每个子 agent 的执行方式：
-1. 读取该 skill 的 `SKILL.md`
-2. 执行其「阶段 0」中的产出物创建步骤（项目探测已在步骤 1 完成，会被自动跳过）
-3. **不执行去重子步骤**（由步骤 3 统一处理）
+各 skill 核心文件互不依赖，为每个 skill 用 Task 工具启动一个子 agent 并行处理，subagent_type 统一为 `general-purpose`。
 
-等待所有子 agent 完成，逐个展示结果（✅ / ⏭️ 跳过）。
+每个子 agent 的 prompt 模板（替换 `<skill>`、`<三态结果>`、`<output_dir>`）：
 
-### 步骤 3 — 串行去重
+```
+你是 xbase 初始化的子 agent，负责处理 <skill> 的核心文件。
 
-产出物全部就绪后，清除跳过去重标记：
-```bash
-python3 .claude/skills/xbase/scripts/skill-state.py write-info skip_dedup ""
+当前信息：
+- 三态判定：<✅ 已就绪 / 🔄 可改造 / ❌ 需新建>
+- output_dir：<路径>
+
+执行步骤：
+1. 读取 .claude/skills/<skill>/references/init-steps.md，按其指引处理核心文件
+2. 三态判定已在上方给出，直接使用，不重复探测
+3. 无论三态结果如何，都用 skill-state.py write 写入文件路径：
+   python3 .claude/skills/xbase/scripts/skill-state.py write <skill> <key> "<路径>" [<key2> "<路径2>" ...]
+4. 不执行去重（由主流程步骤 3 统一处理）
 ```
 
-依次执行各 skill 的去重逻辑（因为多个 skill 可能修改同一个文件如 CLAUDE.md）。
+等待所有子 agent 完成，展示结果（✅ 创建 / ⏭️ 跳过）。
 
-对每个有去重职责的 skill：
-1. 运行 `dedup-scan.py` 一次性扫描所有 skill 的重复内容：
-   ```bash
-   python3 .claude/skills/xbase/scripts/dedup-scan.py scan-all --claude-md <CLAUDE.md路径> [--memory-md <MEMORY.md路径>]
-   ```
-2. 解析 JSON 输出，按 skill 分组展示匹配项
-3. 逐项展示 diff 预览，等用户确认后用 Edit 替换为指针
+### 步骤 3 — 去重
 
-### 步骤 4 — 汇总展示
+!`cat .claude/skills/xbase/references/dedup-steps.md`
 
-展示所有产出物的创建结果和项目信息概览。
+### 步骤 4 — 汇总
+
+展示所有核心文件的创建结果和项目信息概览。
 
 ---
 
 ## 阶段 2：状态查看
 
-1. 运行 `python3 .claude/skills/xbase/scripts/skill-state.py read` 获取当前状态
-2. 对每个 skill，检查 `initialized` 字段是否有值
-3. 对每个产出物路径，用 Glob 检查文件是否实际存在
+1. 运行 `python3 .claude/skills/xbase/scripts/skill-state.py read`
+2. 对每个 skill 检查 `initialized` 字段
+3. 对每个核心文件路径用 Glob 确认文件存在
 4. 展示汇总表：
 
 ```
 xSkills 状态：
 
 项目信息：
-- 类型：[值 / 未探测]
-- 构建命令：[值 / 未探测]
 - output_dir：[值 / 未探测]
+- 运行脚本：[值 / 未探测]
 
 Skill 状态：
-| Skill | 已初始化 | 产出物 | 文件存在 |
-|-------|---------|--------|---------|
-| xdebug | ✅ 2026-02-14 | DEBUG-LOG.md | ✅ |
-| xtest | ❌ | TEST-CHECKLIST.md | ❌ |
-| ... | | | |
+| Skill | 已初始化 | 核心文件 | 路径 | 文件存在 |
+|-------|---------|---------|------|---------|
+| xdebug | ✅ 2026-02-14 | DEBUG-LOG.md | document/DEBUG-LOG.md | ✅ |
+| xtest  | ❌ | TEST-CHECKLIST.md | — | ❌ |
+|        |    | TEST-ISSUES.md    | — | ❌ |
+| ...    | | | | |
 ```
+
+> 多核心文件的 skill（如 xtest）每个文件占一行，Skill 和已初始化列在首行填写，后续行留空。路径列展示 SKILL-STATE.md 中记录的实际路径，未记录时显示 `—`。
 
 ---
 
 ## 阶段 3：全量重置
 
 1. AskUserQuestion 确认：
-   - 问题：将重置所有 skill 的初始化状态。产出物文件不会被删除。确认？
+   - 问题：将清空 SKILL-STATE.md 中所有 skill 的初始化记录，下次使用各 skill 时需要重新初始化。项目中已创建的核心文件（DEBUG-LOG.md、TEST-CHECKLIST.md 等）不会被修改或删除。确认重置？
    - 选项：确认重置 / 取消
 
 2. 确认后运行：`python3 .claude/skills/xbase/scripts/skill-state.py reset-all`
@@ -120,168 +153,150 @@ Skill 状态：
 
 ---
 
-## 项目探测标准流程
+## 其他 skill 的初始化协议
 
-所有 skill 在阶段 0 共享的探测逻辑（由 Claude 直接执行，不依赖脚本）：
+所有非 xbase 的 skill 采用**双轨初始化**：可独立完成初始化，无需调用 xbase。
 
-1. **扫描项目根目录**（用 Glob），识别语言、框架、构建系统
-   - 识别依据：Cargo.toml、Package.swift、package.json、*.xcodeproj 等
-2. **阅读 CLAUDE.md** 了解构建命令、日志系统、调试规范、项目上下文
-3. **确定项目关键信息**（后续阶段均引用，不硬编码）：
-   - 构建命令
-   - 项目类型（GUI 应用 / CLI 工具 / Web 服务 / 库）
-   - 启动方式（直接运行二进制 / dev server / 测试命令 / 其他）
-   - 日志输出位置（终端 stdout / 日志文件 / 浏览器控制台 等）
-   - 停止方式（kill 进程 / Ctrl+C / 停止 dev server 等）
-4. **写入 SKILL-STATE.md**：用 `skill-state.py write-info` 写入以上信息
+**运行时路径**：
+```
+预加载：check-and-read <skill>
+├── initialized → 跳过阶段 0，直接进入阶段 1
+└── not_found   → 执行阶段 0（DCI 注入 prep-steps.md + init-steps.md，独立完成初始化）
+```
+
+**批量路径**：`/xbase init` 通过 Task 子 agent 并行调用各 skill 的 `init-steps.md`，效果相同。
+
+各 skill 的 SKILL.md 中阶段 0 固定写法：
+
+```markdown
+### 阶段 0：探测项目
+
+!`cat .claude/skills/xbase/references/prep-steps.md`
+
+以下为本 skill 的特有探测步骤：
+
+!`cat .claude/skills/<skill>/references/init-steps.md`
+```
+
+`prep-steps.md` 步骤 1 负责处理跳过逻辑（`initialized` → 跳过整个阶段 0）。
+
+reinit 参数处理：`skill-state.py delete <skill>` 清空本 skill 状态后，预加载返回 `not_found`，正常触发阶段 0 重新初始化。
+
+---
 
 ## SKILL-STATE.md 规范
 
 ### 位置与生命周期
 
-`.claude/skills/xbase/SKILL-STATE.md` — 和脚本同目录，**模板预置**（所有段和字段已定义，值留空）。skill 初始化时只需填值，不需要创建文件。
+`.claude/skills/xbase/SKILL-STATE.md` — 和脚本同目录，**模板预置**（所有段和字段已定义，值留空）。初始化时只需填值，不需要创建文件。
 
 ### 读写方式
 
-使用 `.claude/skills/xbase/scripts/skill-state.py` 脚本操作：
-
 ```bash
-# 检查 skill 是否已初始化（看 initialized 字段是否有值）
+# 检查 skill 是否已初始化
 python3 .claude/skills/xbase/scripts/skill-state.py check <skill>
 # 输出: "initialized" 或 "not_found"
+
+# 检查并读取完整状态（预加载用）
+python3 .claude/skills/xbase/scripts/skill-state.py check-and-read <skill>
 
 # 读取完整状态
 python3 .claude/skills/xbase/scripts/skill-state.py read
 
-# 写入/更新 skill 状态（自动添加 initialized 日期）
-python3 .claude/skills/xbase/scripts/skill-state.py write <skill> <key> <value> [<key2> <value2> ...]
+# 写入 skill 状态（自动添加 initialized 日期）
+python3 .claude/skills/xbase/scripts/skill-state.py write <skill> <key> <value> [...]
 
-# 写入/更新项目信息
-python3 .claude/skills/xbase/scripts/skill-state.py write-info <key> <value> [<key2> <value2> ...]
+# 写入项目信息
+python3 .claude/skills/xbase/scripts/skill-state.py write-info <key> <value> [...]
 
-# 清空 skill 段的值（保留结构，用于 reinit）
+# 清空 skill 段的值（保留结构）
 python3 .claude/skills/xbase/scripts/skill-state.py delete <skill>
 
-# 恢复模板（清空所有 skill 状态）
+# 清空项目信息
+python3 .claude/skills/xbase/scripts/skill-state.py delete-info
+
+# 恢复模板（清空所有状态）
 python3 .claude/skills/xbase/scripts/skill-state.py reset-all
 ```
 
-### 模板结构
+### 关键字段
 
-模板预置所有段，值留空。`check` 通过 `initialized` 字段是否有值来判断是否已初始化。`delete` 清空值但保留段结构。
+- **output_dir**（项目信息段）— 所有核心文件的统一存放目录
+- **initialized**（各 skill 段）— 初始化日期，`check` 通过此字段判断是否已初始化
+- **skip_dedup**（项目信息段）— 批量初始化时跳过去重的标记
 
-关键字段：
-- **output_dir**（项目信息段）— 所有产出物的统一存放目录，首个 skill 探测写入，后续复用
+### 路径格式
 
-### 快速跳过逻辑
+SKILL-STATE.md 中存储的所有文件路径统一使用**相对于项目根目录的相对路径**（如 `document/90-开发/DEBUG-LOG.md`），不使用绝对路径。阶段 2 状态查看时，Glob 以项目根目录为基准执行文件存在检查。
 
-每个 skill 阶段 0 的入口：
-1. 运行 `python3 .claude/skills/xbase/scripts/skill-state.py check <skill>`
-2. 输出 `initialized` → 运行 `python3 .claude/skills/xbase/scripts/skill-state.py read` 获取已有信息 → 跳过探测
-3. 输出 `not_found` → 执行完整探测流程 → 完成后用 `write` / `write-info` 写入
+---
 
 ## TEST-ISSUES.md 协作协议
 
 ### 脚本命令
 
 ```bash
-# 列出所有问题及状态
-python3 .claude/skills/xtest/scripts/issues.py list <file_path>
-
-# 按状态过滤列出（可用状态: 待修 / 修复中 / 已修复 / 复测通过）
-python3 .claude/skills/xtest/scripts/issues.py list <file_path> --status <状态>
-
-# 输出各状态计数统计
-python3 .claude/skills/xtest/scripts/issues.py stats <file_path>
-
-# 更新问题状态（标题行 emoji 替换）
-python3 .claude/skills/xtest/scripts/issues.py status <file_path> <id> <new_status>
-# new_status: 待修 / 修复中 / 已修复 / 复测通过
-
-# 获取下一个可用编号
-python3 .claude/skills/xtest/scripts/issues.py next-id <file_path>
+python3 .claude/skills/xtest/scripts/issues.py list <path>              # 列出所有问题
+python3 .claude/skills/xtest/scripts/issues.py list <path> --status <状态>  # 按状态过滤
+python3 .claude/skills/xtest/scripts/issues.py stats <path>             # 状态计数
+python3 .claude/skills/xtest/scripts/issues.py status <path> <id> <状态>  # 更新状态
+python3 .claude/skills/xtest/scripts/issues.py next-id <path>           # 下一个编号
 ```
 
 ### 职责分工
 
-- **xtest 职责**：
-  - 阶段 0 初始化 TEST-ISSUES.md（三态检测：不存在→创建空模板、格式不符→问迁移、已就绪→跳过）
-  - 发现测试失败时写入 🔴 条目（用 `next-id` 获取编号，用 Edit 写入内容）
-  - 复测通过后用 `status` 改为 ✅
-
-- **xdebug 职责**：
-  - 阶段 1 可从 TEST-ISSUES.md 选取 🔴 条目开始修复（用 `status` 改为 🟡）
-  - 修复完成后用 `status` 改为 🟢，用 Edit 写入修复说明
+- **xtest**：创建 TEST-ISSUES.md、写入 🔴 条目、复测后改 ✅
+- **xdebug**：选取 🔴 条目修复（改 🟡），修好后改 🟢 并写修复说明
 
 ### 文件路径
 
-TEST-ISSUES.md 路径记录在 SKILL-STATE.md `## xtest` 中的 `test_issues` 字段，由 xtest 阶段 0 写入。
+SKILL-STATE.md `## xtest` 的 `test_issues` 字段。格式见 `../xtest/references/test-issues-format.md`。
 
-### 格式规范
-
-详见 `../xtest/references/test-issues-format.md`。
+---
 
 ## 决策记录协作协议
 
 ### 脚本命令
 
 ```bash
-# 列出所有决策
-python3 .claude/skills/xdecide/scripts/decision-log.py list <file_path>
-
-# 获取下一个可用编号
-python3 .claude/skills/xdecide/scripts/decision-log.py next-id <file_path>
-
-# 按关键词搜索决策段落
-python3 .claude/skills/xdecide/scripts/decision-log.py search <file_path> <keyword>
+python3 .claude/skills/xdecide/scripts/decision-log.py list <path>           # 列出决策
+python3 .claude/skills/xdecide/scripts/decision-log.py next-id <path>        # 下一个编号
+python3 .claude/skills/xdecide/scripts/decision-log.py search <path> <keyword>  # 搜索
 ```
 
 ### 职责分工
 
-- **xdecide 职责**：
-  - 阶段 0 初始化决策记录文件（三态检测：不存在→创建、格式不符→问迁移、已就绪→跳过）
-  - 引导决策过程，获取编号（`next-id`），用 Edit 写入决策内容
-  - 回顾修订时用 `list` 展示、`search` 搜索
-
-- **xdebug 职责**：
-  - 阶段 6 收尾时，如涉及技术决策，可衔接 `/xdecide` 记录
-
-- **xreview 职责**：
-  - 阶段 2 审查时发现需要决策的架构问题，可衔接 `/xdecide` 记录
-
-- **xcommit 职责**：
-  - 阶段 3 文档完整性检查时，检测是否有未记录的决策
+- **xdecide**：创建决策记录、引导决策过程、写入内容
+- **xdebug**：修复涉及技术决策时衔接 `/xdecide`
+- **xreview**：审查发现架构问题时衔接 `/xdecide`
+- **xcommit**：文档完整性检查时检测未记录的决策
 
 ### 文件路径
 
-决策记录路径记录在 SKILL-STATE.md `## xdecide` 中的 `decision_log` 字段，由 xdecide 阶段 0 写入。
+SKILL-STATE.md `## xdecide` 的 `decision_log` 字段。格式见 `../xdecide/references/decision-format.md`。
 
-### 格式规范
-
-详见 `../xdecide/references/decision-format.md`。
+---
 
 ## 跨 skill 衔接
 
-- **xdebug → xlog**：xdebug 阶段 2 判断日志不足时，直接在 Task 工具的 prompt 参数中传入目标文件和问题描述，启动子 agent 执行 `/xlog`
-- **xtest → xdebug**：xtest 阶段 4 选择"立即修复"时，从 TEST-ISSUES.md 取 🔴 条目衔接 `/xdebug`
-- **xtest → xcommit**：xtest 阶段 4 选择"提交变更"时衔接 `/xcommit`
-- **xdebug → xdecide**：xdebug 阶段 6 收尾时，AskUserQuestion 选项"记录决策"衔接 `/xdecide`
-- **xdebug → xcommit**：xdebug 阶段 6 收尾时，AskUserQuestion 选项"提交变更"衔接 `/xcommit`
-- **xreview → xdecide**：xreview 阶段 2 逐项决策时，选项"记录决策"衔接 `/xdecide`
-- **xreview → xcommit**：xreview 阶段 3 收尾时，选项"提交变更"衔接 `/xcommit`
-- **xdecide → xcommit**：xdecide 阶段 3 收尾时，选项"提交变更"衔接 `/xcommit`
-- **xdoc → xcommit**：xdoc 阶段 4 汇报时，选项"提交变更"衔接 `/xcommit`
-
 所有衔接通过 AskUserQuestion 选项实现（用户主动选择），不自动跳转。
 
-### 上下文传递约定
+- **xdebug → xlog**：子 agent 补日志（Task prompt 传入文件路径和问题描述）
+- **xtest → xdebug**：选"立即修复"（传递 TEST-ISSUES.md 条目编号如 `#003`）
+- **xtest → xcommit**：选"提交变更"
+- **xdebug → xdecide**：选"记录决策"（传递技术决策背景描述）
+- **xdebug → xcommit**：选"提交变更"
+- **xreview → xdecide**：选"记录决策"（传递架构问题描述）
+- **xreview → xcommit**：选"提交变更"
+- **xdecide → xcommit**：选"提交变更"
+- **xdoc → xcommit**：选"提交变更"
 
-衔接时，源 skill 应将相关上下文作为 `$ARGUMENTS` 传入目标 skill：
+### 上下文传递
 
 | 衔接 | 传递内容 |
 |------|----------|
 | xdebug → xlog | Task prompt 中传入目标文件路径和问题描述 |
-| xtest → xdebug | TEST-ISSUES.md 中 🔴 条目的编号（如 `#003`） |
-| xdebug → xdecide | 技术决策的背景描述（如"修复 Bug 时发现 XX 架构问题"） |
-| xreview → xdecide | 审查发现的架构问题描述（如"依赖方向违反：XX 模块依赖了 YY"） |
+| xtest → xdebug | TEST-ISSUES.md 中 🔴 条目编号（如 `#003`） |
+| xdebug → xdecide | 技术决策背景（如"修复时发现 XX 架构问题"） |
+| xreview → xdecide | 架构问题描述（如"依赖方向违反：XX → YY"） |
 | * → xcommit | 无需传递，xcommit 自行读取 git status/diff |

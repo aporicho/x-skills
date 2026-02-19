@@ -32,11 +32,8 @@ TEMPLATE = """\
 
 ## 项目信息
 
-- 类型:
-- 构建命令:
-- 运行脚本:
-- 日志位置:
 - output_dir:
+- 运行脚本:
 - skip_dedup:
 
 ## xdebug

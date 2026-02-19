@@ -65,7 +65,7 @@ Claude Code 自定义工作流 skill 集合 — 用 `/x*` 命令驱动调试、�
 | `/xbase init` | 探测项目 → 并行初始化 7 个 skill 的阶段 0 → 串行去重 |
 | `/xbase status` | 查看所有 skill 的初始化状态 + 产出物健康度 |
 | `/xbase reset` | 清空状态重新来过（会确认） |
-| `/xbase reinit <skill>` | 重新初始化单个 skill |
+| `/xbase reinit` | 清空项目信息 + 重新执行 init |
 
 **管理的共享资源**：
 - `SKILL-STATE.md` — 所有 skill 的运行时状态（项目类型、路径、初始化日期）
@@ -73,6 +73,44 @@ Claude Code 自定义工作流 skill 集合 — 用 `/x*` 命令驱动调试、�
 - 3 个领域 Python 工具 — Git 上下文（`xcommit/scripts/`）、Bug 队列（`xtest/scripts/`）、决策记录（`xdecide/scripts/`）
 
 **关键设计**：xbase 自身不创建任何工作产出物，只做编排 — "谁的产出物谁负责创建"。`/xbase init` 启动 7 个并行 Task 子 agent，各自执行自己的阶段 0。
+
+#### 执行流程
+
+**`/xbase init`（或空参数）**：
+
+1. **预加载**：`skill-state.py read` 获取当前完整状态（xbase 不是工作流 skill，没有自己的 `initialized` 字段，所以用 `read` 读完整状态而非 `check-and-read`）
+2. **步骤 1 — 项目探测**（如 `## 项目信息` 各字段已有值则跳过）：
+   - Claude 用 Glob 扫描根目录识别标志文件（Cargo.toml、Package.swift、package.json 等）
+   - Claude 读 CLAUDE.md，理解构建命令、项目类型、日志系统等信息
+   - Claude 找到文档目录（`document/`、`docs/` 等），未找到则创建 `docs/`
+   - Claude 将探测结果作为参数传给脚本写入：`skill-state.py write-info 类型 "<Claude判断的类型>" 构建命令 "<Claude提取的命令>" output_dir "<Claude找到的目录>"`（脚本只是写入器，不做判断）
+3. **步骤 2 — 并行创建产出物**：
+   - 先写入跳过去重标记：`skill-state.py write-info skip_dedup true`
+   - 启动 7 个 Task 子 agent（xdebug、xtest、xlog、xcommit、xreview、xdoc、xdecide），各自执行自己的阶段 0（产出物创建部分，跳过去重子步骤）
+   - 等待全部完成，逐个展示结果（✅ / ⏭️ 跳过）
+4. **步骤 3 — 串行去重**：
+   - 清除跳过标记：`skill-state.py write-info skip_dedup ""`
+   - Claude 读取 CLAUDE.md / MEMORY.md，对比各 skill 核心文件，识别重复段落
+   - 逐项展示 diff 预览，等用户确认后用 Edit 替换为指针
+5. **步骤 4 — 汇总展示**
+
+**`/xbase status`**：
+
+1. `skill-state.py read` 获取状态
+2. 逐个 skill 检查 `initialized` 字段是否有值
+3. 对每个产出物路径 Glob 检查文件是否实际存在
+4. 展示汇总表（skill 名 / 初始化日期 / 产出物 / 文件存在 ✅/❌）
+
+**`/xbase reset`**：
+
+1. AskUserQuestion 确认：「将重置所有 skill 的初始化状态。产出物文件不会被删除。确认？」
+2. 确认后 `skill-state.py reset-all`
+3. 展示重置后状态
+
+**`/xbase reinit`**：
+
+1. `skill-state.py delete-info` 清空项目信息段
+2. 重新执行 init 流程
 
 ---
 
@@ -82,21 +120,65 @@ Claude Code 自定义工作流 skill 集合 — 用 `/x*` 命令驱动调试、�
 
 **典型触发时机**：开发完功能后验证、日常回归测试、修复后复测。
 
-**阶段**：
-| 阶段 | 做什么 | 是否需要用户参与 |
-|------|--------|---------------|
-| 0 | 探测项目 + 扫描代码生成测试清单 + 创建 TEST-ISSUES.md | 否（自动） |
-| 1 | 选择测试类型（自动化 / 手动 / 指定编号） | 选项 |
-| 2a | 运行自动化测试命令，映射结果到清单 | 否（自动） |
-| 2b | 逐项引导手动测试（每项给具体操作步骤） | 逐项选项 |
-| 3 | 失败 → 后台分析日志 + 写入 TEST-ISSUES.md，不打断测试 | 自动 |
-| 4 | 汇总 → 衔接 xdebug 修复 / xcommit 提交 / 继续 | 选项 |
+**参数**：空 → 正常流程 | `自动化` → 跳到 2a | `手动` → 跳到 2b | `reinit` → 重新初始化
 
 **产出物**：`TEST-CHECKLIST.md`（测试清单）、`TEST-ISSUES.md`（Bug 队列）
 
-**关键设计**：首次生成清单时用**并行子 agent** 扫描不同代码区域加速；增量更新时只扫描 `git diff` 变更文件。
+#### 执行流程
 
-**下一步去哪**：测试失败 → 选"立即修复" → 进入 **xdebug**
+**阶段 0 — 初始化**（自动，不问用户）：
+
+1. 预加载 `skill-state.py check-and-read xtest` → `initialized` 则跳过整个阶段
+2. 项目探测（共享流程，如项目信息段已有值则跳过）
+3. 验证调试基础设施：按 `xdebug/references/infra-setup.md` 检查四项能力（构建、后台启动、日志捕获、停止），缺失自动创建
+4. 全项目搜索 TEST-CHECKLIST.md 同类文件：
+   - **找到** → 迁移到 `output_dir` + 套用新格式（保留原始测试结果）
+   - **没找到** → `artifact-create.py checklist <路径>` 创建骨架 → 执行步骤 5-7 全量生成
+   - **已存在且格式正确** → 增量更新（只扫描 `git diff` 变更文件），跳到阶段 1
+5. 全项目搜索 TEST-ISSUES.md 同类文件：同上三态处理
+6. 并行子 agent 扫描代码生成测试功能点：
+   - 子 agent A：自动化测试用例（`#[test]`、XCTest 等）
+   - 子 agent B：公开接口、命令、状态管理
+   - 子 agent C：交互入口（UI 事件、快捷键、手势）
+   - 子 agent D：FFI/API 边界
+7. 参考文档补充业务逻辑，为每个功能点分类（🤖 自动化 / 👤 手动 / 🤝 结合），生成 TEST-CHECKLIST.md
+8. `skill-state.py write xtest test_checklist "<路径>" test_issues "<路径>"`
+9. 去重子步骤（xtest 当前无重复内容 → 跳过）
+
+**阶段 1 — 选择测试类型**（选项）：
+
+- AskUserQuestion：「测试什么？」→ 自动化测试 / 手动测试（选模块逐项验证） / Other（指定编号）
+
+**阶段 2a — 自动化测试**（自动）：
+
+1. 根据项目构建系统运行测试命令
+2. 解析输出，映射到 TEST-CHECKLIST.md 对应项
+3. 更新状态和概览表
+4. AskUserQuestion：「X 通过 / Y 失败。下一步？」→ 查看失败详情 / 继续手动测试 / 进入 /xdebug 修复 / 结束
+
+**阶段 2b — 手动测试**（逐项选项）：
+
+1. 选模块：从 TEST-CHECKLIST.md 按 ID 前缀统计 ⏳ 项，展示最多 4 个模块选项
+2. 构建 + 后台启动项目（自动，构建失败自行修复）
+3. 逐项测试：每项 AskUserQuestion 给出具体操作步骤 → 通过 / 失败 / 跳过 / Other（备注）
+4. 结果暂存内存，一轮结束后批量写入 TEST-CHECKLIST.md
+
+**阶段 3 — 失败处理**（每次选"失败"时自动触发）：
+
+1. 启动后台子 agent（Task, run_in_background）分析日志
+2. 在 TEST-CHECKLIST.md 标注 ❌ + 问题描述
+3. `issues.py next-id <路径>` 获取编号 → Edit 写入 🔴 条目到 TEST-ISSUES.md
+4. **不打断测试**，继续下一项
+
+**阶段 4 — 汇总**（选项）：
+
+1. 停止项目
+2. 收集所有后台子 agent 分析结论
+3. AskUserQuestion：「X 通过 / Y 失败 / Z 跳过。下一步？」
+   - 立即修复 → 从 TEST-ISSUES.md 取 🔴 条目 → 衔接 `/xdebug`（传条目编号如 `#003`）
+   - 复测已修复项 → 扫描 🟢 条目逐项验证，通过 → ✅，未通过 → 回 🔴
+   - 提交变更 → `/xcommit`
+   - 继续下一个模块 → 回阶段 1
 
 ---
 
@@ -106,22 +188,72 @@ Claude Code 自定义工作流 skill 集合 — 用 `/x*` 命令驱动调试、�
 
 **典型触发时机**：xtest 发现 Bug 后衔接过来、用户直接报告问题。
 
-**阶段**：
-| 阶段 | 做什么 | 是否需要用户参与 |
-|------|--------|---------------|
-| 0 | 探测项目 + 创建 DEBUG-LOG.md + 验证调试基础设施 | 否（自动） |
-| 1 | 确认要调试什么（从 issue 选 / 探索 / 描述） | 选项 |
-| 2 | 判断日志是否足够 → 不够则启动 **xlog** 子 agent 补 → 构建运行 | 否（自动） |
-| 3 | 给用户**具体操作步骤**去复现 Bug | 选项 |
-| 4 | 读取日志分析根因 | 选项（确认分析） |
-| 5 | 修改代码修复 → 重新构建运行 → 引导验证 | 选项（确认修复） |
-| 6 | 更新 DEBUG-LOG.md + TEST-ISSUES.md 状态 → 衔接下一步 | 选项 |
+**参数**：空 → 正常流程 | `#003` → 从 TEST-ISSUES.md 取条目，设为 🟡 修复中，跳到阶段 2 | 其他文本 → 作为 Bug 描述跳到阶段 2 | `reinit` → 重新初始化
 
 **产出物**：`DEBUG-LOG.md`（Bug 修复日志）、`scripts/run.sh`（调试运行脚本）
 
-**关键设计**："先加日志后改代码，不盲猜"。阶段 2 自动调用 xlog 补日志，阶段 4 基于日志分析，不靠猜。
+#### 执行流程
 
-**下一步去哪**：修复完成 → 选"提交变更" → **xcommit**；涉及技术决策 → **xdecide**
+**阶段 0 — 探测项目**（自动）：
+
+1. 预加载 `skill-state.py check-and-read xdebug` → `initialized` 则跳过
+2. 项目探测（共享流程）
+3. 验证调试基础设施：按 `references/infra-setup.md` 检查四项能力（构建、后台启动、日志捕获、停止），缺失自动创建
+4. 全项目搜索 DEBUG-LOG.md 同类文件 → 找到迁移 / 没找到创建骨架
+5. `skill-state.py write xdebug debug_log "<路径>"`
+6. 去重：MEMORY.md 中 DEBUG_LOG 格式说明 → 替换为指针；「修复 Bug 必须更新」→ 保留（禁令）
+
+**阶段 1 — 确认问题**（选项，同时后台启动构建）：
+
+- AskUserQuestion：「这次调试什么？」
+  - 从 TEST-ISSUES.md 选取（先检查 `xtest → test_issues` 字段，无值不展示。有值则 `issues.py list --status 待修` 展示 🔴 项，选中后 `issues.py status` 设为 🟡）
+  - 探索性测试（先跑起来看日志）
+  - 继续上次调试（从 TEST-ISSUES.md 找 🟡 条目）
+  - Other → 直接输入 Bug 描述
+
+**阶段 2 — 加日志 + 构建 + 运行**（全自动，不问用户）：
+
+1. 判断现有日志是否覆盖问题区域（查 LOG-COVERAGE.md + 读相关代码）
+   - 覆盖足够 → 直接构建
+   - 覆盖不足 → 启动 Task 子 agent，传入目标文件和问题描述，让它读 `/xlog` SKILL.md 按 xlog 流程补日志
+2. 执行构建命令
+3. 编译失败 → 自己修复重试
+4. 停止旧进程，后台启动项目
+
+**阶段 3 — 引导用户操作**（选项）：
+
+- AskUserQuestion：根据具体 Bug 给出 1-2-3 操作步骤（不泛泛说"请操作"）
+  - 操作完了，看日志
+  - 问题没复现
+  - App 崩溃了 / 没启动
+
+**阶段 4 — 分析日志**（选项，App 保持运行不停）：
+
+1. 通过运行脚本 `logs` 命令读取，先按级别/模块过滤缩小范围
+2. AskUserQuestion：「[分析摘要]。下一步？」
+   - 已定位，修复代码
+   - 日志不够，加日志再来一轮 → 回阶段 2
+   - 放弃，记录到 TODO
+   - Other → 补充信息
+
+**阶段 5 — 修复 + 验证**（选项）：
+
+1. 停止项目（改代码前才停）
+2. 修改代码修复
+3. 删除临时诊断日志（保留长期有价值的）
+4. 重新构建 + 后台启动
+5. AskUserQuestion：给出具体验证步骤 → 修好了 / 没修好继续调（→ 回阶段 2） / Other（发现新问题）
+
+**阶段 6 — 收尾**（确认修好后自动执行 + 最后选项）：
+
+1. 停止项目
+2. 在 DEBUG-LOG.md 追加修复记录
+3. 如来自 TEST-ISSUES.md：`issues.py status <path> <id> 已修复`（🟡 → 🟢）+ Edit 写入修复说明
+4. AskUserQuestion：「修复完成。下一步？」
+   - 继续修下一个 → 回阶段 1（如 TEST-ISSUES.md 还有 🔴）
+   - 提交变更 → `/xcommit`
+   - 记录决策 → `/xdecide`（传技术决策背景）
+   - Other → 描述新问题
 
 ---
 
@@ -131,17 +263,46 @@ Claude Code 自定义工作流 skill 集合 — 用 `/x*` 命令驱动调试、�
 
 **典型触发时机**：xdebug 阶段 2 发现日志不足时**自动**启动 xlog 子 agent；也可独立使用给特定模块补日志。
 
-**阶段**：
-| 阶段 | 做什么 | 是否需要用户参与 |
-|------|--------|---------------|
-| 0 | 扫描项目日志系统 + 生成 LOG-RULES.md 和 LOG-COVERAGE.md | 否（自动） |
-| 1 | 选择范围（盲区模块 / 指定文件 / 全项目） | 选项 |
-| 2 | 读规范 → 扫描目标代码 → 补盲区 + 纠正不规范 → 确认编译 | 否（自动） |
-| 3 | 汇报变更 | 选项 |
+**参数**：空 → 正常流程 | 文件/模块路径 → 跳到阶段 2 | `reinit` → 重新初始化
 
 **产出物**：`LOG-RULES.md`（日志规范）、`LOG-COVERAGE.md`（覆盖度跟踪）
 
-**关键设计**：被 xdebug 调用时以 Task 子 agent 运行，自动完成后返回，不打断调试主流程。
+#### 执行流程
+
+**阶段 0 — 探测项目日志系统**（自动）：
+
+1. 预加载 `skill-state.py check-and-read xlog` → `initialized` 则跳过
+2. 项目探测（共享流程）
+3. 读 CLAUDE.md 日志相关规则（如禁止 print）
+4. 扫描代码找日志工具：Logger 文件、调用模式（`Log.xxx`/`log::xxx`）、可用 Logger 实例、消息语言
+5. 全项目搜索 LOG-RULES.md 同类文件 → 找到迁移 / 没找到则基于扫描结果生成
+6. 全项目搜索 LOG-COVERAGE.md 同类文件 → 同上
+7. `skill-state.py write xlog log_rules "<路径>" log_coverage "<路径>"`
+8. 去重：MEMORY.md 中日志规则重复部分 → 替换为指针；「禁止 print()」→ 保留
+
+**阶段 1 — 选择范围**（选项，子 agent 调用时跳过）：
+
+- 读取 LOG-COVERAGE.md 概览
+- AskUserQuestion：「给哪里补日志？（✅ X 已覆盖 / ⚠️ Y 有盲区 / ⏳ Z 未扫描）」
+  - 未扫描的模块（优先盲区最多的）
+  - 指定文件/模块
+  - 全项目扫描
+  - Other
+
+**阶段 2 — 扫描 + 补全 + 纠正**（全自动）：
+
+1. 读 LOG-RULES.md 获取规则
+2. 确定扫描范围：指定范围 → 扫描该范围 | 全项目 + 已有记录 → 只扫 `git diff` 变更 | 首次 → 全量
+3. 检查两类问题：
+   - **盲区**：该有日志但没有 → 补充（决策点、模块边界、FFI 边界）
+   - **不规范**：违反禁忌（print 代替 Logger）、级别错误、Logger 不匹配、消息风格不符
+4. 构建确认编译通过（失败自修复）
+5. 更新 LOG-COVERAGE.md 状态和扫描日期
+
+**阶段 3 — 汇报**（选项）：
+
+- AskUserQuestion：「已处理 X 个文件：补充 Y 条 / 纠正 Z 条。」
+  - 完成 / 继续下一个模块 → 回阶段 1 / 看详细变更 / 撤回部分变更
 
 ---
 
@@ -151,19 +312,53 @@ Claude Code 自定义工作流 skill 集合 — 用 `/x*` 命令驱动调试、�
 
 **典型触发时机**：修复完 Bug 后审查代码质量、提交前代码检查、定期代码审计。
 
-**阶段**：
-| 阶段 | 做什么 | 是否需要用户参与 |
-|------|--------|---------------|
-| 0 | 扫描代码 + CLAUDE.md → 生成 REVIEW-RULES.md | 否（自动） |
-| 1 | 选择审查范围（未提交 / 最近提交 / 指定路径） | 选项 |
-| 2 | 逐条审查，每发现问题 → 立即修 / 记录 / 忽略 | 逐项选项 |
-| 3 | 汇总 → 衔接 xcommit / xdecide | 选项 |
+**参数**：空 → 正常流程 | 文件/目录路径 → 跳到阶段 2 | `reinit` → 重新初始化
 
 **产出物**：`REVIEW-RULES.md`（审查规范）
 
-**关键设计**：规则来源两层 — CLAUDE.md 提取禁忌/必须/架构约束 + 代码扫描推导缩进/命名/注释语言等。每条规则标注来源。
+#### 执行流程
 
-**下一步去哪**：发现架构问题 → **xdecide**；审查通过 → **xcommit**
+**阶段 0 — 探测项目**（自动）：
+
+1. 预加载 `skill-state.py check-and-read xreview` → `initialized` 则跳过
+2. 项目探测（共享流程）
+3. 全项目搜索 REVIEW-RULES.md 同类文件 → 找到迁移 / 没找到则生成
+4. 生成 REVIEW-RULES.md（两层规则提取）：
+   - a) CLAUDE.md 提取：禁忌类（"禁止"/"NEVER"）、必须类（"必须"/"MUST"）、规范类（"命名"/"格式"）、架构类（"依赖"/"层"/"耦合"）
+   - b) 代码扫描：缩进风格、命名风格、注释语言、目录结构、错误处理模式、安全检查点
+   - 每条规则标注来源（`CLAUDE.md` 或 `代码扫描`）
+5. `skill-state.py write xreview review_rules "<路径>"`
+6. 去重：CLAUDE.md `## 代码规范` 段 → 替换为指针；「禁止 print()」→ 保留
+
+**阶段 1 — 确定范围**（选项）：
+
+- AskUserQuestion：「审查什么代码？」
+  - 未提交变更（git diff）
+  - 最近一次提交（git show HEAD）
+  - 指定路径
+  - Other → 路径或 git range
+
+**阶段 2 — 执行审查**（逐项选项）：
+
+1. 获取目标代码：git diff / git show / 读文件
+2. 上下文感知调整重点：Bug 修复 → 根因是否真正修复；新功能 → 架构一致性；重构 → 行为一致性
+3. 读取 REVIEW-RULES.md，三维度审查：
+   - **A. 规范合规**：逐条核对禁忌/必须/编码规范
+   - **B. 架构质量**：依赖方向、职责划分、重复代码、接口设计
+   - **C. 安全健壮**：边界条件、并发安全、资源管理、安全漏洞
+4. 每发现问题 → AskUserQuestion：「[维度] 文件:行 — 问题描述 + 建议修复」
+   - 立即修复（→ 执行修复后继续审查）
+   - 记录到重构清单
+   - 记录决策 → `/xdecide`
+   - 忽略
+
+**阶段 3 — 收尾**（选项）：
+
+- AskUserQuestion：「审查完成。N 个问题（已修复 X / 记录 Y / 忽略 Z）。」
+  - 提交变更 → `/xcommit`
+  - 记录决策 → `/xdecide`
+  - 继续审查其他代码 → 回阶段 1
+  - 结束
 
 ---
 
@@ -173,21 +368,56 @@ Claude Code 自定义工作流 skill 集合 — 用 `/x*` 命令驱动调试、�
 
 **典型触发时机**：xdebug 修复涉及架构选择、xreview 发现需要决策的问题、独立的技术方案讨论。
 
-**阶段**：
-| 阶段 | 做什么 | 是否需要用户参与 |
-|------|--------|---------------|
-| 0 | 探测已有决策文件 + 创建 DECIDE-LOG.md | 否（自动） |
-| 1 | 选择模式（新决策 / 快速录入 / 回顾） | 选项 |
-| 2a | 引导式：背景 → 扫描代码分析方案 → 推荐 → 确认 → 写入 | 逐步选项 |
-| 2b | 快速录入：一句话背景 + 结论 → 格式化写入 | 选项 |
-| 2c | 回顾：列表展示 → 选择 → 追加修订 | 选项 |
-| 3 | 衔接 xcommit / 继续 / 结束 | 选项 |
+**参数**：空 → 正常流程 | `review` → 跳到阶段 2c 回顾 | 其他文本 → 作为决策描述跳到阶段 2a | `reinit` → 重新初始化
 
 **产出物**：`DECIDE-LOG.md`（决策记录）
 
-**关键设计**：新决策前搜索历史决策，避免重复或矛盾。修订不删除原文，保留决策演化历史。
+#### 执行流程
 
-**下一步去哪**：记录完成 → **xcommit**
+**阶段 0 — 探测项目**（自动）：
+
+1. 预加载 `skill-state.py check-and-read xdecide` → `initialized` 则跳过
+2. 项目探测（共享流程）
+3. 搜索 `DECIDE-LOG.md` 或含 `决策记录`、`decision`、`ADR` 关键词的文件（文档目录 + 根目录）
+4. 三态处理：找到迁移 / 没找到在 `output_dir` 创建 / 已就绪用 `decision-log.py list` 展示概览
+5. `skill-state.py write xdecide decision_log "<路径>"`
+6. 去重：MEMORY.md 中决策记录格式说明 → 替换为指针；「任何决策必须记录」→ 保留
+
+**阶段 1 — 选择模式**（选项）：
+
+- AskUserQuestion：「决策记录。选择操作：」
+  - 新决策（引导式）
+  - 快速录入
+  - 回顾已有决策
+  - Other → 直接描述决策主题
+
+**阶段 2a — 引导式决策**（逐步选项）：
+
+1. **理清背景**（从其他 skill 衔接时参数已包含描述则跳过）：AskUserQuestion 获取背景
+2. **分析方案**：
+   - 扫描相关代码理解当前实现
+   - `decision-log.py search <路径> <关键词>` 搜索历史相关决策，避免重复
+   - 分析可行方案列出利弊
+   - AskUserQuestion：「方案 A（优势/劣势）/ 方案 B / 推荐方案 X」→ 选方案 / Other 补充
+3. **确认结论**：`decision-log.py next-id <路径>` 获取编号 → 格式化预览 → AskUserQuestion 确认写入
+4. **写入**：Edit 在决策记录文件末尾追加
+
+**阶段 2b — 快速录入**（选项）：
+
+1. AskUserQuestion 获取一句话背景 + 结论
+2. 自动格式化为标准条目，获取编号
+3. 预览确认后写入
+
+**阶段 2c — 回顾修订**（选项）：
+
+1. `decision-log.py list` 展示所有决策
+2. AskUserQuestion 选择条目（超过 4 个则展示最近 3 个 + Other 可搜索）
+3. 展示完整内容
+4. AskUserQuestion → 追加修订（在原条目末尾加 `**修订（日期）**：`，不删除原文）/ 查看相关代码 / 查看其他 / 结束
+
+**阶段 3 — 收尾**（选项）：
+
+- AskUserQuestion：「决策记录完成。」→ 继续下一条 → 回阶段 1 / 提交变更 → `/xcommit` / 结束
 
 ---
 
@@ -197,19 +427,54 @@ Claude Code 自定义工作流 skill 集合 — 用 `/x*` 命令驱动调试、�
 
 **典型触发时机**：代码改了但文档没跟上、定期文档清理、发布前检查。
 
-**阶段**：
-| 阶段 | 做什么 | 是否需要用户参与 |
-|------|--------|---------------|
-| 0 | 扫描文档目录 + 检查脚本 → 生成 DOC-RULES.md | 否（自动） |
-| 1 | 选择任务（健康检查 / 一致性验证 / 指定文件） | 选项 |
-| 2a | 运行检查脚本 + 格式规范检查 | 否（自动） |
-| 2b | 对比 git log 和代码-文档映射，找不一致 | 否（自动） |
-| 3 | 逐项修复（自动修 / 跳过 / 忽略） | 逐项选项 |
-| 4 | 汇报 → 衔接 xcommit | 选项 |
+**参数**：空 → 正常流程 | `健康检查` → 跳到 2a | `一致性` → 跳到 2b | 文件/目录路径 → 检查该路径 | `reinit` → 重新初始化
 
 **产出物**：`DOC-RULES.md`（文档规范）
 
-**下一步去哪**：文档修复后 → **xcommit**
+#### 执行流程
+
+**阶段 0 — 探测项目**（自动）：
+
+1. 预加载 `skill-state.py check-and-read xdoc` → `initialized` 则跳过
+2. 项目探测（共享流程）
+3. 全项目搜索 DOC-RULES.md 同类文件 → 找到迁移 / 没找到则生成
+4. 生成 DOC-RULES.md（两层规则提取）：
+   - a) CLAUDE.md 提取：文档优先级（"文档"/"优先"）、维护要求（"必须"/"同步"）、批量编辑规则（"verify"/"验证"）
+   - b) 项目扫描：文档目录结构、检查脚本（`check_links`/`check_structure`/`generate_index`/`verify_edits`）、格式规范、代码-文档映射
+5. `skill-state.py write xdoc doc_rules "<路径>"`
+6. 去重（xdoc 当前无重复内容 → 跳过）
+
+**阶段 1 — 选择任务**（选项）：
+
+- AskUserQuestion：「文档维护。选择操作：」
+  - 健康检查（断链、格式、结构）
+  - 一致性验证（代码 ↔ 文档）
+  - 指定文件检查
+  - Other
+
+**阶段 2a — 健康检查**（自动）：
+
+1. 运行 DOC-RULES.md 中列出的检查脚本（逐个运行，汇总问题）
+2. 格式规范检查：内部链接验证、标题层级、代码块标注、空文件检测
+3. 汇总问题清单按严重程度排序（断链 > 格式 > 建议）
+
+**阶段 2b — 一致性验证**（自动）：
+
+1. `git log --oneline -20` + `git diff HEAD~5..HEAD --stat` 获取最近变更
+2. 读取 DOC-RULES.md「代码-文档映射」，对照变更文件识别应更新的文档
+3. 检查映射项：代码变更提交中是否包含对应文档更新
+4. 汇总不一致清单
+
+**阶段 3 — 修复**（逐项选项）：
+
+- 逐项 AskUserQuestion：「[问题类型] [文件路径] — 问题描述 + 建议修复」
+  - 自动修复 / 手动处理（跳过）/ 忽略
+- 批量修复后验证：10+ 文件修改 → 按 DOC-RULES.md 运行验证脚本
+
+**阶段 4 — 汇报**（选项）：
+
+- AskUserQuestion：「检查 N 文件，发现 X 问题（已修复 Y / 跳过 Z）。」
+  - 重新检查 / 提交变更 → `/xcommit` / 结束
 
 ---
 
@@ -219,18 +484,66 @@ Claude Code 自定义工作流 skill 集合 — 用 `/x*` 命令驱动调试、�
 
 **典型触发时机**：任何 skill 完成工作后的最后一步，也可独立使用。几乎所有 skill 的收尾选项都能衔接到这里。
 
-**阶段**：
-| 阶段 | 做什么 | 是否需要用户参与 |
-|------|--------|---------------|
-| 0 | 分析 git log + CLAUDE.md → 生成 COMMIT-RULES.md | 否（自动） |
-| 1 | 检查变更（未暂存文件处理） | 选项 |
-| 2 | 运行 COMMIT-RULES.md 中列出的预检脚本 | 选项（失败时） |
-| 3 | 文档完整性检查（Bug 修复是否更新了 DEBUG-LOG.md 等） | 选项（提醒，不阻断） |
-| 4 | 生成 commit message + 确认 + 执行提交 | 选项 |
+**参数**：空 → 自动生成 message | commit 消息文本 → 用作候选 message | `reinit` → 重新初始化
 
 **产出物**：`COMMIT-RULES.md`（提交规范）
 
-**关键设计**：文档完整性检查是建议不是阻断 — 只提醒"看起来是 Bug 修复但 DEBUG-LOG.md 没更新"，用户可选择忽略。
+#### 执行流程
+
+**阶段 0 — 探测项目**（自动）：
+
+1. 预加载 `skill-state.py check-and-read xcommit` → `initialized` 则跳过
+2. 项目探测（共享流程）
+3. 全项目搜索 COMMIT-RULES.md 同类文件 → 找到迁移 / 没找到则生成
+4. 生成 COMMIT-RULES.md（两层规则提取）：
+   - a) CLAUDE.md 提取：提交规则（"提交"/"commit"/"暂存"）、文档要求（"DEBUG-LOG"/"必须"）、禁忌类（"禁止"/"NEVER"）
+   - b) 项目扫描：最近 10 条 commit 分析消息语言/前缀/长度风格；`scripts/` 下搜索预检脚本（preflight/precommit/lint/verify）；扫描文档映射（DEBUG-LOG.md、DECIDE-LOG.md 等）
+5. `skill-state.py write xcommit commit_rules "<路径>"`
+6. 去重：CLAUDE.md `## Git 提交规范` 段 → 替换为指针
+
+**阶段 1 — 检查变更**（选项）：
+
+1. `git-context.py commit-context` 收集 status/diff/log/commit_style
+2. 无变更 → 提示结束
+3. 全部已暂存 → 直接进入阶段 2
+4. 有未暂存 → AskUserQuestion：「有未暂存文件：[列表]」
+   - 全部暂存
+   - 选择暂存（展示列表）
+   - 仅提交已暂存的
+   - Other → 指定文件
+5. 暂存用具体文件名 `git add <file>`，不用 `git add -A`
+
+**阶段 2 — 预检**（自动 / 失败时选项）：
+
+1. 读 COMMIT-RULES.md「预检脚本」列表，逐个运行
+2. 全部通过 → 阶段 3
+3. 有失败 → AskUserQuestion：「[脚本名] 失败：[摘要]」
+   - 自动修复（修复后重新运行）
+   - 跳过此检查
+   - 取消提交
+4. 无预检脚本 → 跳过此阶段
+
+**阶段 3 — 文档完整性**（建议不阻断）：
+
+1. `git diff --cached` 分析暂存变更
+2. 推断变更类型：Bug 修复 / 架构变更 / 新功能
+3. 读 COMMIT-RULES.md「变更类型 → 文档映射」，检查对应文档是否在暂存中
+4. 疑似遗漏 → AskUserQuestion：「本次看起来是 [Bug 修复]，但 [DEBUG-LOG.md] 未在暂存中。」
+   - 先补文档再提交
+   - 不需要，继续提交
+   - Other
+5. 无遗漏 → 直接阶段 4
+
+**阶段 4 — 生成提交**（选项）：
+
+1. 生成 commit message：参数已提供 → 优先使用；否则参照 COMMIT-RULES.md 风格分析 diff 生成
+2. AskUserQuestion：「准备提交。文件列表 + message 预览」
+   - 确认提交
+   - 修改 message
+   - 取消
+   - Other → 输入新 message
+3. `git commit -m "<message>"`
+4. `git status` 确认成功（不自动 push）
 
 ---
 
@@ -307,7 +620,7 @@ check 返回 initialized? ──→ 是：跳过整个阶段 0
     ↓
 写入状态（skill-state.py write）
     ↓
-去重（dedup-scan.py）
+去重（Claude 对比核心文件与 CLAUDE.md，逐条确认）
 ```
 
 **为什么这样设计**：
@@ -382,7 +695,7 @@ check 返回 initialized? ──→ 是：跳过整个阶段 0
 | xlog | MEMORY.md 中日志规则重复部分 → 指向 LOG-RULES.md |
 | xtest / xdoc | 当前无重复内容 → 跳过 |
 
-`dedup-scan.py` 内置 `KEEP_PATTERNS` 保护禁令行不被误替换。替换前展示 diff 预览，等用户确认。
+Claude 判断禁令/方法论类内容保留原文，具体规范替换为指针。替换前展示 diff 预览，等用户确认。
 
 ### 5. 规则来源两层
 
@@ -501,47 +814,16 @@ python3 .claude/skills/xbase/scripts/artifact-create.py --list
 
 ---
 
-#### 4. dedup-scan.py — 去重扫描
+#### 4. 去重（Claude 直接执行）
 
-**解决什么问题**：CLAUDE.md 里可能写了"Git 提交规范"的详细规则，xcommit 又生成了 COMMIT-RULES.md 覆盖同样内容。两处维护容易不同步。这个脚本找出这些重复，建议替换为指针。
+**解决什么问题**：CLAUDE.md 里可能写了"Git 提交规范"的详细规则，xcommit 又生成了 COMMIT-RULES.md 覆盖同样内容。两处维护容易不同步，需要把 CLAUDE.md 中已被核心文件覆盖的段落替换为一句话指针。
 
-**谁调用**：各 skill 阶段 0 末尾的"去重子步骤"；`/xbase init` 步骤 3 串行去重时用 `scan-all` 一次扫描所有 skill。
+**怎么工作**：无脚本，由 Claude 直接执行（见 `dedup-steps.md`）：
+1. 读取 CLAUDE.md / MEMORY.md
+2. 对比各 skill 核心文件内容，识别重复段落
+3. 逐条展示 diff 预览，等用户确认后用 Edit 替换为指针
 
-**怎么工作**：
-1. 每个 skill 有预定义的去重规则（关键词 + 目标段落 + 替换指针文本）
-2. 扫描 CLAUDE.md / MEMORY.md 中匹配关键词的行
-3. 匹配到的行如果**命中 KEEP_PATTERNS**（禁令/方法论）→ 保留不替换
-4. 其余匹配行 → 输出为 JSON，skill 拿到后展示 diff 预览让用户确认
-
-**KEEP_PATTERNS（9 条保护规则）**：
-- `禁止.*print` / `修复 Bug.*必须.*更新` / `任何.*决策.*必须.*记录`
-- `日志规范详见.*skill` / `先加日志.*不要盲猜` / `绝对不修改.*pbxproj`
-- `禁止部分提交` / `文档优先` / `先规划后执行`
-
-**API**：
-```bash
-# 扫描单个 skill 的重复内容
-python3 .claude/skills/xbase/scripts/dedup-scan.py scan --skill <name> --claude-md <path> [--memory-md <path>]
-# 例：scan --skill xcommit --claude-md CLAUDE.md --memory-md ~/.claude/.../MEMORY.md
-
-# 一次扫描所有 skill（/xbase init 步骤 3 用）
-python3 .claude/skills/xbase/scripts/dedup-scan.py scan-all --claude-md <path> [--memory-md <path>]
-```
-
-**输出示例**：
-```json
-{
-  "matches": [
-    {
-      "skill": "xcommit",
-      "file": "CLAUDE.md",
-      "lines": [45, 46, 47],
-      "action": "replace",
-      "pointer": "Git 提交规范详见 COMMIT-RULES.md（路径见 SKILL-STATE.md）"
-    }
-  ]
-}
-```
+**判断标准**：方法论/禁令/哲学 → 保留原文；已被核心文件覆盖的具体规范 → 替换为一句话指针。
 
 ### 工作阶段（skill 执行具体任务时调用）
 
@@ -671,8 +953,7 @@ python3 .claude/skills/xdecide/scripts/decision-log.py search <path> <关键词>
 │   ├── SKILL-STATE.md        # 运行时状态（模板预置，skill 初始化时填值）
 │   ├── scripts/
 │   │   ├── skill-state.py        # 状态管理（check/read/write/delete/reset-all）
-│   │   ├── artifact-create.py    # 产出物骨架创建（从 format 模板生成）
-│   │   └── dedup-scan.py         # 去重扫描（CLAUDE.md/MEMORY.md 重复检测）
+│   │   └── artifact-create.py    # 产出物骨架创建（从 format 模板生成）
 │   └── references/
 │       ├── phase0-template.md    # 阶段 0 标准流程模板（所有 skill 共享）
 │       └── dedup-protocol.md     # 去重流程模板

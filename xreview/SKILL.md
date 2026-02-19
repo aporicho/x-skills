@@ -6,20 +6,6 @@ allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestio
 argument-hint: "[文件/目录路径 | reinit]"
 ---
 
-# 代码审查工作流
-
-## 目录
-
-- [阶段 0：探测项目](#阶段-0探测项目)
-- [阶段 1：确定范围](#阶段-1确定范围)
-- [阶段 2：执行审查](#阶段-2执行审查)
-- [阶段 3：收尾](#阶段-3收尾)
-- [关键原则](#关键原则)
-
-## 启动方式
-
-- 用户输入 `/xreview` 时激活
-
 ### 参数处理（`$ARGUMENTS`）
 
 > **执行顺序**：无论参数如何，阶段 0 的快速跳过检查始终先执行。参数仅影响阶段 1 及之后的跳转。
@@ -28,49 +14,22 @@ argument-hint: "[文件/目录路径 | reinit]"
 - **`reinit`** → 删除 SKILL-STATE.md 中 `## xreview` 段（`python3 .claude/skills/xbase/scripts/skill-state.py delete xreview`）+ 重新执行阶段 0（忽略预加载的 check 结果，delete 后强制执行完整阶段 0）
 - **其他文本** → 作为审查目标路径，跳过阶段 1 直接进入阶段 2
 
-## 核心文件
+### 核心文件
 
 | 文件 | 说明 | 格式规范 |
 |------|------|----------|
 | `REVIEW-RULES.md` | 审查规范（代码扫描 + CLAUDE.md 提取） | `references/review-rules-format.md` |
-
-## 流程
 
 ### 预加载状态
 !`python3 .claude/skills/xbase/scripts/skill-state.py check-and-read xreview 2>/dev/null`
 
 ### 阶段 0：探测项目
 
-> 按 `../xbase/references/phase0-template.md` 标准流程执行。特有探测步骤：
+!`cat .claude/skills/xbase/references/prep-steps.md`
 
-1. **REVIEW-RULES.md 三态检测**：
-   - **不存在** → 在 `output_dir` 下生成（执行步骤 2）
-   - **存在但格式不符**（缺少 A/B/C 三维度章节）→ 用 AskUserQuestion 问是否重新生成（保留旧文件为 `.bak`）
-   - **已就绪** → 跳过生成，直接步骤 3
+以下为本 skill 的特有探测步骤：
 
-2. **生成 REVIEW-RULES.md**（按 `references/review-rules-format.md` 格式）：
-
-   规则来源两层：
-
-   **a) CLAUDE.md 提取**（如存在）：
-   - **禁忌类**：搜索"禁止"/"NEVER"/"不要"/"绝对不"等关键词，提取禁止事项
-   - **必须类**：搜索"必须"/"MUST"/"IMPORTANT"/"CRITICAL"等关键词，提取必须遵守的规则
-   - **规范类**：搜索"规范"/"风格"/"命名"/"格式"等关键词，提取编码规范
-   - **架构类**：搜索"架构"/"依赖"/"层"/"模块"/"耦合"等关键词，提取架构约束
-
-   **b) 代码扫描推导**（始终执行，不依赖 CLAUDE.md 存在）：
-   - **缩进风格**：扫描源文件判断 tab/空格、缩进宽度
-   - **命名风格**：扫描函数/变量名判断 camelCase/snake_case 等
-   - **注释语言**：扫描注释判断中文/英文
-   - **目录结构**：扫描项目目录推导架构分层
-   - **错误处理模式**：扫描 guard/try-catch/Result 等模式
-   - **项目特有安全检查点**：根据技术栈推导（如 FFI 项目检查内存安全、Web 项目检查 XSS 等）
-
-   来源标记：每条规则标注来源为 `CLAUDE.md` 或 `代码扫描`，便于维护。
-
-3. **写入状态**：`python3 .claude/skills/xbase/scripts/skill-state.py write xreview review_rules <REVIEW-RULES.md路径>`
-
-4. **去重子步骤**：按 `../xbase/references/dedup-protocol.md` 流程执行。xreview 去重职责：CLAUDE.md `## 代码规范` 段 → 替换为指向 REVIEW-RULES.md 的指针；「禁止 print()」→ **保留**（禁令）。
+!`cat .claude/skills/xreview/references/init-steps.md`
 
 ### 阶段 1：确定范围
 

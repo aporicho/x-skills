@@ -6,21 +6,6 @@ allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestio
 argument-hint: "[文件/模块路径 | reinit]"
 ---
 
-# 日志补全
-
-## 目录
-
-- [阶段 0：探测项目日志系统](#阶段-0探测项目日志系统)
-- [阶段 1：选择范围](#阶段-1选择范围)
-- [阶段 2：扫描 + 补全 + 纠正](#阶段-2扫描--补全--纠正)
-- [阶段 3：汇报](#阶段-3汇报)
-- [关键原则](#关键原则)
-
-## 启动方式
-
-- 用户输入 `/xlog` 时激活
-- `/xdebug` 阶段 2 加日志时，子 agent 读取本 SKILL.md 执行完整 `/xlog` 流程
-
 ### 参数处理（`$ARGUMENTS`）
 
 > **执行顺序**：无论参数如何，阶段 0 的快速跳过检查始终先执行。参数仅影响阶段 1 及之后的跳转。
@@ -29,7 +14,11 @@ argument-hint: "[文件/模块路径 | reinit]"
 - **`reinit`** → 删除 SKILL-STATE.md 中 `## xlog` 段（`python3 .claude/skills/xbase/scripts/skill-state.py delete xlog`）+ 重新执行阶段 0（忽略预加载的 check 结果，delete 后强制执行完整阶段 0）
 - **其他文本** → 作为目标文件/模块路径，跳过阶段 1 直接进入阶段 2
 
-## 核心文件
+### 启动方式补充
+
+- `/xdebug` 阶段 2 加日志时，子 agent 读取本 SKILL.md 执行完整 `/xlog` 流程
+
+### 核心文件
 
 | 文件 | 说明 | 格式规范 |
 |------|------|----------|
@@ -38,27 +27,16 @@ argument-hint: "[文件/模块路径 | reinit]"
 
 两个文件均由 `/xlog` 创建和维护，存放在 SKILL-STATE.md 的 `output_dir` 目录下。
 
-## 流程
-
 ### 预加载状态
 !`python3 .claude/skills/xbase/scripts/skill-state.py check-and-read xlog 2>/dev/null`
 
 ### 阶段 0：探测项目日志系统
 
-> 按 `../xbase/references/phase0-template.md` 标准流程执行。特有探测步骤：
+!`cat .claude/skills/xbase/references/prep-steps.md`
 
-1. 阅读 CLAUDE.md 了解日志相关规则和禁忌（如禁止 print）
-2. 扫描代码找到日志工具：
-   - 日志工具文件（如 `Logger.swift`、`log.rs`、`logger.ts` 等）
-   - 已有的日志调用模式（`Log.xxx`、`log::xxx`、`console.xxx`、`logger.xxx` 等）
-   - 可用的 Logger 实例 / 分类 / 子系统
-   - 消息语言和 metadata 命名风格
-3. 检测两个核心文件：
-   - **LOG-RULES.md**：不存在 → 基于扫描结果生成（格式见 `references/log-rules-format.md`）；存在但格式不符 → 问是否迁移；已就绪 → 跳过
-   - **LOG-COVERAGE.md**：同上三态检测（格式见 `references/log-coverage-format.md`）
-4. **写入**：`python3 .claude/skills/xbase/scripts/skill-state.py write xlog log_rules "<LOG-RULES.md 路径>" log_coverage "<LOG-COVERAGE.md 路径>"`
+以下为本 skill 的特有探测步骤：
 
-5. **去重子步骤**：按 `../xbase/references/dedup-protocol.md` 流程执行。xlog 去重职责：MEMORY.md 中日志规则重复部分 → 替换为指针；「禁止 print()」「日志规范详见 /logging」→ **保留**。
+!`cat .claude/skills/xlog/references/init-steps.md`
 
 ### 阶段 1：选择范围
 

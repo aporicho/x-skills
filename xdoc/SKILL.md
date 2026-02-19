@@ -6,22 +6,6 @@ allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestio
 argument-hint: "[健康检查 | 一致性 | reinit]"
 ---
 
-# 文档维护工作流
-
-## 目录
-
-- [阶段 0：探测项目](#阶段-0探测项目)
-- [阶段 1：选择任务](#阶段-1选择任务)
-- [阶段 2a：健康检查](#阶段-2a健康检查)
-- [阶段 2b：一致性验证](#阶段-2b一致性验证)
-- [阶段 3：修复](#阶段-3修复)
-- [阶段 4：汇报](#阶段-4汇报)
-- [关键原则](#关键原则)
-
-## 启动方式
-
-- 用户输入 `/xdoc` 时激活
-
 ### 参数处理（`$ARGUMENTS`）
 
 > **执行顺序**：无论参数如何，阶段 0 的快速跳过检查始终先执行。参数仅影响阶段 1 及之后的跳转。
@@ -32,47 +16,22 @@ argument-hint: "[健康检查 | 一致性 | reinit]"
 - **`一致性`** → 跳过阶段 1，直接进入阶段 2b
 - **其他文本** → 作为指定文件/目录路径，执行该路径的健康检查
 
-## 核心文件
+### 核心文件
 
 | 文件 | 说明 | 格式规范 |
 |------|------|----------|
 | `DOC-RULES.md` | 文档规范（目录结构 + 检查脚本 + 映射规则） | `references/doc-rules-format.md` |
-
-## 流程
 
 ### 预加载状态
 !`python3 .claude/skills/xbase/scripts/skill-state.py check-and-read xdoc 2>/dev/null`
 
 ### 阶段 0：探测项目
 
-> 按 `../xbase/references/phase0-template.md` 标准流程执行。特有探测步骤：
+!`cat .claude/skills/xbase/references/prep-steps.md`
 
-1. **DOC-RULES.md 三态检测**：
-   - **不存在** → 在 `output_dir` 下生成（执行步骤 2）
-   - **存在但格式不符**（缺少「文档目录结构」「检查脚本」「代码-文档映射」等章节）→ 用 AskUserQuestion 问是否重新生成（保留旧文件为 `.bak`）
-   - **已就绪** → 跳过生成，直接步骤 3
+以下为本 skill 的特有探测步骤：
 
-2. **生成 DOC-RULES.md**（按 `references/doc-rules-format.md` 格式）：
-
-   规则来源两层：
-
-   **a) CLAUDE.md 提取**（如存在）：
-   - **文档优先级**：搜索"文档"/"document"/"优先"等关键词，提取文档权威性规则
-   - **维护要求**：搜索"必须"/"更新"/"同步"等关键词，提取文档维护要求
-   - **批量编辑规则**：搜索"批量"/"verify"/"验证"等关键词，提取批量编辑验证要求
-
-   **b) 项目扫描**（始终执行，不依赖 CLAUDE.md 存在）：
-   - **文档目录**：搜索 `docs/`/`doc/`/`document/`/`documentation/` 等候选，确认主文档目录及子目录结构
-   - **检查脚本**：在 `scripts/` 目录下搜索 `link`/`check_link`/`structure`/`check_structure`/`index`/`generate_index`/`doc`/`verify` 等关键词的脚本，逐个确认功能
-   - **编辑验证脚本**：搜索 `verify_edits` 等批量编辑验证脚本
-   - **格式规范**：扫描 markdown 文件推导标题风格、代码块标注、注释语言等
-   - **代码-文档映射**：扫描项目中的 DEBUG-LOG.md、DECIDE-LOG.md 等文件，推导变更类型→文档映射
-
-   来源标记：每条规则标注来源为 `CLAUDE.md` 或 `项目扫描`，便于维护。
-
-3. **写入状态**：`python3 .claude/skills/xbase/scripts/skill-state.py write xdoc doc_rules <DOC-RULES.md路径>`
-
-4. **去重子步骤**：按 `../xbase/references/dedup-protocol.md` 流程执行。xdoc 当前无对应重复内容 → **跳过**。
+!`cat .claude/skills/xdoc/references/init-steps.md`
 
 ### 阶段 1：选择任务
 

@@ -6,22 +6,6 @@ allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestio
 argument-hint: "[决策描述 | review | reinit]"
 ---
 
-# 决策记录工作流
-
-## 目录
-
-- [阶段 0：探测项目](#阶段-0探测项目)
-- [阶段 1：选择模式](#阶段-1选择模式)
-- [阶段 2a：引导式决策](#阶段-2a引导式决策)
-- [阶段 2b：快速录入](#阶段-2b快速录入)
-- [阶段 2c：回顾修订](#阶段-2c回顾修订)
-- [阶段 3：收尾](#阶段-3收尾)
-- [关键原则](#关键原则)
-
-## 启动方式
-
-- 用户输入 `/xdecide` 时激活
-
 ### 参数处理（`$ARGUMENTS`）
 
 > **执行顺序**：无论参数如何，阶段 0 的快速跳过检查始终先执行。参数仅影响阶段 1 及之后的跳转。
@@ -31,29 +15,22 @@ argument-hint: "[决策描述 | review | reinit]"
 - **`review`** → 跳过阶段 1，直接进入阶段 2c 回顾修订
 - **其他文本** → 作为决策描述，跳过阶段 1 直接进入阶段 2a 引导式决策（背景自动跳过）
 
-## 核心文件
+### 核心文件
 
 | 文件 | 说明 | 格式规范 |
 |------|------|----------|
 | `DECIDE-LOG.md` | 决策条目（编号递增，含背景/选项/结论） | `references/decision-format.md` |
-
-## 流程
 
 ### 预加载状态
 !`python3 .claude/skills/xbase/scripts/skill-state.py check-and-read xdecide 2>/dev/null`
 
 ### 阶段 0：探测项目
 
-> 按 `../xbase/references/phase0-template.md` 标准流程执行。特有探测步骤：
+!`cat .claude/skills/xbase/references/prep-steps.md`
 
-1. **探测 DECIDE-LOG.md**：搜索 `DECIDE-LOG.md` 或文件名含 `决策记录`、`decision`、`ADR` 等关键词的文件（搜索范围：文档目录及项目根目录）。找到已有文件时优先使用，不强制重命名。
-2. **三态检测**：
-   - **不存在** → 在 `output_dir` 下创建 `DECIDE-LOG.md`（格式见 `references/decision-format.md`）
-   - **存在但格式不符**（无 `## D-NNN` 标题行）→ AskUserQuestion 询问是否迁移
-   - **已就绪** → 用 `decision-log.py list` 获取现有条目，展示概览
-3. **写入**：`python3 .claude/skills/xbase/scripts/skill-state.py write xdecide decision_log "<路径>"`
+以下为本 skill 的特有探测步骤：
 
-4. **去重子步骤**：按 `../xbase/references/dedup-protocol.md` 流程执行。xdecide 去重职责：MEMORY.md 中决策记录格式说明 → 替换为指针；「任何决策必须记录」→ **保留**（禁令）。
+!`cat .claude/skills/xdecide/references/init-steps.md`
 
 ### 阶段 1：选择模式
 

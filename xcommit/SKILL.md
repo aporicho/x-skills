@@ -6,21 +6,6 @@ allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestio
 argument-hint: "[commit消息 | reinit]"
 ---
 
-# 提交工作流
-
-## 目录
-
-- [阶段 0：探测项目](#阶段-0探测项目)
-- [阶段 1：检查变更](#阶段-1检查变更)
-- [阶段 2：预检](#阶段-2预检)
-- [阶段 3：文档完整性](#阶段-3文档完整性)
-- [阶段 4：生成提交](#阶段-4生成提交)
-- [关键原则](#关键原则)
-
-## 启动方式
-
-- 用户输入 `/xcommit` 时激活
-
 ### 参数处理（`$ARGUMENTS`）
 
 > **执行顺序**：无论参数如何，阶段 0 的快速跳过检查始终先执行。参数仅影响阶段 1 及之后的跳转。
@@ -29,45 +14,22 @@ argument-hint: "[commit消息 | reinit]"
 - **`reinit`** → 删除 SKILL-STATE.md 中 `## xcommit` 段（`python3 .claude/skills/xbase/scripts/skill-state.py delete xcommit`）+ 重新执行阶段 0（忽略预加载的 check 结果，delete 后强制执行完整阶段 0）
 - **其他文本** → 作为 commit message 候选，跳到阶段 1（阶段 4 时优先使用此消息）
 
-## 核心文件
+### 核心文件
 
 | 文件 | 说明 | 格式规范 |
 |------|------|----------|
 | `COMMIT-RULES.md` | 提交规范（git log 分析 + CLAUDE.md 提取） | `references/commit-rules-format.md` |
-
-## 流程
 
 ### 预加载状态
 !`python3 .claude/skills/xbase/scripts/skill-state.py check-and-read xcommit 2>/dev/null`
 
 ### 阶段 0：探测项目
 
-> 按 `../xbase/references/phase0-template.md` 标准流程执行。特有探测步骤：
+!`cat .claude/skills/xbase/references/prep-steps.md`
 
-1. **COMMIT-RULES.md 三态检测**：
-   - **不存在** → 在 `output_dir` 下生成（执行步骤 2）
-   - **存在但格式不符**（缺少「提交消息风格」「文档完整性检查」等章节）→ 用 AskUserQuestion 问是否重新生成（保留旧文件为 `.bak`）
-   - **已就绪** → 跳过生成，直接步骤 3
+以下为本 skill 的特有探测步骤：
 
-2. **生成 COMMIT-RULES.md**（按 `references/commit-rules-format.md` 格式）：
-
-   规则来源两层：
-
-   **a) CLAUDE.md 提取**（如存在）：
-   - **提交规则**：搜索"提交"/"commit"/"暂存"/"push"等关键词，提取暂存和提交约束
-   - **文档要求**：搜索"DEBUG-LOG"/"决策记录"/"文档"/"必须"等关键词，提取文档完整性规则
-   - **禁忌类**：搜索"禁止"/"NEVER"/"不要"等关键词，提取提交相关禁忌
-
-   **b) 项目扫描**（始终执行，不依赖 CLAUDE.md 存在）：
-   - **Git 规范**：读取最近 10 条 commit 消息，分析消息语言、前缀格式、长度风格
-   - **预检脚本**：在 `scripts/` 目录下搜索 `preflight`/`precommit`/`lint`/`check`/`verify` 等关键词的脚本
-   - **文档映射**：扫描项目中的 DEBUG-LOG.md、DECIDE-LOG.md 等文件，推导变更类型→文档映射
-
-   来源标记：每条规则标注来源为 `CLAUDE.md` 或 `项目扫描`，便于维护。
-
-3. **写入状态**：`python3 .claude/skills/xbase/scripts/skill-state.py write xcommit commit_rules <COMMIT-RULES.md路径>`
-
-4. **去重子步骤**：按 `../xbase/references/dedup-protocol.md` 流程执行。xcommit 去重职责：CLAUDE.md `## Git 提交规范` 段 → 替换为指向 COMMIT-RULES.md 的指针。
+!`cat .claude/skills/xcommit/references/init-steps.md`
 
 ### 阶段 1：检查变更
 

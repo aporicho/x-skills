@@ -10,10 +10,10 @@ argument-hint: "[init | status | reset | reinit]"
 
 根据 `$ARGUMENTS` 分发：
 
-- **空** 或 **`init`** → 阶段 1：全量初始化
-- **`status`** → 阶段 2：状态查看
-- **`reset`** → 阶段 3：全量重置
-- **`reinit`** → AskUserQuestion 确认（问题：将清空所有 skill 的初始化记录并重新初始化，核心文件不会被删除。确认？选项：确认 / 取消）→ 确认后执行 `python3 .claude/skills/xbase/scripts/skill-state.py reset-all` + 重新执行阶段 1
+- **空** 或 **`init`** → `init`：全量初始化
+- **`status`** → `status`：状态查看
+- **`reset`** → `reset`：全量重置
+- **`reinit`** → AskUserQuestion 确认（问题：将清空所有 skill 的初始化记录并重新初始化，核心文件不会被删除。确认？选项：确认 / 取消）→ 确认后执行 `python3 .claude/skills/xbase/scripts/skill-state.py reset-all` + 重新执行 `init` 流程
 
 ## 预加载状态
 
@@ -21,7 +21,7 @@ argument-hint: "[init | status | reset | reinit]"
 
 ---
 
-## 阶段 1：全量初始化
+## `init`：全量初始化
 
 ### 步骤 1 — 全面探测
 
@@ -109,7 +109,7 @@ argument-hint: "[init | status | reset | reinit]"
 
 ---
 
-## 阶段 2：状态查看
+## `status`：状态查看
 
 1. 运行 `python3 .claude/skills/xbase/scripts/skill-state.py read`
 2. 对每个 skill 检查 `initialized` 字段
@@ -136,7 +136,7 @@ Skill 状态：
 
 ---
 
-## 阶段 3：全量重置
+## `reset`：全量重置
 
 1. AskUserQuestion 确认：
    - 问题：将清空 SKILL-STATE.md 中所有 skill 的初始化记录，下次使用各 skill 时需要重新初始化。项目中已创建的核心文件（DEBUG-LOG.md、TEST-CHECKLIST.md 等）不会被修改或删除。确认重置？
@@ -221,7 +221,7 @@ python3 .claude/skills/xbase/scripts/skill-state.py reset-all
 
 ### 路径格式
 
-SKILL-STATE.md 中存储的所有文件路径统一使用**相对于项目根目录的相对路径**（如 `document/90-开发/DEBUG-LOG.md`），不使用绝对路径。阶段 2 状态查看时，Glob 以项目根目录为基准执行文件存在检查。
+SKILL-STATE.md 中存储的所有文件路径统一使用**相对于项目根目录的相对路径**（如 `document/90-开发/DEBUG-LOG.md`），不使用绝对路径。`status` 查看时，Glob 以项目根目录为基准执行文件存在检查。
 
 ---
 

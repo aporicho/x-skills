@@ -34,7 +34,6 @@ TEMPLATE = """\
 
 - output_dir:
 - 运行脚本:
-- skip_dedup:
 
 ## xdebug
 

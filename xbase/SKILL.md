@@ -72,11 +72,6 @@ argument-hint: "[init | status | reset | reinit]"
 
 ### 步骤 2 — 创建核心文件
 
-写入跳过去重标记：
-```bash
-python3 .claude/skills/xbase/scripts/skill-state.py write-info skip_dedup true
-```
-
 对每个核心文件，根据三态判定：
 
 - **❌ 需新建** → 在 `output_dir` 下创建（格式见各 `core-files.md` 中的格式规范引用）
@@ -223,7 +218,6 @@ python3 .claude/skills/xbase/scripts/skill-state.py reset-all
 
 - **output_dir**（项目信息段）— 所有核心文件的统一存放目录
 - **initialized**（各 skill 段）— 初始化日期，`check` 通过此字段判断是否已初始化
-- **skip_dedup**（项目信息段）— 批量初始化时跳过去重的标记
 
 ### 路径格式
 

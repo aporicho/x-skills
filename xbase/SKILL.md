@@ -2,7 +2,7 @@
 name: xbase
 description: xSkills 初始化与状态管理。一键探测项目、创建所有核心文件、查看状态、重置。其他 skill 未初始化时自动调用 xbase。(xSkills init, status, reset, shared base)
 user-invocable: true
-allowed-tools: ["Bash", "Read", "Edit", "Write", "Glob", "Grep", "AskUserQuestion", "Task"]
+allowed-tools: ["Bash", "Read", "Edit", "Write", "Glob", "Grep", "AskUserQuestion"]
 argument-hint: "[init | status | reset | reinit]"
 ---
 
@@ -78,26 +78,51 @@ argument-hint: "[init | status | reset | reinit]"
 - **🔄 可改造** → AskUserQuestion 询问是否迁移（保留内容，套用新格式）
 - **✅ 已就绪** → 跳过创建
 
-各 skill 核心文件互不依赖，为每个 skill 用 Task 工具启动一个子 agent 并行处理，subagent_type 统一为 `general-purpose`。
+按以下顺序依次处理各 skill。三态判定已在步骤 1 确定，直接使用；每个 skill 处理完后无论三态结果如何，都执行 skill-state.py write 写入路径。
 
-每个子 agent 的 prompt 模板（替换 `<skill>`、`<三态结果>`、`<output_dir>`）：
+**xdebug**
 
-```
-你是 xbase 初始化的子 agent，负责处理 <skill> 的核心文件。
+!`cat .claude/skills/xdebug/references/init-steps.md`
 
-当前信息：
-- 三态判定：<✅ 已就绪 / 🔄 可改造 / ❌ 需新建>
-- output_dir：<路径>
+---
 
-执行步骤：
-1. 读取 .claude/skills/<skill>/references/init-steps.md，按其指引处理核心文件
-2. 三态判定已在上方给出，直接使用，不重复探测
-3. 无论三态结果如何，都用 skill-state.py write 写入文件路径：
-   python3 .claude/skills/xbase/scripts/skill-state.py write <skill> <key> "<路径>" [<key2> "<路径2>" ...]
-4. 不执行去重（由主流程步骤 3 统一处理）
-```
+**xtest**
 
-等待所有子 agent 完成，展示结果（✅ 创建 / ⏭️ 跳过）。
+!`cat .claude/skills/xtest/references/init-steps.md`
+
+---
+
+**xlog**
+
+!`cat .claude/skills/xlog/references/init-steps.md`
+
+---
+
+**xcommit**
+
+!`cat .claude/skills/xcommit/references/init-steps.md`
+
+---
+
+**xreview**
+
+!`cat .claude/skills/xreview/references/init-steps.md`
+
+---
+
+**xdoc**
+
+!`cat .claude/skills/xdoc/references/init-steps.md`
+
+---
+
+**xdecide**
+
+!`cat .claude/skills/xdecide/references/init-steps.md`
+
+---
+
+展示所有 skill 的处理结果（✅ 创建 / ⏭️ 跳过）。
 
 ### 步骤 3 — 去重
 

@@ -1,9 +1,9 @@
 ---
 name: xbase
-description: xSkills 初始化与状态管理。一键探测项目、创建所有核心文件、查看状态、重置。其他 skill 未初始化时自动调用 xbase。(xSkills init, status, reset, shared base)
+description: xSkills 初始化与状态管理。一键探测项目、创建所有核心文件、查看状态、重新初始化。其他 skill 未初始化时自动调用 xbase。(xSkills init, status, reinit, shared base)
 user-invocable: true
 allowed-tools: ["Bash", "Read", "Edit", "Write", "Glob", "Grep", "AskUserQuestion"]
-argument-hint: "[init | status | reset | reinit]"
+argument-hint: "[init | status | reinit]"
 ---
 
 ## 参数处理
@@ -12,7 +12,6 @@ argument-hint: "[init | status | reset | reinit]"
 
 - **空** 或 **`init`** → `init`：全量初始化
 - **`status`** → `status`：状态查看
-- **`reset`** → `reset`：全量重置
 - **`reinit`** → AskUserQuestion 确认（问题：将清空所有 skill 的初始化记录并重新初始化，核心文件不会被删除。确认？选项：确认 / 取消）→ 确认后执行 `python3 .claude/skills/xbase/scripts/skill-state.py reset-all` + 重新执行 `init` 流程
 
 ## 预加载状态
@@ -155,15 +154,4 @@ Skill 状态：
 
 > 多核心文件的 skill（如 xtest）每个文件占一行，Skill 和已初始化列在首行填写，后续行留空。路径列展示 SKILL-STATE.md 中记录的实际路径，未记录时显示 `—`。
 
----
-
-## `reset`：全量重置
-
-1. AskUserQuestion 确认：
-   - 问题：将清空 SKILL-STATE.md 中所有 skill 的初始化记录，下次使用各 skill 时需要重新初始化。项目中已创建的核心文件（DEBUG-LOG.md、TEST-CHECKLIST.md 等）不会被修改或删除。确认重置？
-   - 选项：确认重置 / 取消
-
-2. 确认后运行：`python3 .claude/skills/xbase/scripts/skill-state.py reset-all`
-
-3. 展示重置后状态
 

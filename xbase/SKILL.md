@@ -1,9 +1,9 @@
 ---
 name: xbase
-description: xSkills 初始化与状态管理。一键探测项目、创建所有核心文件、查看状态、重新初始化。其他 skill 未初始化时自动调用 xbase。(xSkills init, status, reinit, shared base)
+description: xSkills 初始化与状态管理。一键探测项目、创建所有核心文件、查看状态。其他 skill 未初始化时自动调用 xbase。(xSkills init, status, shared base)
 user-invocable: true
 allowed-tools: ["Bash", "Read", "Edit", "Write", "Glob", "Grep", "AskUserQuestion"]
-argument-hint: "[init | status | reinit]"
+argument-hint: "[init | status]"
 ---
 
 ## 参数处理
@@ -12,7 +12,6 @@ argument-hint: "[init | status | reinit]"
 
 - **空** 或 **`init`** → `init`：全量初始化
 - **`status`** → `status`：状态查看
-- **`reinit`** → AskUserQuestion 确认（问题：将清空所有 skill 的初始化记录并重新初始化，核心文件不会被删除。确认？选项：确认 / 取消）→ 确认后执行 `python3 .claude/skills/xbase/scripts/skill-state.py reset-all` + 重新执行 `init` 流程
 
 ## 预加载状态
 
@@ -22,11 +21,14 @@ argument-hint: "[init | status | reinit]"
 
 ## `init`：全量初始化
 
+先清空所有状态，确保从零开始：
+```bash
+python3 .claude/skills/xbase/scripts/skill-state.py reset-all
+```
+
 ### 步骤 1 — 全面探测
 
 > 一次性收集所有 skill 所需的项目信息和核心文件状态，后续步骤不重复探测。
-
-如 `## 项目信息` 的 `output_dir` 已有值 → 跳过 A 区，只做 B 区。
 
 **A. 项目信息**
 

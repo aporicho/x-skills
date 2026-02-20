@@ -319,7 +319,7 @@ def cmd_delete(args: list[str]) -> None:
 
 
 def cmd_delete_info(_args: list[str]) -> None:
-    """delete-info — 清空项目信息段的值（保留结构，用于 xbase reinit）。"""
+    """delete-info — 清空项目信息段的值（保留结构）。"""
     atomic_read_modify_write(lambda c: clear_section_values(c, "项目信息"))
     print("已重置 ## 项目信息")
 

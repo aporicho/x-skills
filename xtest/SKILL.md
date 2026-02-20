@@ -1,7 +1,6 @@
 ---
 name: xtest
-description: 测试工作流。用户输入 /xtest 时激活。自动化测试 + 手动逐项验证，维护 TEST-CHECKLIST.md，失败自动衔接 /xdebug。当用户要测试、验证功能、跑测试用例时也适用。
-user-invocable: true
+description: 测试工作流：自动化测试 + 手动逐项验证，维护 TEST-CHECKLIST.md，失败衔接 /xdebug。当用户要测试、验证功能、跑测试用例时使用。
 allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestion", "Task"]
 argument-hint: "[自动化 | 手动 | reinit]"
 ---

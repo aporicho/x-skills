@@ -1,7 +1,6 @@
 ---
 name: xdebug
-description: 命令行调试工作流。用户输入 /xdebug 时激活。自动构建运行 App、捕获日志、引导复现、定位修复，全程选项驱动。当用户报告 Bug、请求调试、排查问题时也适用。
-user-invocable: true
+description: 调试工作流：自动构建运行 App、捕获日志、引导复现、定位修复，全程选项驱动。当用户报告 Bug、请求调试、排查问题时使用。
 allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestion", "Task"]
 argument-hint: "[bug描述 | #issue编号 | reinit]"
 ---

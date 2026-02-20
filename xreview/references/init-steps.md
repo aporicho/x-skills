@@ -1,9 +1,10 @@
 ## 探测
 
-1. **REVIEW-RULES.md 三态检测**（文件名含 review、审查）：
-   - **不存在** → 标记"需创建"
-   - **存在但格式不符**（缺少 A/B/C 三维度章节）→ 标记"迁移候选"
-   - **存在且格式正确** → 标记"已就绪"
+1. **REVIEW-RULES.md 探测**（三路并行，不短路）：
+   - 精确名 Glob：`"**/REVIEW-RULES.md"`
+   - 指纹 Grep：`"^## A\\. 规范合规"`, glob=`"*.md"`
+   - 模糊名 Glob：`"**/*{review,审查,代码规范}*.md"`
+   - 内容指纹：`^## A\. 规范合规`
 2. **代码扫描**（始终执行，为生成规则收集信息）：
    - **缩进风格**：扫描源文件判断 tab/空格、缩进宽度
    - **命名风格**：扫描函数/变量名判断 camelCase/snake_case 等
@@ -20,13 +21,15 @@
 ## 创建
 
 1. **REVIEW-RULES.md 处理**：
-   - 需创建 → 基于探测结果生成（格式见 `references/review-rules-format.md`），每条规则标注来源（`CLAUDE.md` 或 `代码扫描`）
-   - 迁移候选 → 基于探测结果重新生成，删除旧文件
+   - 需创建 → 基于探测结果生成（格式见 `.claude/skills/xreview/references/review-rules-format.md`），每条规则标注来源（`CLAUDE.md` 或 `代码扫描`）
+   - 迁移候选 → 基于探测结果重新生成（旧文件在清理步骤处理）
    - 已就绪 → 跳过
 2. **写入状态**：`python3 .claude/skills/xbase/scripts/skill-state.py write xreview review_rules "<REVIEW-RULES.md 路径>"`
 
-## 去重
+## 清理
 
-读取 CLAUDE.md/MEMORY.md，对比本 skill 核心文件（路径从 SKILL-STATE.md 获取），将已被覆盖的具体规范替换为一句话指针（方法论/禁令保留原文）。有重复时逐条展示 diff，AskUserQuestion 确认后 Edit 替换。
+**文件清理**：删除探测阶段标记的"废弃候选"文件（已被规范文件取代的旧文件）。有待删除文件时逐个展示，AskUserQuestion 确认后用 `rm -f` 删除（所有废弃文件合并到一条命令）。
+
+**引用清理**：读取 CLAUDE.md，对比本 skill 核心文件（路径从 SKILL-STATE.md 获取），将已被覆盖的具体规范替换为一句话指针（方法论/禁令保留原文）。有重复时逐条展示 diff，AskUserQuestion 确认后 Edit 替换。修复过时引用（指向已不存在的 skill 或旧文件名的引用）。
 
 xreview 职责：CLAUDE.md `## 代码规范` 段 → 替换为指向 REVIEW-RULES.md 的指针；「禁止 print()」→ **保留**（禁令）。

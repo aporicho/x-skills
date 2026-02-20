@@ -1,7 +1,6 @@
 ---
 name: xreview
-description: 代码审查工作流。用户输入 /xreview 时激活。基于 REVIEW-RULES.md 三维度审查，逐项决策。当用户要审查代码、做 code review 时也适用。
-user-invocable: true
+description: 代码审查工作流：基于 REVIEW-RULES.md 三维度审查（规范/架构/安全），逐项决策。当用户要审查代码、做 code review 时使用。
 allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestion"]
 argument-hint: "[文件/目录路径 | reinit]"
 ---

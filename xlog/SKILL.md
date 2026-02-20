@@ -1,7 +1,6 @@
 ---
 name: xlog
-description: 日志补全。用户输入 /xlog 时激活，或由 /xdebug 子 agent 自动调用。建立日志规范，扫描代码补充诊断日志。当用户要补日志、完善日志覆盖时也适用。
-user-invocable: true
+description: 日志补全：建立日志规范，扫描代码补充诊断日志。也由 /xdebug 子 agent 自动调用。当用户要补日志、完善日志覆盖时使用。
 allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestion"]
 argument-hint: "[文件/模块路径 | reinit]"
 ---

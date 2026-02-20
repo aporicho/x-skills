@@ -1,7 +1,6 @@
 ---
 name: xdoc
-description: 文档维护工作流。用户输入 /xdoc 时激活。基于 DOC-RULES.md 进行文档健康检查 + 代码-文档一致性验证。当用户要维护文档、检查文档质量时也适用。
-user-invocable: true
+description: 文档维护工作流：基于 DOC-RULES.md 进行文档健康检查 + 代码-文档一致性验证。当用户要维护文档、检查文档质量时使用。
 allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestion"]
 argument-hint: "[健康检查 | 一致性 | reinit]"
 ---

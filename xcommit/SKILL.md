@@ -1,7 +1,6 @@
 ---
 name: xcommit
-description: 提交工作流。用户输入 /xcommit 时激活。基于 COMMIT-RULES.md 自动预检 + 文档完整性检查 + 规范化提交。当用户要提交代码、保存变更时也适用。
-user-invocable: true
+description: 提交工作流：基于 COMMIT-RULES.md 自动预检 + 文档完整性检查 + 规范化提交。当用户要提交代码、保存变更时使用。
 allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestion"]
 argument-hint: "[commit消息 | reinit]"
 ---

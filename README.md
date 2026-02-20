@@ -94,7 +94,6 @@ xdecide ──→ xcommit
 │   │   └── extract-section.py
 │   └── references/
 │       ├── init-steps.md               # 项目级探测/创建流程
-│       ├── prep-steps.md               # 阶段 0 标准流程模板
 │       └── prep-steps.md               # 阶段 0 标准流程模板
 │
 ├── xtest/

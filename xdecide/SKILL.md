@@ -1,7 +1,6 @@
 ---
 name: xdecide
-description: 决策记录工作流。用户输入 /xdecide 时激活。引导决策过程、快速录入、回顾修订，维护决策记录文件。当用户要做技术决策、记录决策、回顾历史决策时也适用。
-user-invocable: true
+description: 决策记录工作流：引导决策过程、快速录入、回顾修订，维护决策记录文件。当用户要做技术决策、记录决策、回顾历史决策时使用。
 allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestion"]
 argument-hint: "[决策描述 | review | reinit]"
 ---

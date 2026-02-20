@@ -1,7 +1,6 @@
 ---
 name: xbase
-description: xSkills 初始化与状态管理。一键探测项目、初始化所有 skill、查看状态。(xSkills init, status, shared base)
-user-invocable: true
+description: xSkills 初始化与状态管理：一键探测项目、初始化所有 skill、查看状态。
 allowed-tools: ["Bash", "Read", "Edit", "Write", "Glob", "Grep", "AskUserQuestion", "Task"]
 argument-hint: "[init | status]"
 ---
@@ -29,6 +28,27 @@ python3 .claude/skills/xbase/scripts/skill-state.py reset-all
 ### 步骤 1 — 集中探测
 
 > 一次性收集所有信息，后续步骤直接使用结果。
+
+**CRITICAL — 三路并行探测协议**（适用于所有核心文件）：
+
+每个核心文件有三路互补搜索，每路都有盲区，缺任何一路都会漏文件：
+- **精确名** Glob — 漏：改过名的文件
+- **指纹** Grep — 漏：内容已变或为空的文件
+- **模糊名** Glob — 漏：名称无相关关键词的文件
+
+执行规则：
+1. **同批并行发出**：三路 Glob/Grep 必须在同一批 tool call 中发出，禁止看到某路结果后再决定是否跑其余
+2. **收齐后再判定**：汇总去重（排除 `.claude/`、`node_modules/`、`.git/`、`build/`、`target/`、`vendor/`、`DerivedData/`），对每个候选用内容指纹 regex 判格式：命中 → 已就绪，未命中（含空文件）→ 迁移候选
+3. **优先级**：output_dir 内 > 项目根 > 其他；精确文件名 > 非精确；已就绪 > 迁移候选
+4. **冲突**：多个已就绪 → AskUserQuestion 选规范文件，其余标记废弃候选
+5. **无候选** → 需创建
+
+**展示原始命中**（确保三路都有数值，0 也要写）：
+
+| 核心文件 | 精确名 | 指纹 | 模糊名 | 去重后候选 |
+|---------|-------|------|-------|-----------|
+| DEBUG-LOG.md | 1 | 1 | 2 | 2 |
+| ... | | | | |
 
 **项目级**
 
@@ -62,19 +82,19 @@ python3 .claude/skills/xbase/scripts/skill-state.py reset-all
 
 !`python3 .claude/skills/xbase/scripts/extract-section.py xdecide 探测`
 
-**展示探测结果**，等用户确认后进入步骤 2：
+**最终状态**（基于上方原始命中汇总推导），等用户确认后进入步骤 2：
 
-| Skill | 核心文件 | 状态 |
-|-------|---------|------|
-| xdebug | DEBUG-LOG.md | 需创建 / 迁移候选 / 已就绪 |
-| xtest | TEST-CHECKLIST.md | 需全量生成 / 迁移候选 / 增量更新 |
-| xtest | TEST-ISSUES.md | 需创建 / 迁移候选 / 已就绪 |
-| xlog | LOG-RULES.md | 需创建 / 迁移候选 / 已就绪 |
-| xlog | LOG-COVERAGE.md | 需创建 / 迁移候选 / 已就绪 |
-| xcommit | COMMIT-RULES.md | 需创建 / 迁移候选 / 已就绪 |
-| xreview | REVIEW-RULES.md | 需创建 / 迁移候选 / 已就绪 |
-| xdoc | DOC-RULES.md | 需创建 / 迁移候选 / 已就绪 |
-| xdecide | DECIDE-LOG.md | 需创建 / 迁移候选 / 已就绪 |
+| Skill | 核心文件 | 状态 | 废弃候选 |
+|-------|---------|------|---------|
+| xdebug | DEBUG-LOG.md | 需创建 / 迁移候选 / 已就绪 | （旧文件路径，无则留空） |
+| xtest | TEST-CHECKLIST.md | 需全量生成 / 迁移候选 / 增量更新 | |
+| xtest | TEST-ISSUES.md | 需创建 / 迁移候选 / 已就绪 | |
+| xlog | LOG-RULES.md | 需创建 / 迁移候选 / 已就绪 | |
+| xlog | LOG-COVERAGE.md | 需创建 / 迁移候选 / 已就绪 | |
+| xcommit | COMMIT-RULES.md | 需创建 / 迁移候选 / 已就绪 | |
+| xreview | REVIEW-RULES.md | 需创建 / 迁移候选 / 已就绪 | |
+| xdoc | DOC-RULES.md | 需创建 / 迁移候选 / 已就绪 | |
+| xdecide | DECIDE-LOG.md | 需创建 / 迁移候选 / 已就绪 | |
 
 ### 步骤 2 — 集中创建
 
@@ -126,37 +146,37 @@ python3 .claude/skills/xbase/scripts/skill-state.py reset-all
 
 !`python3 .claude/skills/xbase/scripts/extract-section.py xdecide 创建`
 
-### 步骤 3 — 集中去重
+### 步骤 3 — 集中清理
 
-> 所有核心文件已就位，一次性处理 CLAUDE.md 重复内容。
+> 所有核心文件已就位，一次性清理废弃文件和 CLAUDE.md 重复内容。
 
 **xdebug**
 
-!`python3 .claude/skills/xbase/scripts/extract-section.py xdebug 去重`
+!`python3 .claude/skills/xbase/scripts/extract-section.py xdebug 清理`
 
 **xtest**
 
-!`python3 .claude/skills/xbase/scripts/extract-section.py xtest 去重`
+!`python3 .claude/skills/xbase/scripts/extract-section.py xtest 清理`
 
 **xlog**
 
-!`python3 .claude/skills/xbase/scripts/extract-section.py xlog 去重`
+!`python3 .claude/skills/xbase/scripts/extract-section.py xlog 清理`
 
 **xcommit**
 
-!`python3 .claude/skills/xbase/scripts/extract-section.py xcommit 去重`
+!`python3 .claude/skills/xbase/scripts/extract-section.py xcommit 清理`
 
 **xreview**
 
-!`python3 .claude/skills/xbase/scripts/extract-section.py xreview 去重`
+!`python3 .claude/skills/xbase/scripts/extract-section.py xreview 清理`
 
 **xdoc**
 
-!`python3 .claude/skills/xbase/scripts/extract-section.py xdoc 去重`
+!`python3 .claude/skills/xbase/scripts/extract-section.py xdoc 清理`
 
 **xdecide**
 
-!`python3 .claude/skills/xbase/scripts/extract-section.py xdecide 去重`
+!`python3 .claude/skills/xbase/scripts/extract-section.py xdecide 清理`
 
 ### 步骤 4 — 汇总
 

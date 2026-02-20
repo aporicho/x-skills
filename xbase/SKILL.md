@@ -120,10 +120,6 @@ argument-hint: "[init | status | reset | reinit]"
 
 !`cat .claude/skills/xdecide/references/init-steps.md`
 
----
-
-展示所有 skill 的处理结果（✅ 创建 / ⏭️ 跳过）。
-
 ### 步骤 3 — 去重
 
 !`cat .claude/skills/xbase/references/dedup-steps.md`
@@ -173,149 +169,11 @@ Skill 状态：
 
 ---
 
-## 其他 skill 的初始化协议
+## 关键原则
 
-所有非 xbase 的 skill 采用**双轨初始化**：可独立完成初始化，无需调用 xbase。
-
-**运行时路径**：
-```
-预加载：check-and-read <skill>
-├── initialized → 跳过阶段 0，直接进入阶段 1
-└── not_found   → 执行阶段 0（DCI 注入 prep-steps.md + init-steps.md，独立完成初始化）
-```
-
-**批量路径**：`/xbase init` 通过 Task 子 agent 并行调用各 skill 的 `init-steps.md`，效果相同。
-
-各 skill 的 SKILL.md 中阶段 0 固定写法：
-
-```markdown
-### 阶段 0：探测项目
-
-!`cat .claude/skills/xbase/references/prep-steps.md`
-
-以下为本 skill 的特有探测步骤：
-
-!`cat .claude/skills/<skill>/references/init-steps.md`
-```
-
-`prep-steps.md` 步骤 1 负责处理跳过逻辑（`initialized` → 跳过整个阶段 0）。
-
-reinit 参数处理：`skill-state.py delete <skill>` 清空本 skill 状态后，预加载返回 `not_found`，正常触发阶段 0 重新初始化。
-
----
-
-## SKILL-STATE.md 规范
-
-### 位置与生命周期
-
-`.claude/skills/xbase/SKILL-STATE.md` — 和脚本同目录，**模板预置**（所有段和字段已定义，值留空）。初始化时只需填值，不需要创建文件。
-
-### 读写方式
-
-```bash
-# 检查 skill 是否已初始化
-python3 .claude/skills/xbase/scripts/skill-state.py check <skill>
-# 输出: "initialized" 或 "not_found"
-
-# 检查并读取完整状态（预加载用）
-python3 .claude/skills/xbase/scripts/skill-state.py check-and-read <skill>
-
-# 读取完整状态
-python3 .claude/skills/xbase/scripts/skill-state.py read
-
-# 写入 skill 状态（自动添加 initialized 日期）
-python3 .claude/skills/xbase/scripts/skill-state.py write <skill> <key> <value> [...]
-
-# 写入项目信息
-python3 .claude/skills/xbase/scripts/skill-state.py write-info <key> <value> [...]
-
-# 清空 skill 段的值（保留结构）
-python3 .claude/skills/xbase/scripts/skill-state.py delete <skill>
-
-# 清空项目信息
-python3 .claude/skills/xbase/scripts/skill-state.py delete-info
-
-# 恢复模板（清空所有状态）
-python3 .claude/skills/xbase/scripts/skill-state.py reset-all
-```
-
-### 关键字段
-
-- **output_dir**（项目信息段）— 所有核心文件的统一存放目录
-- **initialized**（各 skill 段）— 初始化日期，`check` 通过此字段判断是否已初始化
-
-### 路径格式
-
-SKILL-STATE.md 中存储的所有文件路径统一使用**相对于项目根目录的相对路径**（如 `document/90-开发/DEBUG-LOG.md`），不使用绝对路径。`status` 查看时，Glob 以项目根目录为基准执行文件存在检查。
-
----
-
-## TEST-ISSUES.md 协作协议
-
-### 脚本命令
-
-```bash
-python3 .claude/skills/xtest/scripts/issues.py list <path>              # 列出所有问题
-python3 .claude/skills/xtest/scripts/issues.py list <path> --status <状态>  # 按状态过滤
-python3 .claude/skills/xtest/scripts/issues.py stats <path>             # 状态计数
-python3 .claude/skills/xtest/scripts/issues.py status <path> <id> <状态>  # 更新状态
-python3 .claude/skills/xtest/scripts/issues.py next-id <path>           # 下一个编号
-```
-
-### 职责分工
-
-- **xtest**：创建 TEST-ISSUES.md、写入 🔴 条目、复测后改 ✅
-- **xdebug**：选取 🔴 条目修复（改 🟡），修好后改 🟢 并写修复说明
-
-### 文件路径
-
-SKILL-STATE.md `## xtest` 的 `test_issues` 字段。格式见 `../xtest/references/test-issues-format.md`。
-
----
-
-## 决策记录协作协议
-
-### 脚本命令
-
-```bash
-python3 .claude/skills/xdecide/scripts/decision-log.py list <path>           # 列出决策
-python3 .claude/skills/xdecide/scripts/decision-log.py next-id <path>        # 下一个编号
-python3 .claude/skills/xdecide/scripts/decision-log.py search <path> <keyword>  # 搜索
-```
-
-### 职责分工
-
-- **xdecide**：创建决策记录、引导决策过程、写入内容
-- **xdebug**：修复涉及技术决策时衔接 `/xdecide`
-- **xreview**：审查发现架构问题时衔接 `/xdecide`
-- **xcommit**：文档完整性检查时检测未记录的决策
-
-### 文件路径
-
-SKILL-STATE.md `## xdecide` 的 `decision_log` 字段。格式见 `../xdecide/references/decision-format.md`。
-
----
-
-## 跨 skill 衔接
-
-所有衔接通过 AskUserQuestion 选项实现（用户主动选择），不自动跳转。
-
-- **xdebug → xlog**：子 agent 补日志（Task prompt 传入文件路径和问题描述）
-- **xtest → xdebug**：选"立即修复"（传递 TEST-ISSUES.md 条目编号如 `#003`）
-- **xtest → xcommit**：选"提交变更"
-- **xdebug → xdecide**：选"记录决策"（传递技术决策背景描述）
-- **xdebug → xcommit**：选"提交变更"
-- **xreview → xdecide**：选"记录决策"（传递架构问题描述）
-- **xreview → xcommit**：选"提交变更"
-- **xdecide → xcommit**：选"提交变更"
-- **xdoc → xcommit**：选"提交变更"
-
-### 上下文传递
-
-| 衔接 | 传递内容 |
-|------|----------|
-| xdebug → xlog | Task prompt 中传入目标文件路径和问题描述 |
-| xtest → xdebug | TEST-ISSUES.md 中 🔴 条目编号（如 `#003`） |
-| xdebug → xdecide | 技术决策背景（如"修复时发现 XX 架构问题"） |
-| xreview → xdecide | 架构问题描述（如"依赖方向违反：XX → YY"） |
-| * → xcommit | 无需传递，xcommit 自行读取 git status/diff |
+- **只探测不创建** — 步骤 1 只收集信息，步骤 2 才创建文件
+- **三态皆写路径** — 无论 ✅/🔄/❌，处理后都写入 SKILL-STATE.md，避免循环初始化
+- **相对路径** — SKILL-STATE.md 中所有路径统一使用相对于项目根目录的相对路径
+- **write-info 立即执行** — A 区探测完立即写入 output_dir，不等用户确认
+- **去重保守** — 方法论/禁令/哲学保留原文，只替换已被核心文件覆盖的具体规范
+- **重置不删文件** — reset 只清空状态记录，不修改或删除已创建的核心文件

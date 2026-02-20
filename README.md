@@ -95,7 +95,7 @@ xdecide ──→ xcommit
 │   └── references/
 │       ├── init-steps.md               # 项目级探测/创建流程
 │       ├── prep-steps.md               # 阶段 0 标准流程模板
-│       └── infra-setup.md              # 调试基础设施检查（run.sh 格式规范）
+│       └── prep-steps.md               # 阶段 0 标准流程模板
 │
 ├── xtest/
 │   ├── SKILL.md

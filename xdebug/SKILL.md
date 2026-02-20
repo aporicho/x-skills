@@ -20,7 +20,7 @@ argument-hint: "[bug描述 | #issue编号 | reinit]"
 | 文件 | 说明 | 格式规范 |
 |------|------|----------|
 | `DEBUG-LOG.md` | Bug 修复日志（症状→根因→解决） | `references/debug-log-format.md` |
-| `scripts/run.sh`（或等价物） | 调试运行脚本（构建/启动/停止/日志） | `../xbase/references/infra-setup.md` |
+| `scripts/run.sh`（或等价物） | 调试运行脚本（构建/启动/停止/日志） | 阶段 0 init-steps 创建 |
 
 ### 预加载状态
 !`python3 .claude/skills/xbase/scripts/skill-state.py check-and-read xdebug 2>/dev/null`

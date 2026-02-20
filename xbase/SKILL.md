@@ -88,45 +88,77 @@ python3 .claude/skills/xbase/scripts/skill-state.py reset-all
 
 **xdebug**
 
-!`python3 .claude/skills/xbase/scripts/extract-section.py xdebug 创建 去重`
+!`python3 .claude/skills/xbase/scripts/extract-section.py xdebug 创建`
 
 ---
 
 **xtest**
 
-!`python3 .claude/skills/xbase/scripts/extract-section.py xtest 创建 去重`
+!`python3 .claude/skills/xbase/scripts/extract-section.py xtest 创建`
 
 ---
 
 **xlog**
 
-!`python3 .claude/skills/xbase/scripts/extract-section.py xlog 创建 去重`
+!`python3 .claude/skills/xbase/scripts/extract-section.py xlog 创建`
 
 ---
 
 **xcommit**
 
-!`python3 .claude/skills/xbase/scripts/extract-section.py xcommit 创建 去重`
+!`python3 .claude/skills/xbase/scripts/extract-section.py xcommit 创建`
 
 ---
 
 **xreview**
 
-!`python3 .claude/skills/xbase/scripts/extract-section.py xreview 创建 去重`
+!`python3 .claude/skills/xbase/scripts/extract-section.py xreview 创建`
 
 ---
 
 **xdoc**
 
-!`python3 .claude/skills/xbase/scripts/extract-section.py xdoc 创建 去重`
+!`python3 .claude/skills/xbase/scripts/extract-section.py xdoc 创建`
 
 ---
 
 **xdecide**
 
-!`python3 .claude/skills/xbase/scripts/extract-section.py xdecide 创建 去重`
+!`python3 .claude/skills/xbase/scripts/extract-section.py xdecide 创建`
 
-### 步骤 3 — 汇总
+### 步骤 3 — 集中去重
+
+> 所有核心文件已就位，一次性处理 CLAUDE.md 重复内容。
+
+**xdebug**
+
+!`python3 .claude/skills/xbase/scripts/extract-section.py xdebug 去重`
+
+**xtest**
+
+!`python3 .claude/skills/xbase/scripts/extract-section.py xtest 去重`
+
+**xlog**
+
+!`python3 .claude/skills/xbase/scripts/extract-section.py xlog 去重`
+
+**xcommit**
+
+!`python3 .claude/skills/xbase/scripts/extract-section.py xcommit 去重`
+
+**xreview**
+
+!`python3 .claude/skills/xbase/scripts/extract-section.py xreview 去重`
+
+**xdoc**
+
+!`python3 .claude/skills/xbase/scripts/extract-section.py xdoc 去重`
+
+**xdecide**
+
+!`python3 .claude/skills/xbase/scripts/extract-section.py xdecide 去重`
+
+### 步骤 4 — 汇总
 
 展示所有核心文件的创建结果和项目信息概览。
 

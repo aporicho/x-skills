@@ -68,6 +68,7 @@ xdecide ──→ xcommit
 |------|------|
 | `skill-state.py` | SKILL-STATE.md 读写接口（check/read/write/delete/reset-all） |
 | `artifact-create.py` | 从 `references/*-format.md` 生成产出物骨架 |
+| `extract-section.py` | 从 init-steps.md 按节名（探测/创建/去重）提取内容 |
 
 各 skill 的领域工具：
 
@@ -89,36 +90,41 @@ xdecide ──→ xcommit
 │   ├── SKILL-STATE.md
 │   ├── scripts/
 │   │   ├── skill-state.py
-│   │   └── artifact-create.py
+│   │   ├── artifact-create.py
+│   │   └── extract-section.py
 │   └── references/
-│       ├── prep-steps.md             # 阶段 0 标准流程模板
-│       ├── dedup-steps.md            # 去重流程
-│       ├── detect-steps.md           # 项目探测步骤
-│       ├── infra-setup.md            # 调试基础设施检查
-│       └── state-spec.md             # SKILL-STATE.md 规范
+│       ├── init-steps.md               # 项目级探测/创建流程
+│       ├── prep-steps.md               # 阶段 0 标准流程模板
+│       ├── dedup-steps.md              # 去重流程
+│       ├── infra-setup.md              # 调试基础设施检查
+│       └── state-spec.md               # SKILL-STATE.md 规范
 │
 ├── xtest/
 │   ├── SKILL.md
 │   ├── scripts/
 │   │   └── issues.py
 │   └── references/
+│       ├── init-steps.md
 │       ├── checklist-format.md
 │       └── test-issues-format.md
 │
 ├── xdebug/
 │   ├── SKILL.md
 │   └── references/
+│       ├── init-steps.md
 │       └── debug-log-format.md
 │
 ├── xlog/
 │   ├── SKILL.md
 │   └── references/
+│       ├── init-steps.md
 │       ├── log-rules-format.md
 │       └── log-coverage-format.md
 │
 ├── xreview/
 │   ├── SKILL.md
 │   └── references/
+│       ├── init-steps.md
 │       └── review-rules-format.md
 │
 ├── xdecide/
@@ -126,11 +132,13 @@ xdecide ──→ xcommit
 │   ├── scripts/
 │   │   └── decision-log.py
 │   └── references/
+│       ├── init-steps.md
 │       └── decision-format.md
 │
 ├── xdoc/
 │   ├── SKILL.md
 │   └── references/
+│       ├── init-steps.md
 │       └── doc-rules-format.md
 │
 └── xcommit/
@@ -138,6 +146,7 @@ xdecide ──→ xcommit
     ├── scripts/
     │   └── git-context.py
     └── references/
+        ├── init-steps.md
         └── commit-rules-format.md
 ```
 

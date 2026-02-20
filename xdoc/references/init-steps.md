@@ -19,10 +19,12 @@
 
 1. **DOC-RULES.md 处理**：
    - 需创建 → 基于探测结果生成（格式见 `references/doc-rules-format.md`），每条规则标注来源（`CLAUDE.md` 或 `项目扫描`）
-   - 迁移候选 → 用 AskUserQuestion 问是否重新生成（保留旧文件为 `.bak`）
+   - 迁移候选 → 基于探测结果重新生成，删除旧文件
    - 已就绪 → 跳过
 2. **写入状态**：`python3 .claude/skills/xbase/scripts/skill-state.py write xdoc doc_rules "<DOC-RULES.md 路径>"`
 
 ## 去重
 
-按 `../xbase/references/dedup-steps.md` 流程执行。xdoc 当前无对应重复内容 → **跳过**。
+读取 CLAUDE.md/MEMORY.md，对比本 skill 核心文件（路径从 SKILL-STATE.md 获取），将已被覆盖的具体规范替换为一句话指针（方法论/禁令保留原文）。有重复时逐条展示 diff，AskUserQuestion 确认后 Edit 替换。
+
+xdoc 当前无对应重复内容 → **跳过**。

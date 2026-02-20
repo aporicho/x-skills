@@ -15,7 +15,7 @@
 1. **补齐调试基础设施**：对探测中标记缺失的能力，按 `../xbase/references/infra-setup.md` 自动创建
 2. **TEST-CHECKLIST.md 处理**：
    - 需全量生成 → 执行步骤 3-5 生成
-   - 迁移候选 → 用 AskUserQuestion 询问是否迁移（保留原始测试结果，套用新格式）
+   - 迁移候选 → 保留原始测试结果套用新格式，删除旧文件
    - 增量更新 → 只扫描 `git diff` 变更的文件，新增/删除对应测试项，跳到阶段 1
 3. **扫描代码**生成测试功能点（代码是唯一事实来源）：
    - **全量生成时用并行子 agent 加速**：按语言/模块拆分，每个子 agent（Task 工具）扫描一个区域，最后合并结果
@@ -31,10 +31,12 @@
    - 🤝 结合：机器准备场景，人验证结果
 6. **TEST-ISSUES.md 处理**：
    - 需创建 → 创建空模板（格式见 `references/test-issues-format.md`）
-   - 迁移候选 → 用 AskUserQuestion 询问是否迁移
+   - 迁移候选 → 保留原始内容套用新格式，删除旧文件
    - 已就绪 → 跳过
 7. **写入状态**：`python3 .claude/skills/xbase/scripts/skill-state.py write xtest test_checklist "<TEST-CHECKLIST.md 路径>" test_issues "<TEST-ISSUES.md 路径>"`
 
 ## 去重
 
-按 `../xbase/references/dedup-steps.md` 流程执行。xtest 当前无对应重复内容 → **跳过**。
+读取 CLAUDE.md/MEMORY.md，对比本 skill 核心文件（路径从 SKILL-STATE.md 获取），将已被覆盖的具体规范替换为一句话指针（方法论/禁令保留原文）。有重复时逐条展示 diff，AskUserQuestion 确认后 Edit 替换。
+
+xtest 当前无对应重复内容 → **跳过**。

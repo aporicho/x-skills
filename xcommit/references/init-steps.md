@@ -17,10 +17,12 @@
 
 1. **COMMIT-RULES.md 处理**：
    - 需创建 → 基于探测结果生成（格式见 `references/commit-rules-format.md`），每条规则标注来源（`CLAUDE.md` 或 `项目扫描`）
-   - 迁移候选 → 用 AskUserQuestion 问是否重新生成（保留旧文件为 `.bak`）
+   - 迁移候选 → 基于探测结果重新生成，删除旧文件
    - 已就绪 → 跳过
 2. **写入状态**：`python3 .claude/skills/xbase/scripts/skill-state.py write xcommit commit_rules "<COMMIT-RULES.md 路径>"`
 
 ## 去重
 
-按 `../xbase/references/dedup-steps.md` 流程执行。xcommit 去重职责：CLAUDE.md `## Git 提交规范` 段 → 替换为指向 COMMIT-RULES.md 的指针。
+读取 CLAUDE.md/MEMORY.md，对比本 skill 核心文件（路径从 SKILL-STATE.md 获取），将已被覆盖的具体规范替换为一句话指针（方法论/禁令保留原文）。有重复时逐条展示 diff，AskUserQuestion 确认后 Edit 替换。
+
+xcommit 职责：CLAUDE.md `## Git 提交规范` 段 → 替换为指向 COMMIT-RULES.md 的指针。

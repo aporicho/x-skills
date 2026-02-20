@@ -22,8 +22,8 @@ import fcntl
 from datetime import date
 from pathlib import Path
 
-# 和脚本同目录，不依赖项目结构
-STATE_FILE = Path(__file__).resolve().parent / "SKILL-STATE.md"
+# xbase 根目录下的状态文件（脚本在 scripts/ 子目录，需上溯一级）
+STATE_FILE = Path(__file__).resolve().parent.parent / "SKILL-STATE.md"
 
 TEMPLATE = """\
 # SKILL STATE

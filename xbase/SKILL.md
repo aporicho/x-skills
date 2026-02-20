@@ -38,9 +38,9 @@ python3 .claude/skills/xbase/scripts/skill-state.py reset-all
 
 执行规则：
 1. **同批并行发出**：三路 Glob/Grep 必须在同一批 tool call 中发出，禁止看到某路结果后再决定是否跑其余
-2. **收齐后再判定**：汇总去重（排除 `.claude/`、`node_modules/`、`.git/`、`build/`、`target/`、`vendor/`、`DerivedData/`），对每个候选用内容指纹 regex 判格式：命中 → 已就绪，未命中（含空文件）→ 迁移候选
+2. **收齐后再判定**：汇总去重（排除 `.claude/`、`node_modules/`、`.git/`、`build/`、`target/`、`vendor/`、`DerivedData/`），对每个候选用内容指纹 regex 判格式：命中 → 已就绪，未命中且有实质内容 → 迁移候选，未命中且文件为空 → 需创建
 3. **优先级**：output_dir 内 > 项目根 > 其他；精确文件名 > 非精确；已就绪 > 迁移候选
-4. **冲突**：多个已就绪 → AskUserQuestion 选规范文件，其余标记废弃候选
+4. **冲突**：多个已就绪 → 若优先级有明确差距（如 output_dir 内 vs 项目根），自动选高优先级文件，低优先级标记废弃候选；若同级冲突（如都在 output_dir 内），AskUserQuestion 选规范文件
 5. **无候选** → 需创建
 
 **展示原始命中**（确保三路都有数值，0 也要写）：
@@ -186,9 +186,8 @@ python3 .claude/skills/xbase/scripts/skill-state.py reset-all
 
 ## `status`：状态查看
 
-1. 使用预加载状态（已在上方执行 `skill-state.py read`），对每个 skill 检查 `initialized` 字段
-2. 对每个核心文件路径用 Glob 确认文件存在
-3. 展示汇总表：
+1. 使用预加载状态（已在上方执行 `skill-state.py read`），直接格式化展示
+2. 展示汇总表：
 
 ```
 xSkills 状态：
@@ -198,12 +197,12 @@ xSkills 状态：
 - 运行脚本：[值 / 未探测]
 
 Skill 状态：
-| Skill | 已初始化 | 核心文件 | 路径 | 文件存在 |
-|-------|---------|---------|------|---------|
-| xdebug | ✅ 2026-02-14 | DEBUG-LOG.md | document/DEBUG-LOG.md | ✅ |
-| xtest  | ❌ | TEST-CHECKLIST.md | — | ❌ |
-|        |    | TEST-ISSUES.md    | — | ❌ |
-| ...    | | | | |
+| Skill | 已初始化 | 核心文件 | 路径 |
+|-------|---------|---------|------|
+| xdebug | ✅ 2026-02-20 | DEBUG-LOG.md | document/90-开发/DEBUG-LOG.md |
+| xtest  | ❌ | TEST-CHECKLIST.md | — |
+|        |    | TEST-ISSUES.md    | — |
+| ...    | | | |
 ```
 
 > 多核心文件的 skill（如 xtest）每个文件占一行，Skill 和已初始化列在首行填写，后续行留空。路径列展示 SKILL-STATE.md 中记录的实际路径，未记录时显示 `—`。

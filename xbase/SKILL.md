@@ -200,11 +200,11 @@ Skill 状态：
 | Skill | 已初始化 | 核心文件 | 路径 |
 |-------|---------|---------|------|
 | xdebug | ✅ 2026-02-20 | DEBUG-LOG.md | document/90-开发/DEBUG-LOG.md |
-| xtest  | ❌ | TEST-CHECKLIST.md | — |
-|        |    | TEST-ISSUES.md    | — |
-| ...    | | | |
+| xtest | ❌ | TEST-CHECKLIST.md | — |
+| xtest | ❌ | TEST-ISSUES.md | — |
+| ... | | | |
 ```
 
-> 多核心文件的 skill（如 xtest）每个文件占一行，Skill 和已初始化列在首行填写，后续行留空。路径列展示 SKILL-STATE.md 中记录的实际路径，未记录时显示 `—`。
+> 多核心文件的 skill（如 xtest）每个文件占一行，每行都填写完整的 Skill 名和初始化状态。路径列展示 SKILL-STATE.md 中记录的实际路径，未记录时显示 `—`。
 
 

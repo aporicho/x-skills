@@ -21,12 +21,8 @@
 
 1. **LOG-RULES.md 处理**：
    - 需创建 → 基于扫描结果生成（格式见 `.claude/skills/xlog/references/log-rules-format.md`）
-   - 迁移候选 → 保留原始内容套用新格式（旧文件在清理步骤处理）
-   - 已就绪 → 跳过
 2. **LOG-COVERAGE.md 处理**：
    - 需创建 → 基于扫描结果生成（格式见 `.claude/skills/xlog/references/log-coverage-format.md`）
-   - 迁移候选 → 保留原始内容套用新格式（旧文件在清理步骤处理）
-   - 已就绪 → 跳过
 3. **写入状态**：`python3 .claude/skills/xbase/scripts/skill-state.py write xlog log_rules "<LOG-RULES.md 路径>" log_coverage "<LOG-COVERAGE.md 路径>"`
 
 ## 清理

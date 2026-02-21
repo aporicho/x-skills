@@ -11,8 +11,6 @@
 
 1. **DECIDE-LOG.md 处理**：
    - 需创建 → 在 `output_dir` 下创建（格式见 `.claude/skills/xdecide/references/decision-format.md`）
-   - 迁移候选 → 保留原始内容套用新格式（旧文件在清理步骤处理）
-   - 已就绪 → 跳过
 2. **写入状态**：`python3 .claude/skills/xbase/scripts/skill-state.py write xdecide decision_log "<路径>"`
 
 ## 清理

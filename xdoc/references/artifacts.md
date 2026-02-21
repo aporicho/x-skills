@@ -20,8 +20,6 @@
 
 1. **DOC-RULES.md 处理**：
    - 需创建 → 基于探测结果生成（格式见 `.claude/skills/xdoc/references/doc-rules-format.md`），每条规则标注来源（`CLAUDE.md` 或 `项目扫描`）
-   - 迁移候选 → 基于探测结果重新生成（旧文件在清理步骤处理）
-   - 已就绪 → 跳过
 2. **写入状态**：`python3 .claude/skills/xbase/scripts/skill-state.py write xdoc doc_rules "<DOC-RULES.md 路径>"`
 
 ## 清理

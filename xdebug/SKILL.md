@@ -19,18 +19,20 @@ argument-hint: "[bug描述 | #issue编号 | reinit]"
 | 文件 | 说明 | 格式规范 |
 |------|------|----------|
 | `DEBUG-LOG.md` | Bug 修复日志（症状→根因→解决） | `references/debug-log-format.md` |
-| `scripts/run.sh`（或等价物） | 调试运行脚本（构建/启动/停止/日志） | 阶段 0 init-steps 创建 |
+| `scripts/run.sh`（或等价物） | 调试运行脚本（构建/启动/停止/日志） | 阶段 0 artifacts 创建 |
 
 ### 预加载状态
 !`python3 .claude/skills/xbase/scripts/skill-state.py check-and-read xdebug 2>/dev/null`
 
 ### 阶段 0：探测项目
 
-!`cat .claude/skills/xbase/references/prep-steps.md`
+!`cat .claude/skills/xbase/references/protocol-prep.md`
 
-以下为本 skill 的特有探测步骤：
+!`cat .claude/skills/xbase/references/protocol-detection.md`
 
-!`cat .claude/skills/xdebug/references/init-steps.md`
+!`cat .claude/skills/xdebug/references/artifacts.md`
+
+!`cat .claude/skills/xbase/references/protocol-cleanup.md`
 
 ### 阶段 1：确认问题
 

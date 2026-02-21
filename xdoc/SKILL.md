@@ -26,11 +26,13 @@ argument-hint: "[健康检查 | 一致性 | reinit]"
 
 ### 阶段 0：探测项目
 
-!`cat .claude/skills/xbase/references/prep-steps.md`
+!`cat .claude/skills/xbase/references/protocol-prep.md`
 
-以下为本 skill 的特有探测步骤：
+!`cat .claude/skills/xbase/references/protocol-detection.md`
 
-!`cat .claude/skills/xdoc/references/init-steps.md`
+!`cat .claude/skills/xdoc/references/artifacts.md`
+
+!`cat .claude/skills/xbase/references/protocol-cleanup.md`
 
 ### 阶段 1：选择任务
 

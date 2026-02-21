@@ -18,7 +18,7 @@ argument-hint: "[自动化 | 手动 | reinit]"
 
 | 文件 | 说明 | 格式规范 |
 |------|------|----------|
-| `TEST-CHECKLIST.md` | 测试清单（按模块组织，记录测试结果） | `references/checklist-format.md` |
+| `TEST-CHECKLIST.md` | 测试清单（按模块组织，记录测试结果） | `references/test-checklist-format.md` |
 | `TEST-ISSUES.md` | Bug 队列（状态流转：🔴→🟡→🟢→✅） | `references/test-issues-format.md` |
 
 ### 预加载状态
@@ -26,11 +26,13 @@ argument-hint: "[自动化 | 手动 | reinit]"
 
 ### 阶段 0：初始化
 
-!`cat .claude/skills/xbase/references/prep-steps.md`
+!`cat .claude/skills/xbase/references/protocol-prep.md`
 
-以下为本 skill 的特有探测步骤：
+!`cat .claude/skills/xbase/references/protocol-detection.md`
 
-!`cat .claude/skills/xtest/references/init-steps.md`
+!`cat .claude/skills/xtest/references/artifacts.md`
+
+!`cat .claude/skills/xbase/references/protocol-cleanup.md`
 
 ### 阶段 1：选择测试类型
 

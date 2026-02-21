@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""从 init-steps.md 按节名提取内容。
+"""从 artifacts.md 按节名提取内容。
 
 用法: python3 extract-section.py <skill> <section> [<section2> ...]
 示例: python3 extract-section.py xdebug 探测
@@ -57,10 +57,10 @@ def main() -> None:
     skill = sys.argv[1]
     section_names = sys.argv[2:]
 
-    # 定位 init-steps.md
+    # 定位 artifacts.md
     script_dir = Path(__file__).resolve().parent
     skills_dir = script_dir.parent.parent  # .claude/skills/
-    filepath = skills_dir / skill / "references" / "init-steps.md"
+    filepath = skills_dir / skill / "references" / "artifacts.md"
 
     if not filepath.exists():
         print(f"错误：文件不存在 {filepath}", file=sys.stderr)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """SKILL-STATE.md 读写工具。
 
-供 xdebug/xtest/xlog/xcommit/xreview/xdoc/xdecide skill 使用，替代多次 Read/Edit tool call。
+供 xdebug/xtest skill 使用，替代多次 Read/Edit tool call。
 
 SKILL-STATE.md 作为模板预置在同目录下，所有段和字段已定义好，skill 初始化时只需填值。
 
@@ -28,7 +28,7 @@ STATE_FILE = Path(__file__).resolve().parent.parent / "SKILL-STATE.md"
 TEMPLATE = """\
 # SKILL STATE
 
-> 由 xdebug/xtest/xlog/xcommit/xreview/xdoc/xdecide 共同维护
+> 由 xdebug/xtest 共同维护
 
 ## 项目信息
 
@@ -44,32 +44,6 @@ TEMPLATE = """\
 
 - test_checklist:
 - test_issues:
-- initialized:
-
-## xlog
-
-- log_rules:
-- log_coverage:
-- initialized:
-
-## xcommit
-
-- commit_rules:
-- initialized:
-
-## xreview
-
-- review_rules:
-- initialized:
-
-## xdoc
-
-- doc_rules:
-- initialized:
-
-## xdecide
-
-- decision_log:
 - initialized:
 """
 

@@ -31,11 +31,13 @@ argument-hint: "[文件/模块路径 | reinit]"
 
 ### 阶段 0：探测项目日志系统
 
-!`cat .claude/skills/xbase/references/prep-steps.md`
+!`cat .claude/skills/xbase/references/protocol-prep.md`
 
-以下为本 skill 的特有探测步骤：
+!`cat .claude/skills/xbase/references/protocol-detection.md`
 
-!`cat .claude/skills/xlog/references/init-steps.md`
+!`cat .claude/skills/xlog/references/artifacts.md`
+
+!`cat .claude/skills/xbase/references/protocol-cleanup.md`
 
 ### 阶段 1：选择范围
 

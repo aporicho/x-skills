@@ -32,20 +32,14 @@
      - 子 agent D：扫描 FFI/API 边界
    - **增量更新时**：只扫描变更文件，不启动子 agent
 4. **文档作为补充**：参考项目文档补充业务逻辑、边界条件、用户场景
-5. 为每个功能点分类并生成 `TEST-CHECKLIST.md`（格式见 `.claude/skills/xtest/references/checklist-format.md`）：
+5. 为每个功能点分类并生成 `TEST-CHECKLIST.md`（格式见 `.claude/skills/xtest/references/test-checklist-format.md`）：
    - 🤖 自动化：已有测试代码覆盖，或可通过命令行验证
    - 👤 手动：需要启动 App 操作验证（UI 交互、视觉效果、动画等）
    - 🤝 结合：机器准备场景，人验证结果
 6. **TEST-ISSUES.md 处理**：
    - 需创建 → 创建空模板（格式见 `.claude/skills/xtest/references/test-issues-format.md`）
-   - 迁移候选 → 保留原始内容套用新格式（旧文件在清理步骤处理）
-   - 已就绪 → 跳过
 7. **写入状态**：`python3 .claude/skills/xbase/scripts/skill-state.py write xtest test_checklist "<TEST-CHECKLIST.md 路径>" test_issues "<TEST-ISSUES.md 路径>"`
 
 ## 清理
-
-**文件清理**：删除探测阶段标记的"废弃候选"文件（已被规范文件取代的旧文件）。有待删除文件时逐个展示，AskUserQuestion 确认后用 `rm -f` 删除（所有废弃文件合并到一条命令）。
-
-**引用清理**：读取 CLAUDE.md，对比本 skill 核心文件（路径从 SKILL-STATE.md 获取），将已被覆盖的具体规范替换为一句话指针（方法论/禁令保留原文）。有重复时逐条展示 diff，AskUserQuestion 确认后 Edit 替换。修复过时引用（指向已不存在的 skill 或旧文件名的引用）。
 
 xtest 当前无对应重复内容 → 仅执行文件清理。

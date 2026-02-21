@@ -29,26 +29,7 @@ python3 .claude/skills/xbase/scripts/skill-state.py reset-all
 
 > 一次性收集所有信息，后续步骤直接使用结果。
 
-**CRITICAL — 三路并行探测协议**（适用于所有核心文件）：
-
-每个核心文件有三路互补搜索，每路都有盲区，缺任何一路都会漏文件：
-- **精确名** Glob — 漏：改过名的文件
-- **指纹** Grep — 漏：内容已变或为空的文件
-- **模糊名** Glob — 漏：名称无相关关键词的文件
-
-执行规则：
-1. **同批并行发出**：三路 Glob/Grep 必须在同一批 tool call 中发出，禁止看到某路结果后再决定是否跑其余
-2. **收齐后再判定**：汇总去重（排除 `.claude/`、`node_modules/`、`.git/`、`build/`、`target/`、`vendor/`、`DerivedData/`），对每个候选用内容指纹 regex 判格式：命中 → 已就绪，未命中且有实质内容 → 迁移候选，未命中且文件为空 → 需创建
-3. **优先级**：output_dir 内 > 项目根 > 其他；精确文件名 > 非精确；已就绪 > 迁移候选
-4. **冲突**：多个已就绪 → 若优先级有明确差距（如 output_dir 内 vs 项目根），自动选高优先级文件，低优先级标记废弃候选；若同级冲突（如都在 output_dir 内），AskUserQuestion 选规范文件
-5. **无候选** → 需创建
-
-**展示原始命中**（确保三路都有数值，0 也要写）：
-
-| 核心文件 | 精确名 | 指纹 | 模糊名 | 去重后候选 |
-|---------|-------|------|-------|-----------|
-| DEBUG-LOG.md | 1 | 1 | 2 | 2 |
-| ... | | | | |
+!`cat .claude/skills/xbase/references/protocol-detection.md`
 
 **项目级**
 
@@ -58,21 +39,21 @@ python3 .claude/skills/xbase/scripts/skill-state.py reset-all
 
 !`python3 .claude/skills/xbase/scripts/extract-section.py xdebug 探测`
 
-**xtest**
-
-!`python3 .claude/skills/xbase/scripts/extract-section.py xtest 探测`
-
 **xlog**
 
 !`python3 .claude/skills/xbase/scripts/extract-section.py xlog 探测`
 
-**xcommit**
+**xtest**
 
-!`python3 .claude/skills/xbase/scripts/extract-section.py xcommit 探测`
+!`python3 .claude/skills/xbase/scripts/extract-section.py xtest 探测`
 
 **xreview**
 
 !`python3 .claude/skills/xbase/scripts/extract-section.py xreview 探测`
+
+**xcommit**
+
+!`python3 .claude/skills/xbase/scripts/extract-section.py xcommit 探测`
 
 **xdoc**
 
@@ -87,12 +68,12 @@ python3 .claude/skills/xbase/scripts/skill-state.py reset-all
 | Skill | 核心文件 | 状态 | 废弃候选 |
 |-------|---------|------|---------|
 | xdebug | DEBUG-LOG.md | 需创建 / 迁移候选 / 已就绪 | （旧文件路径，无则留空） |
-| xtest | TEST-CHECKLIST.md | 需全量生成 / 迁移候选 / 增量更新 | |
-| xtest | TEST-ISSUES.md | 需创建 / 迁移候选 / 已就绪 | |
 | xlog | LOG-RULES.md | 需创建 / 迁移候选 / 已就绪 | |
 | xlog | LOG-COVERAGE.md | 需创建 / 迁移候选 / 已就绪 | |
-| xcommit | COMMIT-RULES.md | 需创建 / 迁移候选 / 已就绪 | |
+| xtest | TEST-CHECKLIST.md | 需全量生成 / 迁移候选 / 增量更新 | |
+| xtest | TEST-ISSUES.md | 需创建 / 迁移候选 / 已就绪 | |
 | xreview | REVIEW-RULES.md | 需创建 / 迁移候选 / 已就绪 | |
+| xcommit | COMMIT-RULES.md | 需创建 / 迁移候选 / 已就绪 | |
 | xdoc | DOC-RULES.md | 需创建 / 迁移候选 / 已就绪 | |
 | xdecide | DECIDE-LOG.md | 需创建 / 迁移候选 / 已就绪 | |
 
@@ -112,27 +93,27 @@ python3 .claude/skills/xbase/scripts/skill-state.py reset-all
 
 ---
 
-**xtest**
-
-!`python3 .claude/skills/xbase/scripts/extract-section.py xtest 创建`
-
----
-
 **xlog**
 
 !`python3 .claude/skills/xbase/scripts/extract-section.py xlog 创建`
 
 ---
 
-**xcommit**
+**xtest**
 
-!`python3 .claude/skills/xbase/scripts/extract-section.py xcommit 创建`
+!`python3 .claude/skills/xbase/scripts/extract-section.py xtest 创建`
 
 ---
 
 **xreview**
 
 !`python3 .claude/skills/xbase/scripts/extract-section.py xreview 创建`
+
+---
+
+**xcommit**
+
+!`python3 .claude/skills/xbase/scripts/extract-section.py xcommit 创建`
 
 ---
 
@@ -150,25 +131,27 @@ python3 .claude/skills/xbase/scripts/skill-state.py reset-all
 
 > 所有核心文件已就位，一次性清理废弃文件和 CLAUDE.md 重复内容。
 
+!`cat .claude/skills/xbase/references/protocol-cleanup.md`
+
 **xdebug**
 
 !`python3 .claude/skills/xbase/scripts/extract-section.py xdebug 清理`
-
-**xtest**
-
-!`python3 .claude/skills/xbase/scripts/extract-section.py xtest 清理`
 
 **xlog**
 
 !`python3 .claude/skills/xbase/scripts/extract-section.py xlog 清理`
 
-**xcommit**
+**xtest**
 
-!`python3 .claude/skills/xbase/scripts/extract-section.py xcommit 清理`
+!`python3 .claude/skills/xbase/scripts/extract-section.py xtest 清理`
 
 **xreview**
 
 !`python3 .claude/skills/xbase/scripts/extract-section.py xreview 清理`
+
+**xcommit**
+
+!`python3 .claude/skills/xbase/scripts/extract-section.py xcommit 清理`
 
 **xdoc**
 
@@ -200,9 +183,14 @@ Skill 状态：
 | Skill | 已初始化 | 核心文件 | 路径 |
 |-------|---------|---------|------|
 | xdebug | ✅ 2026-02-20 | DEBUG-LOG.md | document/90-开发/DEBUG-LOG.md |
+| xlog | ❌ | LOG-RULES.md | — |
+| xlog | ❌ | LOG-COVERAGE.md | — |
 | xtest | ❌ | TEST-CHECKLIST.md | — |
 | xtest | ❌ | TEST-ISSUES.md | — |
-| ... | | | |
+| xreview | ❌ | REVIEW-RULES.md | — |
+| xcommit | ❌ | COMMIT-RULES.md | — |
+| xdoc | ❌ | DOC-RULES.md | — |
+| xdecide | ❌ | DECIDE-LOG.md | — |
 ```
 
 > 多核心文件的 skill（如 xtest）每个文件占一行，每行都填写完整的 Skill 名和初始化状态。路径列展示 SKILL-STATE.md 中记录的实际路径，未记录时显示 `—`。

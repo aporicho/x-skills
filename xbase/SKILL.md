@@ -63,20 +63,20 @@ python3 .claude/skills/xbase/scripts/skill-state.py reset-all
 
 !`python3 .claude/skills/xbase/scripts/include.py xbase xdecide:探测 $ARGUMENTS`
 
-**最终状态**（基于上方原始命中汇总推导），等用户确认后进入阶段 2：
+展示**最终状态**表（基于上方原始命中汇总推导），等待用户确认后进入阶段 2：
 
 | Skill | 核心文件 | 状态 | 废弃候选 |
 |-------|---------|------|---------|
-| xbase | run.sh | 需创建 / 迁移候选 / 已就绪 | （旧文件路径，无则留空） |
-| xdebug | DEBUG-LOG.md | 需创建 / 迁移候选 / 已就绪 | |
-| xlog | LOG-RULES.md | 需创建 / 迁移候选 / 已就绪 | |
-| xlog | LOG-COVERAGE.md | 需创建 / 迁移候选 / 已就绪 | |
+| xbase | run.sh | 需创建 / 迁移候选 / 需更新 / 已就绪 | （旧文件路径，无则留空） |
+| xdebug | DEBUG-LOG.md | 需创建 / 迁移候选 / 需更新 / 已就绪 | |
+| xlog | LOG-RULES.md | 需创建 / 迁移候选 / 需更新 / 已就绪 | |
+| xlog | LOG-COVERAGE.md | 需创建 / 迁移候选 / 需更新 / 已就绪 | |
 | xtest | TEST-CHECKLIST.md | 需创建 / 迁移候选 / 需更新 / 已就绪 | |
-| xtest | TEST-ISSUES.md | 需创建 / 迁移候选 / 已就绪 | |
-| xreview | REVIEW-RULES.md | 需创建 / 迁移候选 / 已就绪 | |
-| xcommit | COMMIT-RULES.md | 需创建 / 迁移候选 / 已就绪 | |
-| xdoc | DOC-RULES.md | 需创建 / 迁移候选 / 已就绪 | |
-| xdecide | DECIDE-LOG.md | 需创建 / 迁移候选 / 已就绪 | |
+| xtest | TEST-ISSUES.md | 需创建 / 迁移候选 / 需更新 / 已就绪 | |
+| xreview | REVIEW-RULES.md | 需创建 / 迁移候选 / 需更新 / 已就绪 | |
+| xcommit | COMMIT-RULES.md | 需创建 / 迁移候选 / 需更新 / 已就绪 | |
+| xdoc | DOC-RULES.md | 需创建 / 迁移候选 / 需更新 / 已就绪 | |
+| xdecide | DECIDE-LOG.md | 需创建 / 迁移候选 / 需更新 / 已就绪 | |
 
 ### 阶段 2：集中创建
 
@@ -180,7 +180,7 @@ xSkills 状态：
 
 | 项目信息 | 值 |
 |---------|------|
-| output_dir | [值 / 未探测] |
+| doc_dir | [值 / 未探测] |
 
 | Skill | 已初始化 | 核心文件 | 路径 |
 |-------|---------|---------|------|

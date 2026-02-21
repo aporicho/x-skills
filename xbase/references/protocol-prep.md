@@ -9,12 +9,12 @@
 
 **步骤 2：项目探测**
 
-> 如预加载输出中 `## 项目信息` 的 `output_dir` 已有值（其他 skill 已写入）→ 跳过本步。
+> 如预加载输出中 `## 项目信息` 的 `doc_dir` 已有值（其他 skill 已写入）→ 跳过本步。
 
 1. 用 Glob 扫描项目根目录，识别标志文件（Cargo.toml、Package.swift、*.xcodeproj、package.json 等）
 2. 读 CLAUDE.md，理解构建命令、项目类型、日志系统等
 3. 找到文档目录（`document/`、`docs/`、`doc/` 等），未找到则创建 `docs/`
 4. 写入探测结果：
    ```bash
-   python3 .claude/skills/xbase/scripts/skill-state.py write-info output_dir "<目录>"
+   python3 .claude/skills/xbase/scripts/skill-state.py write-info doc_dir "<目录>"
    ```

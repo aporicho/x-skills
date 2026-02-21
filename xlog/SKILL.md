@@ -24,7 +24,7 @@ argument-hint: "[文件/模块路径 | reinit]"
 | `LOG-RULES.md` | 日志规范（Logger 列表、级别用法、代码模式） | `references/log-rules-format.md` |
 | `LOG-COVERAGE.md` | 日志覆盖度跟踪（模块扫描状态） | `references/log-coverage-format.md` |
 
-两个文件均由 `/xlog` 创建和维护，存放在 SKILL-STATE.md 的 `output_dir` 目录下。
+两个文件均由 `/xlog` 创建和维护，存放在 SKILL-STATE.md 的 `doc_dir` 目录下。
 
 ### 预加载状态
 !`python3 .claude/skills/xbase/scripts/skill-state.py check-and-read xlog 2>/dev/null`

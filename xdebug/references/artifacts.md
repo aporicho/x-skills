@@ -11,5 +11,5 @@
 
 1. **构建命令补齐**：构建命令缺失 → 根据项目类型推导
 2. **DEBUG-LOG.md 处理**：
-   - 需创建 → 在 `output_dir` 下创建（格式见 `.claude/skills/xdebug/references/debug-log-format.md`）
+   - 需创建 → 在 `doc_dir` 下创建（格式见 `.claude/skills/xdebug/references/debug-log-format.md`）
 3. **写入状态**：`python3 .claude/skills/xbase/scripts/skill-state.py write xdebug debug_log "<DEBUG-LOG.md 路径>"`

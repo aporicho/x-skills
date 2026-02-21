@@ -7,6 +7,13 @@
 用法:
     python3 include.py <gate_skill> <ref> [user_args...]
 
+参数说明:
+    gate_skill  注入门控 skill——用于决定是否跳过注入。
+                如果该 skill 已初始化且 user_args 中无 reinit，则跳过（输出空）。
+                特例：gate_skill 为 xbase 时，仅在 user_args[0] == "status" 时跳过。
+    ref         引用目标，解析规则见下表。
+    user_args   透传的用户参数（如 reinit、status 等）。
+
 ref 解析规则（skills_dir = 脚本上两级目录）：
 
 | ref 格式           | 解析                                    | 示例              |
@@ -31,7 +38,11 @@ STATE_FILE = SKILLS_DIR / "xbase" / "SKILL-STATE.md"
 
 
 def is_initialized(skill: str) -> bool:
-    """检查 skill 是否已初始化。"""
+    """检查 skill 是否已初始化。
+
+    注意：此逻辑与 skill-state.py cmd_check 保持同步。
+    如修改判定规则，两处须同步更新。
+    """
     if not STATE_FILE.exists():
         return False
     content = STATE_FILE.read_text(encoding="utf-8")

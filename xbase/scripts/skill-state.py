@@ -30,7 +30,7 @@ TEMPLATE = """\
 
 ## 项目信息
 
-- output_dir:
+- doc_dir:
 
 ## xbase
 

@@ -2,7 +2,7 @@
 
 ## 创建位置
 
-存放在 SKILL-STATE.md 的 `output_dir` 目录下。
+存放在 SKILL-STATE.md 的 `doc_dir` 目录下。
 
 ## 文件格式
 

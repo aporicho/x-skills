@@ -4,7 +4,7 @@
 
 ## 项目信息
 
-- output_dir: document/90-开发
+- doc_dir: document/90-开发
 
 ## xbase
 

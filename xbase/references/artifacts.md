@@ -13,9 +13,9 @@
 ## 创建
 
 1. **文档目录**：
-   - output_dir 已存在 → 无操作
-   - output_dir 待创建 → 创建 `docs/`
-   - 写入状态：`python3 .claude/skills/xbase/scripts/skill-state.py write-info output_dir "<路径>"`
+   - doc_dir 已存在 → 无操作
+   - doc_dir 待创建 → 创建 `docs/`
+   - 写入状态：`python3 .claude/skills/xbase/scripts/skill-state.py write-info doc_dir "<路径>"`
 2. **运行脚本**（对探测中标记"待创建"的）：
    - 在 `scripts/` 下创建，需支持：`build`（构建）、`start`（后台启动 + 日志捕获到文件）、`stop`（停止进程）、`logs [filter]`（读取/过滤日志）、`status`（检查运行状态）
    - 创建后验证：运行 `build` 和 `status` 确认可用，失败则修复重试

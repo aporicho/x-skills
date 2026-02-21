@@ -39,6 +39,8 @@ argument-hint: "[targeted <路径> [问题上下文] | reinit]"
 
 !`python3 .claude/skills/xbase/scripts/include.py xlog xlog/artifacts $ARGUMENTS`
 
+!`python3 .claude/skills/xbase/scripts/include.py xlog xlog/log-quality-principles $ARGUMENTS`
+
 !`python3 .claude/skills/xbase/scripts/include.py xlog protocol-cleanup $ARGUMENTS`
 
 ### 阶段 1：选择范围
@@ -59,16 +61,17 @@ argument-hint: "[targeted <路径> [问题上下文] | reinit]"
 
 ### 阶段 2：扫描 + 确认 + 补全 + 纠正
 
-1. 读取 LOG-RULES.md 获取本项目的日志规则
-2. 确定扫描范围（来自阶段 1 选择或参数指定）
-3. 读取目标代码，检查两类问题：
+!`python3 .claude/skills/xbase/scripts/include.py xlog $log_rules $ARGUMENTS`
+
+1. 确定扫描范围（来自阶段 1 选择或参数指定）
+2. 读取目标代码，按上方注入的 LOG-RULES.md 检查两类问题：
    - **盲区**：该有日志但没有的位置 → 补充
    - **不规范**：已有日志但不符合 LOG-RULES.md → 纠正
      - 违反项目禁忌（如用 print 代替 Logger）
      - 级别错误（如 guard 失败用了 debug 而非 warning）
      - Logger 实例不匹配（如交互代码用了 `Log.general` 而非 `Log.interaction`）
      - 消息风格不符（如只描述现象不解释原因）
-4. **确认步骤**（仅交互模式，targeted 跳过）：展示发现摘要，用 AskUserQuestion：
+3. **确认步骤**（仅交互模式，targeted 跳过）：展示发现摘要，用 AskUserQuestion：
 
 ```
 问题：扫描完成，发现 X 处盲区、Y 处不规范。[简要列出关键发现]
@@ -79,9 +82,9 @@ argument-hint: "[targeted <路径> [问题上下文] | reinit]"
 - 取消
 ```
 
-5. 执行补全/纠正
-6. 构建确认编译通过
-7. 编译失败 → 自己修复
+4. 执行补全/纠正
+5. 构建确认编译通过
+6. 编译失败 → 自己修复
 
 ### 阶段 3：汇报
 
@@ -104,15 +107,15 @@ argument-hint: "[targeted <路径> [问题上下文] | reinit]"
 
 > 由 `/xdebug` 子 agent 调用，或用户直接以 `targeted <路径> [问题上下文]` 参数触发。
 
+!`python3 .claude/skills/xbase/scripts/include.py xlog $log_rules $ARGUMENTS`
+
 流程：
 
-1. **读状态** — 从 SKILL-STATE.md 获取 LOG-RULES.md 路径
-2. **读规范** — 读取 LOG-RULES.md
-3. **补日志** — 读取目标路径代码，结合问题上下文，在关键决策点和边界处补充诊断日志
-4. **构建验证** — 执行构建命令确认编译通过
+1. **补日志** — 读取目标路径代码，结合问题上下文，按上方注入的 LOG-RULES.md，在关键决策点和边界处补充诊断日志
+2. **构建验证** — 执行构建命令确认编译通过
    - 编译失败 → 最多重试 2 次（修复后重新构建）
    - 仍失败 → 回滚所有日志变更，输出失败摘要，退出
-5. **输出摘要** — 一行摘要（如"已在 3 个文件补充 5 条日志"），直接输出文本（非 AskUserQuestion），退出
+3. **输出摘要** — 一行摘要（如"已在 3 个文件补充 5 条日志"），直接输出文本（非 AskUserQuestion），退出
 
 轻量模式不执行阶段 1 的范围选择和阶段 2 的确认步骤，也不进入阶段 3 的交互式汇报。
 

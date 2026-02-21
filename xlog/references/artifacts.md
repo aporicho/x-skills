@@ -15,5 +15,5 @@
 ## 创建
 
 1. **LOG-RULES.md 处理**：
-   - 需创建 → 基于扫描结果生成（格式见 `.claude/skills/xlog/references/log-rules-format.md`）
+   - 需创建 → 基于扫描结果生成（格式见 `.claude/skills/xlog/references/log-rules-format.md`，质量标准见上方注入的 log-quality-principles.md）
 2. **写入状态**：`python3 .claude/skills/xbase/scripts/skill-state.py write xlog log_rules "<LOG-RULES.md 路径>"`

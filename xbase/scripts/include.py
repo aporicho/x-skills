@@ -21,12 +21,16 @@ ref 解析规则（skills_dir = 脚本上两级目录）：
 | 名称（无 / 无 :）   | xbase/references/{名称}.md              | protocol-prep     |
 | skill/文件         | {skill}/references/{文件}.md            | xdebug/artifacts  |
 | skill:段名         | {skill}/references/artifacts.md → ## 段名 | xdebug:探测        |
+| $key              | SKILL-STATE.md → ## gate_skill → key 的值作为文件路径 | $log_rules |
+
+$key 引用为运行时依赖，不受初始化门控（should_skip），每次都注入。
 
 示例:
     python3 include.py xdebug protocol-prep
     python3 include.py xdebug protocol-prep reinit
     python3 include.py xbase xdebug:探测
     python3 include.py xbase xdebug:探测 status
+    python3 include.py xlog $log_rules
 """
 
 import sys
@@ -92,8 +96,39 @@ def extract_section(filepath: Path, section_name: str) -> str:
     sys.exit(1)
 
 
-def resolve_ref(ref: str) -> tuple[Path, str | None]:
+def read_state_value(skill: str, key: str) -> str | None:
+    """从 SKILL-STATE.md 读取指定 skill 段的键值。"""
+    if not STATE_FILE.exists():
+        return None
+    content = STATE_FILE.read_text(encoding="utf-8")
+    in_section = False
+    for line in content.split("\n"):
+        if re.match(rf"^## {re.escape(skill)}\s*$", line):
+            in_section = True
+            continue
+        if in_section and re.match(r"^## ", line):
+            break
+        if in_section:
+            m = re.match(rf"^- {re.escape(key)}:\s*(.+)$", line)
+            if m:
+                return m.group(1).strip()
+    return None
+
+
+def resolve_ref(ref: str, gate_skill: str) -> tuple[Path, str | None]:
     """解析 ref 为 (文件路径, 段名或None)。"""
+    if ref.startswith("$"):
+        # $key → 从 SKILL-STATE.md 的 gate_skill 段读取 key 值作为文件路径
+        key = ref[1:]
+        value = read_state_value(gate_skill, key)
+        if not value:
+            print(
+                f"错误：SKILL-STATE.md 中 ## {gate_skill} 段未找到 {key} 的值",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+        project_root = SKILLS_DIR.parent.parent
+        return project_root / value, None
     if ":" in ref:
         # skill:段名 → {skill}/references/artifacts.md + 段名
         skill, section = ref.split(":", 1)
@@ -118,10 +153,11 @@ def main() -> None:
     ref = sys.argv[2]
     user_args = sys.argv[3:]
 
-    if should_skip(gate_skill, user_args):
+    # $ 引用始终注入（运行时依赖，不受初始化门控）
+    if not ref.startswith("$") and should_skip(gate_skill, user_args):
         return
 
-    filepath, section = resolve_ref(ref)
+    filepath, section = resolve_ref(ref, gate_skill)
 
     if not filepath.exists():
         print(f"文件不存在: {filepath}", file=sys.stderr)

@@ -29,6 +29,8 @@ argument-hint: "[决策描述 | review | reinit]"
 
 !`cat .claude/skills/xbase/references/protocol-detection.md`
 
+!`cat .claude/skills/xbase/references/protocol-creation.md`
+
 !`cat .claude/skills/xdecide/references/artifacts.md`
 
 !`cat .claude/skills/xbase/references/protocol-cleanup.md`

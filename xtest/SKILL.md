@@ -30,6 +30,8 @@ argument-hint: "[自动化 | 手动 | reinit]"
 
 !`cat .claude/skills/xbase/references/protocol-detection.md`
 
+!`cat .claude/skills/xbase/references/protocol-creation.md`
+
 !`cat .claude/skills/xtest/references/artifacts.md`
 
 !`cat .claude/skills/xbase/references/protocol-cleanup.md`

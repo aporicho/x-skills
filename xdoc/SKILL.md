@@ -30,6 +30,8 @@ argument-hint: "[健康检查 | 一致性 | reinit]"
 
 !`cat .claude/skills/xbase/references/protocol-detection.md`
 
+!`cat .claude/skills/xbase/references/protocol-creation.md`
+
 !`cat .claude/skills/xdoc/references/artifacts.md`
 
 !`cat .claude/skills/xbase/references/protocol-cleanup.md`

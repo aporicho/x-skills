@@ -28,6 +28,8 @@ argument-hint: "[commit消息 | reinit]"
 
 !`cat .claude/skills/xbase/references/protocol-detection.md`
 
+!`cat .claude/skills/xbase/references/protocol-creation.md`
+
 !`cat .claude/skills/xcommit/references/artifacts.md`
 
 !`cat .claude/skills/xbase/references/protocol-cleanup.md`

@@ -30,6 +30,8 @@ argument-hint: "[bug描述 | #issue编号 | reinit]"
 
 !`cat .claude/skills/xbase/references/protocol-detection.md`
 
+!`cat .claude/skills/xbase/references/protocol-creation.md`
+
 !`cat .claude/skills/xdebug/references/artifacts.md`
 
 !`cat .claude/skills/xbase/references/protocol-cleanup.md`

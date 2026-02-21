@@ -81,6 +81,8 @@ python3 .claude/skills/xbase/scripts/skill-state.py reset-all
 
 > 根据步骤 1 结果执行，跳过已完成的探测。
 
+!`cat .claude/skills/xbase/references/protocol-creation.md`
+
 **项目级**
 
 !`python3 .claude/skills/xbase/scripts/extract-section.py xbase 创建`

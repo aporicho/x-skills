@@ -35,6 +35,8 @@ argument-hint: "[文件/模块路径 | reinit]"
 
 !`cat .claude/skills/xbase/references/protocol-detection.md`
 
+!`cat .claude/skills/xbase/references/protocol-creation.md`
+
 !`cat .claude/skills/xlog/references/artifacts.md`
 
 !`cat .claude/skills/xbase/references/protocol-cleanup.md`

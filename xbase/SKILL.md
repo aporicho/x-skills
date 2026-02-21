@@ -5,29 +5,29 @@ allowed-tools: ["Bash", "Read", "Edit", "Write", "Glob", "Grep", "AskUserQuestio
 argument-hint: "[init | status]"
 ---
 
-## 参数处理
+### 参数处理（`$ARGUMENTS`）
 
 根据 `$ARGUMENTS` 分发：
 
 - **空** 或 **`init`** → `init`：全量初始化
 - **`status`** → `status`：状态查看
 
-## 预加载状态
+### 预加载状态
 
 !`python3 .claude/skills/xbase/scripts/skill-state.py read 2>/dev/null`
 
 ---
 
-## `init`：全量初始化
+### `init`：全量初始化
 
 先清空所有状态，确保从零开始：
 ```bash
 python3 .claude/skills/xbase/scripts/skill-state.py reset-all
 ```
 
-### 步骤 1 — 集中探测
+### 阶段 1：集中探测
 
-> 一次性收集所有信息，后续步骤直接使用结果。
+> 一次性收集所有信息，后续阶段直接使用结果。
 
 !`cat .claude/skills/xbase/references/protocol-detection.md`
 
@@ -63,7 +63,7 @@ python3 .claude/skills/xbase/scripts/skill-state.py reset-all
 
 !`python3 .claude/skills/xbase/scripts/extract-section.py xdecide 探测`
 
-**最终状态**（基于上方原始命中汇总推导），等用户确认后进入步骤 2：
+**最终状态**（基于上方原始命中汇总推导），等用户确认后进入阶段 2：
 
 | Skill | 核心文件 | 状态 | 废弃候选 |
 |-------|---------|------|---------|
@@ -77,9 +77,9 @@ python3 .claude/skills/xbase/scripts/skill-state.py reset-all
 | xdoc | DOC-RULES.md | 需创建 / 迁移候选 / 已就绪 | |
 | xdecide | DECIDE-LOG.md | 需创建 / 迁移候选 / 已就绪 | |
 
-### 步骤 2 — 集中创建
+### 阶段 2：集中创建
 
-> 根据步骤 1 结果执行，跳过已完成的探测。
+> 根据阶段 1 结果执行，跳过已完成的探测。
 
 !`cat .claude/skills/xbase/references/protocol-creation.md`
 
@@ -129,7 +129,7 @@ python3 .claude/skills/xbase/scripts/skill-state.py reset-all
 
 !`python3 .claude/skills/xbase/scripts/extract-section.py xdecide 创建`
 
-### 步骤 3 — 集中清理
+### 阶段 3：集中清理
 
 > 所有核心文件已就位，一次性清理废弃文件和 CLAUDE.md 重复内容。
 
@@ -163,13 +163,13 @@ python3 .claude/skills/xbase/scripts/skill-state.py reset-all
 
 !`python3 .claude/skills/xbase/scripts/extract-section.py xdecide 清理`
 
-### 步骤 4 — 汇总
+### 阶段 4：汇总
 
 展示所有核心文件的创建结果和项目信息概览。
 
 ---
 
-## `status`：状态查看
+### `status`：状态查看
 
 1. 使用预加载状态（已在上方执行 `skill-state.py read`），直接格式化展示
 2. 展示汇总表：

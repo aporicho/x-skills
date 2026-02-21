@@ -29,7 +29,7 @@ argument-hint: "[文件/模块路径 | reinit]"
 ### 预加载状态
 !`python3 .claude/skills/xbase/scripts/skill-state.py check-and-read xlog 2>/dev/null`
 
-### 阶段 0：探测项目日志系统
+### 阶段 0：探测项目
 
 !`cat .claude/skills/xbase/references/protocol-prep.md`
 
@@ -90,15 +90,6 @@ argument-hint: "[文件/模块路径 | reinit]"
 ```
 
 完成后返回调用方（如果是子 agent 调用则自动结束）。
-
----
-
-## 迁移旧格式
-
-两个核心文件均适用，如果检测到已有文档但格式不同：
-1. 用 AskUserQuestion 展示差异，询问是否迁移
-2. 用户同意 → 保留原始内容，套用新格式
-3. 用户拒绝 → 保持原样，后续更新时仍遵循原格式
 
 ---
 

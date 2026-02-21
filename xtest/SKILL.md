@@ -24,7 +24,7 @@ argument-hint: "[自动化 | 手动 | reinit]"
 ### 预加载状态
 !`python3 .claude/skills/xbase/scripts/skill-state.py check-and-read xtest 2>/dev/null`
 
-### 阶段 0：初始化
+### 阶段 0：探测项目
 
 !`cat .claude/skills/xbase/references/protocol-prep.md`
 

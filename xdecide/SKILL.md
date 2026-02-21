@@ -50,7 +50,7 @@ argument-hint: "[决策描述 | review | reinit]"
 
 ### 阶段 2a：引导式决策
 
-**步骤 1 — 理清背景**：
+**步骤 1：理清背景**
 
 > 如果从其他 skill 衔接调用（如 xdebug/xreview 提供了上下文），且参数已包含决策描述，跳过此步骤。
 
@@ -62,7 +62,7 @@ argument-hint: "[决策描述 | review | reinit]"
 - Other → 用户输入背景描述
 ```
 
-**步骤 2 — 分析方案**：
+**步骤 2：分析方案**
 
 1. 扫描相关代码，理解当前实现和约束
 2. 用 `decision-log.py search` 搜索历史相关决策，避免重复或矛盾
@@ -84,7 +84,7 @@ argument-hint: "[决策描述 | review | reinit]"
 - Other → 补充信息或提出其他方案
 ```
 
-**步骤 3 — 确认结论**：
+**步骤 3：确认结论**
 
 获取下一个编号，格式化预览完整决策：
 
@@ -111,7 +111,7 @@ python3 .claude/skills/xdecide/scripts/decision-log.py next-id <决策记录路�
 - 取消
 ```
 
-**步骤 4 — 写入**：
+**步骤 4：写入**
 
 用 Edit 工具在决策记录文件末尾追加决策内容（在最后一个 `---` 后追加）。
 

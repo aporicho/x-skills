@@ -25,15 +25,15 @@ argument-hint: "[决策描述 | review | reinit]"
 
 ### 阶段 0：探测项目
 
-!`cat .claude/skills/xbase/references/protocol-prep.md`
+!`python3 .claude/skills/xbase/scripts/include.py xdecide protocol-prep $ARGUMENTS`
 
-!`cat .claude/skills/xbase/references/protocol-detection.md`
+!`python3 .claude/skills/xbase/scripts/include.py xdecide protocol-detection $ARGUMENTS`
 
-!`cat .claude/skills/xbase/references/protocol-creation.md`
+!`python3 .claude/skills/xbase/scripts/include.py xdecide protocol-creation $ARGUMENTS`
 
-!`cat .claude/skills/xdecide/references/artifacts.md`
+!`python3 .claude/skills/xbase/scripts/include.py xdecide xdecide/artifacts $ARGUMENTS`
 
-!`cat .claude/skills/xbase/references/protocol-cleanup.md`
+!`python3 .claude/skills/xbase/scripts/include.py xdecide protocol-cleanup $ARGUMENTS`
 
 ### 阶段 1：选择模式
 

@@ -22,4 +22,4 @@
 
 ## 清理
 
-xcommit 职责：CLAUDE.md `## Git 提交规范` 段 → 替换为指向 COMMIT-RULES.md 的指针。
+仅执行文件清理。

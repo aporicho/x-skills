@@ -26,4 +26,4 @@
 
 ## 清理
 
-xreview 职责：CLAUDE.md `## 代码规范` 段 → 替换为指向 REVIEW-RULES.md 的指针；「禁止 print()」→ **保留**（禁令）。
+仅执行文件清理。

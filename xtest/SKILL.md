@@ -26,15 +26,15 @@ argument-hint: "[自动化 | 手动 | reinit]"
 
 ### 阶段 0：探测项目
 
-!`cat .claude/skills/xbase/references/protocol-prep.md`
+!`python3 .claude/skills/xbase/scripts/include.py xtest protocol-prep $ARGUMENTS`
 
-!`cat .claude/skills/xbase/references/protocol-detection.md`
+!`python3 .claude/skills/xbase/scripts/include.py xtest protocol-detection $ARGUMENTS`
 
-!`cat .claude/skills/xbase/references/protocol-creation.md`
+!`python3 .claude/skills/xbase/scripts/include.py xtest protocol-creation $ARGUMENTS`
 
-!`cat .claude/skills/xtest/references/artifacts.md`
+!`python3 .claude/skills/xbase/scripts/include.py xtest xtest/artifacts $ARGUMENTS`
 
-!`cat .claude/skills/xbase/references/protocol-cleanup.md`
+!`python3 .claude/skills/xbase/scripts/include.py xtest protocol-cleanup $ARGUMENTS`
 
 ### 阶段 1：选择测试类型
 

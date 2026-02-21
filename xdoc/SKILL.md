@@ -26,15 +26,15 @@ argument-hint: "[健康检查 | 一致性 | reinit]"
 
 ### 阶段 0：探测项目
 
-!`cat .claude/skills/xbase/references/protocol-prep.md`
+!`python3 .claude/skills/xbase/scripts/include.py xdoc protocol-prep $ARGUMENTS`
 
-!`cat .claude/skills/xbase/references/protocol-detection.md`
+!`python3 .claude/skills/xbase/scripts/include.py xdoc protocol-detection $ARGUMENTS`
 
-!`cat .claude/skills/xbase/references/protocol-creation.md`
+!`python3 .claude/skills/xbase/scripts/include.py xdoc protocol-creation $ARGUMENTS`
 
-!`cat .claude/skills/xdoc/references/artifacts.md`
+!`python3 .claude/skills/xbase/scripts/include.py xdoc xdoc/artifacts $ARGUMENTS`
 
-!`cat .claude/skills/xbase/references/protocol-cleanup.md`
+!`python3 .claude/skills/xbase/scripts/include.py xdoc protocol-cleanup $ARGUMENTS`
 
 ### 阶段 1：选择任务
 

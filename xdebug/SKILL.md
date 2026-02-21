@@ -26,15 +26,15 @@ argument-hint: "[bug描述 | #issue编号 | reinit]"
 
 ### 阶段 0：探测项目
 
-!`cat .claude/skills/xbase/references/protocol-prep.md`
+!`python3 .claude/skills/xbase/scripts/include.py xdebug protocol-prep $ARGUMENTS`
 
-!`cat .claude/skills/xbase/references/protocol-detection.md`
+!`python3 .claude/skills/xbase/scripts/include.py xdebug protocol-detection $ARGUMENTS`
 
-!`cat .claude/skills/xbase/references/protocol-creation.md`
+!`python3 .claude/skills/xbase/scripts/include.py xdebug protocol-creation $ARGUMENTS`
 
-!`cat .claude/skills/xdebug/references/artifacts.md`
+!`python3 .claude/skills/xbase/scripts/include.py xdebug xdebug/artifacts $ARGUMENTS`
 
-!`cat .claude/skills/xbase/references/protocol-cleanup.md`
+!`python3 .claude/skills/xbase/scripts/include.py xdebug protocol-cleanup $ARGUMENTS`
 
 ### 阶段 1：确认问题
 

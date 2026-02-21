@@ -31,15 +31,15 @@ argument-hint: "[文件/模块路径 | reinit]"
 
 ### 阶段 0：探测项目
 
-!`cat .claude/skills/xbase/references/protocol-prep.md`
+!`python3 .claude/skills/xbase/scripts/include.py xlog protocol-prep $ARGUMENTS`
 
-!`cat .claude/skills/xbase/references/protocol-detection.md`
+!`python3 .claude/skills/xbase/scripts/include.py xlog protocol-detection $ARGUMENTS`
 
-!`cat .claude/skills/xbase/references/protocol-creation.md`
+!`python3 .claude/skills/xbase/scripts/include.py xlog protocol-creation $ARGUMENTS`
 
-!`cat .claude/skills/xlog/references/artifacts.md`
+!`python3 .claude/skills/xbase/scripts/include.py xlog xlog/artifacts $ARGUMENTS`
 
-!`cat .claude/skills/xbase/references/protocol-cleanup.md`
+!`python3 .claude/skills/xbase/scripts/include.py xlog protocol-cleanup $ARGUMENTS`
 
 ### 阶段 1：选择范围
 

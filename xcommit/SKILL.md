@@ -24,15 +24,15 @@ argument-hint: "[commit消息 | reinit]"
 
 ### 阶段 0：探测项目
 
-!`cat .claude/skills/xbase/references/protocol-prep.md`
+!`python3 .claude/skills/xbase/scripts/include.py xcommit protocol-prep $ARGUMENTS`
 
-!`cat .claude/skills/xbase/references/protocol-detection.md`
+!`python3 .claude/skills/xbase/scripts/include.py xcommit protocol-detection $ARGUMENTS`
 
-!`cat .claude/skills/xbase/references/protocol-creation.md`
+!`python3 .claude/skills/xbase/scripts/include.py xcommit protocol-creation $ARGUMENTS`
 
-!`cat .claude/skills/xcommit/references/artifacts.md`
+!`python3 .claude/skills/xbase/scripts/include.py xcommit xcommit/artifacts $ARGUMENTS`
 
-!`cat .claude/skills/xbase/references/protocol-cleanup.md`
+!`python3 .claude/skills/xbase/scripts/include.py xcommit protocol-cleanup $ARGUMENTS`
 
 ### 阶段 1：检查变更
 
@@ -131,7 +131,10 @@ argument-hint: "[commit消息 | reinit]"
 
 3. **执行提交**：
    ```bash
-   git commit -m "<message>"
+   git commit -m "$(cat <<'EOF'
+   <message>
+   EOF
+   )"
    ```
 
 4. 运行 `git status` 确认提交成功。

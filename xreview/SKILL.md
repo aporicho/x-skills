@@ -24,15 +24,15 @@ argument-hint: "[文件/目录路径 | reinit]"
 
 ### 阶段 0：探测项目
 
-!`cat .claude/skills/xbase/references/protocol-prep.md`
+!`python3 .claude/skills/xbase/scripts/include.py xreview protocol-prep $ARGUMENTS`
 
-!`cat .claude/skills/xbase/references/protocol-detection.md`
+!`python3 .claude/skills/xbase/scripts/include.py xreview protocol-detection $ARGUMENTS`
 
-!`cat .claude/skills/xbase/references/protocol-creation.md`
+!`python3 .claude/skills/xbase/scripts/include.py xreview protocol-creation $ARGUMENTS`
 
-!`cat .claude/skills/xreview/references/artifacts.md`
+!`python3 .claude/skills/xbase/scripts/include.py xreview xreview/artifacts $ARGUMENTS`
 
-!`cat .claude/skills/xbase/references/protocol-cleanup.md`
+!`python3 .claude/skills/xbase/scripts/include.py xreview protocol-cleanup $ARGUMENTS`
 
 ### 阶段 1：确定范围
 

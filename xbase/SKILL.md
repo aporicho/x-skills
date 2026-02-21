@@ -67,10 +67,11 @@ python3 .claude/skills/xbase/scripts/skill-state.py reset-all
 
 | Skill | 核心文件 | 状态 | 废弃候选 |
 |-------|---------|------|---------|
-| xdebug | DEBUG-LOG.md | 需创建 / 迁移候选 / 已就绪 | （旧文件路径，无则留空） |
+| xbase | run.sh | 需创建 / 迁移候选 / 已就绪 | （旧文件路径，无则留空） |
+| xdebug | DEBUG-LOG.md | 需创建 / 迁移候选 / 已就绪 | |
 | xlog | LOG-RULES.md | 需创建 / 迁移候选 / 已就绪 | |
 | xlog | LOG-COVERAGE.md | 需创建 / 迁移候选 / 已就绪 | |
-| xtest | TEST-CHECKLIST.md | 需全量生成 / 迁移候选 / 增量更新 | |
+| xtest | TEST-CHECKLIST.md | 需创建 / 迁移候选 / 需更新 / 已就绪 | |
 | xtest | TEST-ISSUES.md | 需创建 / 迁移候选 / 已就绪 | |
 | xreview | REVIEW-RULES.md | 需创建 / 迁移候选 / 已就绪 | |
 | xcommit | COMMIT-RULES.md | 需创建 / 迁移候选 / 已就绪 | |
@@ -79,7 +80,7 @@ python3 .claude/skills/xbase/scripts/skill-state.py reset-all
 
 ### 阶段 2：集中创建
 
-> 根据阶段 1 结果执行，跳过已完成的探测。
+> 根据阶段 1 的四态结果，对每个核心文件执行对应处理。
 
 !`python3 .claude/skills/xbase/scripts/include.py xbase protocol-creation $ARGUMENTS`
 
@@ -165,7 +166,7 @@ python3 .claude/skills/xbase/scripts/skill-state.py reset-all
 
 ### 阶段 4：汇总
 
-展示所有核心文件的创建结果和项目信息概览。
+按下方 `status` 格式展示所有核心文件状态和项目信息概览。
 
 ---
 
@@ -177,13 +178,13 @@ python3 .claude/skills/xbase/scripts/skill-state.py reset-all
 ```
 xSkills 状态：
 
-项目信息：
-- output_dir：[值 / 未探测]
-- 运行脚本：[值 / 未探测]
+| 项目信息 | 值 |
+|---------|------|
+| output_dir | [值 / 未探测] |
 
-Skill 状态：
 | Skill | 已初始化 | 核心文件 | 路径 |
 |-------|---------|---------|------|
+| xbase | ✅ 2026-02-21 | run.sh | scripts/run.sh |
 | xdebug | ✅ 2026-02-20 | DEBUG-LOG.md | document/90-开发/DEBUG-LOG.md |
 | xlog | ❌ | LOG-RULES.md | — |
 | xlog | ❌ | LOG-COVERAGE.md | — |

@@ -77,7 +77,7 @@ def extract_section(filepath: Path, section_name: str) -> str:
     if current_name == section_name:
         return "\n".join(current_lines).strip()
 
-    print(f"错误：节 '## {section_name}' 在 {filepath} 中不存在", file=sys.stderr)
+    print(f"错误：段 '## {section_name}' 在 {filepath} 中不存在", file=sys.stderr)
     sys.exit(1)
 
 

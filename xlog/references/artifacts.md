@@ -24,7 +24,3 @@
 2. **LOG-COVERAGE.md 处理**：
    - 需创建 → 基于扫描结果生成（格式见 `.claude/skills/xlog/references/log-coverage-format.md`）
 3. **写入状态**：`python3 .claude/skills/xbase/scripts/skill-state.py write xlog log_rules "<LOG-RULES.md 路径>" log_coverage "<LOG-COVERAGE.md 路径>"`
-
-## 清理
-
-仅执行文件清理。

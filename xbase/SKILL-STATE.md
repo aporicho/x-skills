@@ -1,11 +1,15 @@
 # SKILL STATE
 
-> 由 xdebug/xtest/xlog/xcommit/xreview/xdoc/xdecide 共同维护
+> 由 xbase/xdebug/xtest/xlog/xcommit/xreview/xdoc/xdecide 共同维护
 
 ## 项目信息
 
 - output_dir: document/90-开发
-- 运行脚本: scripts/run.sh
+
+## xbase
+
+- run_script: scripts/run.sh
+- initialized: 2026-02-21
 
 ## xdebug
 

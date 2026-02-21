@@ -1,19 +1,17 @@
 #!/usr/bin/env python3
 """SKILL-STATE.md 读写工具。
 
-供 xdebug/xtest skill 使用，替代多次 Read/Edit tool call。
-
 SKILL-STATE.md 作为模板预置在同目录下，所有段和字段已定义好，skill 初始化时只需填值。
 
 用法:
-    python3 .claude/skills/xbase/skill-state.py check <skill>
-    python3 .claude/skills/xbase/skill-state.py read
-    python3 .claude/skills/xbase/skill-state.py check-and-read <skill>
-    python3 .claude/skills/xbase/skill-state.py write <skill> <key> <value> [<key2> <value2> ...]
-    python3 .claude/skills/xbase/skill-state.py write-info <key> <value> [<key2> <value2> ...]
-    python3 .claude/skills/xbase/skill-state.py delete <skill>
-    python3 .claude/skills/xbase/skill-state.py delete-info
-    python3 .claude/skills/xbase/skill-state.py reset-all
+    python3 .claude/skills/xbase/scripts/skill-state.py check <skill>
+    python3 .claude/skills/xbase/scripts/skill-state.py read
+    python3 .claude/skills/xbase/scripts/skill-state.py check-and-read <skill>
+    python3 .claude/skills/xbase/scripts/skill-state.py write <skill> <key> <value> [<key2> <value2> ...]
+    python3 .claude/skills/xbase/scripts/skill-state.py write-info <key> <value> [<key2> <value2> ...]
+    python3 .claude/skills/xbase/scripts/skill-state.py delete <skill>
+    python3 .claude/skills/xbase/scripts/skill-state.py delete-info
+    python3 .claude/skills/xbase/scripts/skill-state.py reset-all
 """
 
 import sys
@@ -28,12 +26,16 @@ STATE_FILE = Path(__file__).resolve().parent.parent / "SKILL-STATE.md"
 TEMPLATE = """\
 # SKILL STATE
 
-> 由 xdebug/xtest/xlog/xcommit/xreview/xdoc/xdecide 共同维护
+> 由 xbase/xdebug/xtest/xlog/xcommit/xreview/xdoc/xdecide 共同维护
 
 ## 项目信息
 
 - output_dir:
-- 运行脚本:
+
+## xbase
+
+- run_script:
+- initialized:
 
 ## xdebug
 

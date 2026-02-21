@@ -23,7 +23,3 @@
 1. **REVIEW-RULES.md 处理**：
    - 需创建 → 基于探测结果生成（格式见 `.claude/skills/xreview/references/review-rules-format.md`），每条规则标注来源（`CLAUDE.md` 或 `代码扫描`）
 2. **写入状态**：`python3 .claude/skills/xbase/scripts/skill-state.py write xreview review_rules "<REVIEW-RULES.md 路径>"`
-
-## 清理
-
-仅执行文件清理。

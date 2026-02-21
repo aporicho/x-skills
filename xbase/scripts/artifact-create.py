@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""产出物骨架创建工具。
+"""核心文件骨架创建工具。
 
 动态读取 references/*-format.md 提取格式结构，从模板生成骨架文件。
 新增 skill 只需放格式文件即可自动适配。
@@ -37,7 +37,7 @@ def discover_formats() -> dict:
         if not h1:
             continue
 
-        # 从 H1 提取产出物文件名（如 "COMMIT-RULES.md 规范" → "COMMIT-RULES.md"）
+        # 从 H1 提取核心文件名（如 "COMMIT-RULES.md 规范" → "COMMIT-RULES.md"）
         filename_match = re.match(r"^([A-Z][-A-Z0-9]+\.md)", h1)
         if not filename_match:
             # fallback: 从 format 文件名推导（如 commit-rules-format.md → COMMIT-RULES.md）
@@ -67,7 +67,7 @@ def discover_formats() -> dict:
 
 
 def cmd_create(artifact_name: str, target_path: str) -> None:
-    """从格式文件提取骨架并创建产出物文件。"""
+    """从格式文件提取骨架并创建核心文件。"""
     p = Path(target_path)
 
     formats = discover_formats()
@@ -97,7 +97,7 @@ def cmd_create(artifact_name: str, target_path: str) -> None:
 
 
 def cmd_list() -> None:
-    """列出所有可创建的产出物。"""
+    """列出所有可创建的核心文件。"""
     formats = discover_formats()
     for name, fmt in sorted(formats.items()):
         print(f"  {name:20s} → {fmt['filename']}")

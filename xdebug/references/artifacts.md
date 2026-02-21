@@ -13,7 +13,3 @@
 2. **DEBUG-LOG.md 处理**：
    - 需创建 → 在 `output_dir` 下创建（格式见 `.claude/skills/xdebug/references/debug-log-format.md`）
 3. **写入状态**：`python3 .claude/skills/xbase/scripts/skill-state.py write xdebug debug_log "<DEBUG-LOG.md 路径>"`
-
-## 清理
-
-仅执行文件清理。

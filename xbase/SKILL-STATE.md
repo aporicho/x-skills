@@ -25,7 +25,6 @@
 ## xlog
 
 - log_rules: document/90-开发/LOG-RULES.md
-- log_coverage: document/90-开发/LOG-COVERAGE.md
 - initialized: 2026-02-21
 
 ## xcommit

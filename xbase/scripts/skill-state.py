@@ -51,7 +51,6 @@ TEMPLATE = """\
 ## xlog
 
 - log_rules:
-- log_coverage:
 - initialized:
 
 ## xcommit

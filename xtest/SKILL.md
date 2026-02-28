@@ -2,15 +2,12 @@
 name: xtest
 description: 测试工作流：自动化测试 + 手动逐项验证，维护 TEST-CHECKLIST.md，失败衔接 /xdebug。当用户要测试、验证功能、跑测试用例时使用。
 allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestion", "Task"]
-argument-hint: "[自动化 | 手动 | reinit]"
+argument-hint: "[自动化 | 手动]"
 ---
 
 ### 参数处理（`$ARGUMENTS`）
 
-> **执行顺序**：无论参数如何，阶段 0 的快速跳过检查始终先执行。参数仅影响阶段 1 及之后的跳转。
-
 - **空** → 正常走阶段 1 询问
-- **`reinit`** → 删除 SKILL-STATE.md 中 `## xtest` 段（`python3 .claude/skills/xbase/scripts/skill-state.py delete xtest`）+ 重新执行阶段 0（忽略预加载的 check 结果，delete 后强制执行完整阶段 0）
 - **`自动化`** → 跳过阶段 1，直接进入阶段 2a
 - **`手动`** → 跳过阶段 1，直接进入阶段 2b
 
@@ -24,17 +21,11 @@ argument-hint: "[自动化 | 手动 | reinit]"
 ### 预加载状态
 !`python3 .claude/skills/xbase/scripts/skill-state.py check-and-read xtest 2>/dev/null`
 
-### 阶段 0：探测项目
+### 初始化检查
 
-!`python3 .claude/skills/xbase/scripts/include.py xtest protocol-prep $ARGUMENTS`
-
-!`python3 .claude/skills/xbase/scripts/include.py xtest protocol-detection $ARGUMENTS`
-
-!`python3 .claude/skills/xbase/scripts/include.py xtest protocol-creation $ARGUMENTS`
-
-!`python3 .claude/skills/xbase/scripts/include.py xtest xtest/artifacts $ARGUMENTS`
-
-!`python3 .claude/skills/xbase/scripts/include.py xtest protocol-cleanup $ARGUMENTS`
+查看上方预加载输出：
+- 含 `initialized` → 跳过，进入阶段 1
+- 含 `not_found` → 输出"xtest 尚未初始化，请先运行 `/xbase`"，停止
 
 ### 阶段 1：选择测试类型
 
@@ -71,9 +62,9 @@ argument-hint: "[自动化 | 手动 | reinit]"
 **选模块**：从 TEST-CHECKLIST.md grep ⏳ 行按 ID 前缀统计，展示选项（最多 4 个取待测最多的模块）。
 
 **构建 + 运行**（不问用户）：
-- 如果阶段 0 生成测试清单时已后台预构建 → 直接用构建结果
+- 如果已有预构建结果 → 直接使用
 - 否则根据项目构建系统执行构建命令
-- 后台启动项目，日志输出到阶段 0 确定的位置
+- 后台启动项目，日志输出到初始化时确定的位置
 - 构建失败自行修复，不问用户
 
 **逐项测试**：grep 选定模块的 ⏳ 项，每项用 AskUserQuestion：

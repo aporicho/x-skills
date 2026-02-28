@@ -2,15 +2,12 @@
 name: xdecide
 description: 决策记录工作流：引导决策过程、快速录入、回顾修订，维护决策记录文件。当用户要做技术决策、记录决策、回顾历史决策时使用。
 allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestion"]
-argument-hint: "[决策描述 | review | reinit]"
+argument-hint: "[决策描述 | review]"
 ---
 
 ### 参数处理（`$ARGUMENTS`）
 
-> **执行顺序**：无论参数如何，阶段 0 的快速跳过检查始终先执行。参数仅影响阶段 1 及之后的跳转。
-
 - **空** → 正常走阶段 1 询问
-- **`reinit`** → 删除 SKILL-STATE.md 中 `## xdecide` 段（`python3 .claude/skills/xbase/scripts/skill-state.py delete xdecide`）+ 重新执行阶段 0（忽略预加载的 check 结果，delete 后强制执行完整阶段 0）
 - **`review`** → 跳过阶段 1，直接进入阶段 2c 回顾修订
 - **其他文本** → 作为决策描述，跳过阶段 1 直接进入阶段 2a 引导式决策（背景自动跳过）
 
@@ -23,17 +20,11 @@ argument-hint: "[决策描述 | review | reinit]"
 ### 预加载状态
 !`python3 .claude/skills/xbase/scripts/skill-state.py check-and-read xdecide 2>/dev/null`
 
-### 阶段 0：探测项目
+### 初始化检查
 
-!`python3 .claude/skills/xbase/scripts/include.py xdecide protocol-prep $ARGUMENTS`
-
-!`python3 .claude/skills/xbase/scripts/include.py xdecide protocol-detection $ARGUMENTS`
-
-!`python3 .claude/skills/xbase/scripts/include.py xdecide protocol-creation $ARGUMENTS`
-
-!`python3 .claude/skills/xbase/scripts/include.py xdecide xdecide/artifacts $ARGUMENTS`
-
-!`python3 .claude/skills/xbase/scripts/include.py xdecide protocol-cleanup $ARGUMENTS`
+查看上方预加载输出：
+- 含 `initialized` → 跳过，进入阶段 1
+- 含 `not_found` → 输出"xdecide 尚未初始化，请先运行 `/xbase`"，停止
 
 ### 阶段 1：选择模式
 

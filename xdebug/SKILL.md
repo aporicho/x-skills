@@ -2,15 +2,12 @@
 name: xdebug
 description: 调试工作流：自动构建运行 App、捕获日志、引导复现、定位修复，全程选项驱动。当用户报告 Bug、请求调试、排查问题时使用。
 allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestion", "Task"]
-argument-hint: "[bug描述 | #issue编号 | reinit]"
+argument-hint: "[bug描述 | #issue编号]"
 ---
 
 ### 参数处理（`$ARGUMENTS`）
 
-> **执行顺序**：无论参数如何，阶段 0 的快速跳过检查始终先执行。参数仅影响阶段 1 及之后的跳转。
-
 - **空** → 正常走阶段 1 询问
-- **`reinit`** → 删除 SKILL-STATE.md 中 `## xdebug` 段（`python3 .claude/skills/xbase/scripts/skill-state.py delete xdebug`）+ 重新执行阶段 0（忽略预加载的 check 结果，delete 后强制执行完整阶段 0）
 - **以 `#` 开头**（如 `#003`）→ 从 SKILL-STATE.md `## xtest → test_issues` 读取 TEST-ISSUES.md 路径。如果字段为空（xtest 未初始化），提示用户"TEST-ISSUES.md 尚未创建，请先运行 /xtest"，回退到正常阶段 1 询问。路径有效则取对应条目作为问题描述，用 `issues.py status` 设为 🟡（修复中），跳过阶段 1 直接进入阶段 2
 - **其他文本** → 作为 bug 描述，跳过阶段 1 直接进入阶段 2
 
@@ -19,22 +16,16 @@ argument-hint: "[bug描述 | #issue编号 | reinit]"
 | 文件 | 说明 | 格式规范 |
 |------|------|----------|
 | `DEBUG-LOG.md` | Bug 修复日志（症状→根因→解决） | `references/debug-log-format.md` |
-| `scripts/run.sh`（或等价物） | 调试运行脚本（构建/启动/停止/日志） | 阶段 0 artifacts 创建 |
+| `scripts/run.sh`（或等价物） | 调试运行脚本（构建/启动/停止/日志） | xbase 初始化创建 |
 
 ### 预加载状态
 !`python3 .claude/skills/xbase/scripts/skill-state.py check-and-read xdebug 2>/dev/null`
 
-### 阶段 0：探测项目
+### 初始化检查
 
-!`python3 .claude/skills/xbase/scripts/include.py xdebug protocol-prep $ARGUMENTS`
-
-!`python3 .claude/skills/xbase/scripts/include.py xdebug protocol-detection $ARGUMENTS`
-
-!`python3 .claude/skills/xbase/scripts/include.py xdebug protocol-creation $ARGUMENTS`
-
-!`python3 .claude/skills/xbase/scripts/include.py xdebug xdebug/artifacts $ARGUMENTS`
-
-!`python3 .claude/skills/xbase/scripts/include.py xdebug protocol-cleanup $ARGUMENTS`
+查看上方预加载输出：
+- 含 `initialized` → 跳过，进入阶段 1
+- 含 `not_found` → 输出"xdebug 尚未初始化，请先运行 `/xbase`"，停止
 
 ### 阶段 1：确认问题
 
@@ -56,9 +47,9 @@ argument-hint: "[bug描述 | #issue编号 | reinit]"
 1. 判断现有日志是否足够覆盖问题区域（读相关代码确认日志是否充足）
    - 覆盖足够 → 直接构建运行
    - 覆盖不足 → 启动子 agent（Task 工具），在 prompt 参数中直接传入目标文件和问题描述，让它读取 `.claude/skills/xlog/SKILL.md`，以 `targeted <目标路径> <问题描述>` 为参数执行轻量模式。子 agent 完成后主流程继续
-2. 执行构建命令（从阶段 0 推导）
+2. 执行构建命令（从初始化状态推导）
 3. 编译失败 → 自己修复后重试，不问用户
-4. 停止旧进程，后台启动项目，日志输出到阶段 0 确定的位置
+4. 停止旧进程，后台启动项目，日志输出到初始化时确定的位置
 
 ### 阶段 3：引导用户操作
 

@@ -1,16 +1,13 @@
 ---
 name: xlog
-description: 日志补全：建立日志规范，按需给代码补充诊断日志。也由 /xdebug 子 agent 通过 targeted 模式自动调用。当用户要补日志、完善日志质量时使用。
+description: 日志补全与审查：建立日志规范，按需给代码补充诊断日志、纠正不规范的日志调用。也由 /xdebug 子 agent 通过 targeted 模式自动调用。当用户要补日志、审查日志规范性、修正日志问题时使用。
 allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestion"]
-argument-hint: "[targeted <路径> [问题上下文] | reinit]"
+argument-hint: "[targeted <路径> [问题上下文]]"
 ---
 
 ### 参数处理（`$ARGUMENTS`）
 
-> **执行顺序**：无论参数如何，阶段 0 的快速跳过检查始终先执行。参数仅影响阶段 1 及之后的跳转。
-
 - **空** → 正常走阶段 1 询问
-- **`reinit`** → 删除 SKILL-STATE.md 中 `## xlog` 段（`python3 .claude/skills/xbase/scripts/skill-state.py delete xlog`）+ 重新执行阶段 0（忽略预加载的 check 结果，delete 后强制执行完整阶段 0）
 - **`targeted <路径> [问题上下文]`** → targeted 后第一个 token 为目标路径，其余合并为问题上下文。进入轻量模式（见下方「轻量模式」段）
 - **其他文本** → 作为目标文件/模块路径，跳过阶段 1 直接进入阶段 2
 
@@ -29,25 +26,22 @@ argument-hint: "[targeted <路径> [问题上下文] | reinit]"
 ### 预加载状态
 !`python3 .claude/skills/xbase/scripts/skill-state.py check-and-read xlog 2>/dev/null`
 
-### 阶段 0：探测项目
+### 初始化检查
 
-!`python3 .claude/skills/xbase/scripts/include.py xlog protocol-prep $ARGUMENTS`
-
-!`python3 .claude/skills/xbase/scripts/include.py xlog protocol-detection $ARGUMENTS`
-
-!`python3 .claude/skills/xbase/scripts/include.py xlog protocol-creation $ARGUMENTS`
-
-!`python3 .claude/skills/xbase/scripts/include.py xlog xlog/artifacts $ARGUMENTS`
-
-!`python3 .claude/skills/xbase/scripts/include.py xlog xlog/log-quality-principles $ARGUMENTS`
-
-!`python3 .claude/skills/xbase/scripts/include.py xlog protocol-cleanup $ARGUMENTS`
+查看上方预加载输出：
+- 含 `initialized` → 跳过，进入阶段 1
+- 含 `not_found` → 输出"xlog 尚未初始化，请先运行 `/xbase`"，停止
 
 ### 阶段 1：选择范围
 
 > 从 `/xdebug` 子 agent 调用时，目标信息在 Task prompt 中传入，跳过此阶段直接进入阶段 2。
 
-分析最近变更的代码文件（分层收集：未提交变更 + 近期提交，按项目语言过滤，上限 30 文件）。如果变更文件为空，提示用户指定路径。
+收集最近变更的代码文件（上限 30 文件）：
+
+1. 用 `git diff --name-only` + `git diff --cached --name-only` 收集未提交变更
+2. 用 `git log --name-only -20 --pretty=format:""` 收集近期提交的文件
+3. 合并去重，按项目语言过滤（排除非代码文件如 .md、.json、.yml 等）
+4. 变更文件为空 → 提示用户指定路径
 
 用 AskUserQuestion：
 
@@ -59,9 +53,9 @@ argument-hint: "[targeted <路径> [问题上下文] | reinit]"
 - Other → 自由输入
 ```
 
-### 阶段 2：扫描 + 确认 + 补全 + 纠正
-
 !`python3 .claude/skills/xbase/scripts/include.py xlog $log_rules $ARGUMENTS`
+
+### 阶段 2：扫描 + 确认 + 补全 + 纠正
 
 1. 确定扫描范围（来自阶段 1 选择或参数指定）
 2. 读取目标代码，按上方注入的 LOG-RULES.md 检查两类问题：
@@ -84,7 +78,7 @@ argument-hint: "[targeted <路径> [问题上下文] | reinit]"
 
 4. 执行补全/纠正
 5. 构建确认编译通过
-6. 编译失败 → 自己修复
+6. 编译失败 → 修复后重新构建，最多重试 3 次。仍失败 → 报告用户失败原因，用 AskUserQuestion 确认下一步（回滚 / 手动修复 / 跳过）
 
 ### 阶段 3：汇报
 
@@ -106,8 +100,6 @@ argument-hint: "[targeted <路径> [问题上下文] | reinit]"
 ## 轻量模式（targeted）
 
 > 由 `/xdebug` 子 agent 调用，或用户直接以 `targeted <路径> [问题上下文]` 参数触发。
-
-!`python3 .claude/skills/xbase/scripts/include.py xlog $log_rules $ARGUMENTS`
 
 流程：
 

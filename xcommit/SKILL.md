@@ -2,16 +2,13 @@
 name: xcommit
 description: 提交工作流：基于 COMMIT-RULES.md 自动预检 + 文档完整性检查 + 规范化提交。当用户要提交代码、保存变更时使用。
 allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestion"]
-argument-hint: "[commit消息 | reinit]"
+argument-hint: "[commit消息]"
 ---
 
 ### 参数处理（`$ARGUMENTS`）
 
-> **执行顺序**：无论参数如何，阶段 0 的快速跳过检查始终先执行。参数仅影响阶段 1 及之后的跳转。
-
 - **空** → 正常走全流程（自动生成 commit message）
-- **`reinit`** → 删除 SKILL-STATE.md 中 `## xcommit` 段（`python3 .claude/skills/xbase/scripts/skill-state.py delete xcommit`）+ 重新执行阶段 0（忽略预加载的 check 结果，delete 后强制执行完整阶段 0）
-- **其他文本** → 作为 commit message 候选，跳到阶段 1（阶段 4 时优先使用此消息）
+- **其他文本** → 作为 commit message 候选，跳到阶段 1（阶段 5 时优先使用此消息）
 
 ### 核心文件
 
@@ -22,17 +19,11 @@ argument-hint: "[commit消息 | reinit]"
 ### 预加载状态
 !`python3 .claude/skills/xbase/scripts/skill-state.py check-and-read xcommit 2>/dev/null`
 
-### 阶段 0：探测项目
+### 初始化检查
 
-!`python3 .claude/skills/xbase/scripts/include.py xcommit protocol-prep $ARGUMENTS`
-
-!`python3 .claude/skills/xbase/scripts/include.py xcommit protocol-detection $ARGUMENTS`
-
-!`python3 .claude/skills/xbase/scripts/include.py xcommit protocol-creation $ARGUMENTS`
-
-!`python3 .claude/skills/xbase/scripts/include.py xcommit xcommit/artifacts $ARGUMENTS`
-
-!`python3 .claude/skills/xbase/scripts/include.py xcommit protocol-cleanup $ARGUMENTS`
+查看上方预加载输出：
+- 含 `initialized` → 跳过，进入阶段 1
+- 含 `not_found` → 输出"xcommit 尚未初始化，请先运行 `/xbase`"，停止
 
 ### 阶段 1：检查变更
 
@@ -60,12 +51,25 @@ argument-hint: "[commit消息 | reinit]"
 
 **暂存操作**：用具体文件名 `git add <file1> <file2> ...`，不用 `git add -A` 或 `git add .`。
 
-### 阶段 2：预检
+### 阶段 2：审查确认
+
+用 AskUserQuestion：
+
+```
+问题：变更已就绪，提交前是否需要审查代码？
+选项：
+- 跳过审查，继续提交
+- 先审查（→ /xreview）
+```
+
+选择"先审查"时：提示用户运行 `/xreview` 审查未提交变更，审查完成后再运行 `/xcommit` 继续提交，结束当前流程。
+
+### 阶段 3：预检
 
 读取 COMMIT-RULES.md 中的「预检脚本」列表，逐个运行：
 
 1. 运行每个脚本，捕获输出
-2. **全部通过** → 继续阶段 3
+2. **全部通过** → 继续阶段 4
 3. **有失败** → 用 AskUserQuestion：
 
 ```
@@ -82,7 +86,7 @@ argument-hint: "[commit消息 | reinit]"
 
 > 如果没有探测到预检脚本，跳过此阶段。
 
-### 阶段 3：文档完整性
+### 阶段 4：文档完整性
 
 **不阻断提交，仅给出建议。**
 
@@ -103,9 +107,9 @@ argument-hint: "[commit消息 | reinit]"
 - Other → 说明情况
 ```
 
-**无遗漏** → 直接进入阶段 4。
+**无遗漏** → 直接进入阶段 5。
 
-### 阶段 4：生成提交
+### 阶段 5：生成提交
 
 1. **生成 commit message**：
    - 如果参数已提供 message → 优先使用
@@ -139,11 +143,36 @@ argument-hint: "[commit消息 | reinit]"
 
 4. 运行 `git status` 确认提交成功。
 
+### 阶段 6：决策回顾
+
+回顾本次变更的 diff 和对话上下文，检测是否包含隐式决策——架构选择、方案取舍、技术选型、"先不做 X" 等取舍。
+
+**检测到疑似决策时**，用 AskUserQuestion：
+
+```
+问题：本次工作中检测到以下疑似决策：
+  1. [决策描述]
+  2. [决策描述]
+  需要记录吗？
+选项：
+- 记录（→ /xdecide）
+- 不需要
+```
+
+**未检测到时**，用 AskUserQuestion：
+
+```
+问题：提交完成。本次工作中有需要记录的决策吗？
+选项：
+- 有（→ /xdecide）
+- 没有
+```
+
 ---
 
 ## 关键原则
 
-- **规则从文件读取** — 预检脚本、文档映射、commit 风格基于 COMMIT-RULES.md，`reinit` 时重新生成
+- **规则从文件读取** — 预检脚本、文档映射、commit 风格基于 COMMIT-RULES.md，`/xbase reinit xcommit` 时重新生成
 - **全量暂存检查** — 展示完整文件列表，确认无遗漏
 - **文档完整性是建议不是阻断** — 提醒但不阻止提交
 - **不用 `git add -A`** — 用具体文件名暂存，避免意外包含敏感文件
@@ -151,4 +180,6 @@ argument-hint: "[commit消息 | reinit]"
 - **展示文件列表** — 提交前展示完整变更文件列表
 - **选项优先于打字** — Other 兜底自由输入
 - **每轮只问一个问题** — 不堆叠
+- **提交前审查锚点** — 每次提交前固定询问是否需要代码审查，不依赖用户记忆
+- **提交后决策捕获** — 提交成功后 AI 主动检测对话中的隐式决策，提醒记录
 - **不推送** — 只做本地 commit，不自动 push（除非用户明确要求）

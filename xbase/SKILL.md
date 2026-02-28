@@ -2,19 +2,37 @@
 name: xbase
 description: xSkills 初始化与状态管理：一键探测项目、初始化所有 skill、查看状态。
 allowed-tools: ["Bash", "Read", "Edit", "Write", "Glob", "Grep", "AskUserQuestion", "Task"]
-argument-hint: "[init | status]"
+argument-hint: "[ensure | init | reinit <skill> | status]"
 ---
 
 ### 参数处理（`$ARGUMENTS`）
 
 根据 `$ARGUMENTS` 分发：
 
-- **空** 或 **`init`** → `init`：全量初始化
+- **空** 或 **`ensure`** → `ensure`：补充初始化
+- **`init`** → `init`：全量初始化（reset-all）
+- **`reinit <skill>`** → `reinit`：重新初始化指定 skill
 - **`status`** → `status`：状态查看
 
 ### 预加载状态
 
 !`python3 .claude/skills/xbase/scripts/skill-state.py read 2>/dev/null`
+
+---
+
+### `ensure`：补充初始化
+
+读取预加载状态，识别未初始化的 skill（无 `initialized` 值的段）。
+
+- 全部已初始化 → 输出"所有 skill 已初始化"，按 `status` 格式展示，结束
+- 有未初始化的 → 仅对未初始化的 skill 执行阶段 1-4（流程与 init 相同，但不执行 reset-all，跳过已初始化的 skill）
+
+---
+
+### `reinit <skill>`：重新初始化指定 skill
+
+1. 删除状态：`python3 .claude/skills/xbase/scripts/skill-state.py delete <skill>`
+2. 按 `ensure` 流程处理（只会处理刚删除的那个 skill）
 
 ---
 

@@ -1,12 +1,19 @@
-# x-skills
+# CLAUDE.md
 
-这是独立 Git 仓库（`x-skills`），挂载在 Entro 项目的 `.claude/skills/` 下。
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## 提交注意
+## 项目概述
 
-- **此目录是独立仓库**，不是 Entro 主仓库的一部分
-- 提交时在此目录（`.claude/skills/`）下执行 `git add` / `git commit`，不要在 Entro 根目录操作
-- 远程：`git@github.com:aporicho/x-skills.git`
+x-skills 是一套 Claude Code Skills 体系，用于保证 AI 辅助开发时的**过程质量和知识不丢失**。部署到目标项目的 `.claude/skills/` 目录下使用。
+
+架构设计、文件体系、术语表、衔接矩阵见 `docs/system.md`（核心架构文档）。编写或修改 SKILL.md 及 references/ 时，对照 `docs/SKILL-EVALUATION.md` 检查质量。各 skill 的设计文档在 `docs/x{name}.md`。
+
+## 当前阶段：Docs-First 设计
+
+- 目标：产出高质量设计文档，用文档驱动后续重构
+- 现有代码仅作**参考**，不作为设计起点
+- **隔离现有实现**：分析时先从需求/目标独立推导，不被现有结构/思路带偏；现有实现只在对照验证环节引入
+- 产出的文档将作为后续重构的唯一规范
 
 ## 守则
 

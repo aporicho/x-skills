@@ -3,7 +3,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-CLAUDE_MD="$SCRIPT_DIR/../CLAUDE.md"
+CLAUDE_MD="$CLAUDE_PROJECT_DIR/CLAUDE.md"
 
 if [ ! -f "$CLAUDE_MD" ]; then
   exit 0

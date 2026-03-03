@@ -1,0 +1,19 @@
+## 探测
+
+1. **阅读 CLAUDE.md** 了解日志相关规则和禁忌（如禁止 print）
+2. **扫描代码**找到日志工具：
+   - 日志工具文件（如 `Logger.swift`、`log.rs`、`logger.ts` 等）
+   - 已有的日志调用模式（`Log.xxx`、`log::xxx`、`console.xxx`、`logger.xxx` 等）
+   - 可用的 Logger 实例 / 分类 / 子系统
+   - 消息语言和 metadata 命名风格
+3. **LOG-RULES.md 探测**（三路并行，不短路）：
+   - 精确名 Glob：`"**/LOG-RULES.md"`
+   - 指纹 Grep：`"^## Logger 列表"`, glob=`"*.md"`
+   - 模糊名 Glob：`"**/*{log-rules,日志规范,logging}*.md"`
+   - 内容指纹：`^## Logger 列表`
+
+## 创建
+
+1. **LOG-RULES.md 处理**：
+   - 需创建 → 基于扫描结果生成（指南见 `.claude/skills/xlog/references/log-rules-guideline.md`）
+2. **写入状态**：`python3 .claude/skills/xbase/scripts/state.py write xlog log_rules "<LOG-RULES.md 路径>"`

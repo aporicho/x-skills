@@ -2,35 +2,30 @@
 name: xdebug
 description: 调试工作流：自动构建运行 App、捕获日志、引导复现、定位修复，全程选项驱动。当用户报告 Bug、请求调试、排查问题时使用。
 allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestion", "Task"]
-argument-hint: "[bug描述 | #issue编号 | reinit]"
+argument-hint: "[bug描述 | #issue编号]"
 ---
 
 ### 参数处理（`$ARGUMENTS`）
 
-> **执行顺序**：无论参数如何，阶段 0 的快速跳过检查始终先执行。参数仅影响阶段 1 及之后的跳转。
-
 - **空** → 正常走阶段 1 询问
-- **`reinit`** → 删除 SKILL-STATE.md 中 `## xdebug` 段（`python3 .claude/skills/xbase/scripts/skill-state.py delete xdebug`）+ 重新执行阶段 0（忽略预加载的 check 结果，delete 后强制执行完整阶段 0）
-- **以 `#` 开头**（如 `#003`）→ 从 SKILL-STATE.md `## xtest → test_issues` 读取 TEST-ISSUES.md 路径。如果字段为空（xtest 未初始化），提示用户"TEST-ISSUES.md 尚未创建，请先运行 /xtest"，回退到正常阶段 1 询问。路径有效则取对应条目作为问题描述，用 `issues.py status` 设为 🟡（修复中），跳过阶段 1 直接进入阶段 2
+- **以 `#` 开头**（如 `#003`）→ 从 SKILL-STATE.md `## xtest → test_issues` 读取 TEST-ISSUES.md 路径。如果字段为空（xtest 未初始化），提示用户"TEST-ISSUES.md 尚未创建，请先运行 /xtest"，回退到正常阶段 1 询问。路径有效则取对应条目作为问题描述，用 Edit 将状态设为 🟡（修复中），跳过阶段 1 直接进入阶段 2
 - **其他文本** → 作为 bug 描述，跳过阶段 1 直接进入阶段 2
 
 ### 核心文件
 
 | 文件 | 说明 | 格式规范 |
 |------|------|----------|
-| `DEBUG-LOG.md` | Bug 修复日志（症状→根因→解决） | `references/debug-log-format.md` |
-| `scripts/run.sh`（或等价物） | 调试运行脚本（构建/启动/停止/日志） | 阶段 0 init-steps 创建 |
+| `DEBUG-LOG.md` | Bug 修复日志（症状→根因→解决） | `references/debug-log-template.md` |
+| `scripts/run.sh`（或等价物） | 调试运行脚本（构建/启动/停止/日志） | xbase 初始化创建 |
 
 ### 预加载状态
-!`python3 .claude/skills/xbase/scripts/skill-state.py check-and-read xdebug 2>/dev/null`
+!`python3 .claude/skills/xbase/scripts/state.py check-and-read xdebug 2>/dev/null`
 
-### 阶段 0：探测项目
+### 初始化检查
 
-!`cat .claude/skills/xbase/references/prep-steps.md`
-
-以下为本 skill 的特有探测步骤：
-
-!`cat .claude/skills/xdebug/references/init-steps.md`
+查看上方预加载输出：
+- 含 `initialized` → 跳过，进入阶段 1
+- 含 `not_found` → 输出"xdebug 尚未初始化，请先运行 `/xbase`"，停止
 
 ### 阶段 1：确认问题
 
@@ -39,7 +34,7 @@ argument-hint: "[bug描述 | #issue编号 | reinit]"
 ```
 问题：这次调试什么？
 选项：
-- 从 TEST-ISSUES.md 选取（→ 先检查 SKILL-STATE.md `## xtest → test_issues` 是否有值。无值则不展示此选项。有值则用 issues.py list 展示 🔴 项，用户选一个后 issues.py status 设为 🟡（修复中））
+- 从 TEST-ISSUES.md 选取（→ 先检查 SKILL-STATE.md `## xtest → test_issues` 是否有值。无值则不展示此选项。有值则读取文件展示 🔴 项，用户选一个后用 Edit 将状态设为 🟡（修复中））
 - 探索性测试（先跑起来看日志）
 - 继续上次调试（→ 从 TEST-ISSUES.md 找 🟡 条目，如无则提示无进行中的调试）
 - Other → 用户直接输入 Bug 描述
@@ -49,12 +44,12 @@ argument-hint: "[bug描述 | #issue编号 | reinit]"
 
 **此阶段不问用户，全部自动完成：**
 
-1. 判断现有日志是否足够覆盖问题区域（先查 LOG-COVERAGE.md，再读相关代码确认）
+1. 判断现有日志是否足够覆盖问题区域（读相关代码确认日志是否充足）
    - 覆盖足够 → 直接构建运行
-   - 覆盖不足 → 启动子 agent（Task 工具），在 prompt 参数中直接传入目标文件和问题描述，让它读取 `.claude/skills/xlog/SKILL.md` 并按 `/xlog` 流程给目标区域补日志。子 agent 完成后主流程继续
-2. 执行构建命令（从阶段 0 推导）
+   - 覆盖不足 → 启动子 agent（Task 工具），在 prompt 参数中直接传入目标文件和问题描述，让它读取 `.claude/skills/xlog/SKILL.md`，以 `targeted <目标路径> <问题描述>` 为参数执行轻量模式。子 agent 完成后主流程继续
+2. 执行构建命令（从初始化状态推导）
 3. 编译失败 → 自己修复后重试，不问用户
-4. 停止旧进程，后台启动项目，日志输出到阶段 0 确定的位置
+4. 停止旧进程，后台启动项目，日志输出到初始化时确定的位置
 
 ### 阶段 3：引导用户操作
 
@@ -110,10 +105,10 @@ argument-hint: "[bug描述 | #issue编号 | reinit]"
 **仅在确认修好后执行，不问用户：**
 
 1. 停止项目
-2. 在 DEBUG-LOG.md 追加本次 Bug 修复记录（格式见 `references/debug-log-format.md`）
+2. 在 DEBUG-LOG.md 追加本次 Bug 修复记录（格式见 `references/debug-log-template.md`）
 3. 如涉及技术决策且项目有决策记录文档，更新记录
 4. 如果本次修复来自 TEST-ISSUES.md：
-   - 用 `issues.py status` 将状态从 🟡（修复中）改为 🟢（已修复）：`python3 .claude/skills/xtest/scripts/issues.py status <path> <id> 已修复`
+   - 用 Edit 将对应条目状态从 🟡（修复中）改为 🟢（已修复）
    - 用 Edit 工具在对应条目下写入修复说明
 5. 用 AskUserQuestion：
 
@@ -140,7 +135,7 @@ argument-hint: "[bug描述 | #issue编号 | reinit]"
 - **操作步骤要具体** — 根据 Bug 给出 1-2-3 步骤，不要说"请操作复现"
 - **每轮只问一个问题** — 不堆叠多个问题
 - **先加日志后改代码** — 禁止盲猜
-- **加日志委派子 agent** — 子 agent 读 `/xlog` SKILL.md 执行，主流程不中断
+- **加日志委派子 agent** — 子 agent 读 `/xlog` SKILL.md，以 `targeted <路径> <问题描述>` 执行轻量模式，主流程不中断
 - **App 不要提前停** — 分析日志时保持运行，确认要改代码了再停
 - **编译问题自己解决** — 编译失败不问用户
 - **没修好不更新文档** — 只在确认修复后更新

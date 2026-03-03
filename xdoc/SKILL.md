@@ -2,15 +2,12 @@
 name: xdoc
 description: 文档维护工作流：基于 DOC-RULES.md 进行文档健康检查 + 代码-文档一致性验证。当用户要维护文档、检查文档质量时使用。
 allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestion"]
-argument-hint: "[健康检查 | 一致性 | reinit]"
+argument-hint: "[健康检查 | 一致性]"
 ---
 
 ### 参数处理（`$ARGUMENTS`）
 
-> **执行顺序**：无论参数如何，阶段 0 的快速跳过检查始终先执行。参数仅影响阶段 1 及之后的跳转。
-
 - **空** → 正常走阶段 1 询问
-- **`reinit`** → 删除 SKILL-STATE.md 中 `## xdoc` 段（`python3 .claude/skills/xbase/scripts/skill-state.py delete xdoc`）+ 重新执行阶段 0（忽略预加载的 check 结果，delete 后强制执行完整阶段 0）
 - **`健康检查`** → 跳过阶段 1，直接进入阶段 2a
 - **`一致性`** → 跳过阶段 1，直接进入阶段 2b
 - **其他文本** → 作为指定文件/目录路径，执行该路径的健康检查
@@ -19,18 +16,16 @@ argument-hint: "[健康检查 | 一致性 | reinit]"
 
 | 文件 | 说明 | 格式规范 |
 |------|------|----------|
-| `DOC-RULES.md` | 文档规范（目录结构 + 检查脚本 + 映射规则） | `references/doc-rules-format.md` |
+| `DOC-RULES.md` | 文档规范（目录结构 + 检查脚本 + 映射规则） | `references/doc-rules-guideline.md` |
 
 ### 预加载状态
-!`python3 .claude/skills/xbase/scripts/skill-state.py check-and-read xdoc 2>/dev/null`
+!`python3 .claude/skills/xbase/scripts/state.py check-and-read xdoc 2>/dev/null`
 
-### 阶段 0：探测项目
+### 初始化检查
 
-!`cat .claude/skills/xbase/references/prep-steps.md`
-
-以下为本 skill 的特有探测步骤：
-
-!`cat .claude/skills/xdoc/references/init-steps.md`
+查看上方预加载输出：
+- 含 `initialized` → 跳过，进入阶段 1
+- 含 `not_found` → 输出"xdoc 尚未初始化，请先运行 `/xbase`"，停止
 
 ### 阶段 1：选择任务
 
@@ -111,7 +106,7 @@ argument-hint: "[健康检查 | 一致性 | reinit]"
 
 ## 关键原则
 
-- **规则从文件读取** — 文档目录、检查脚本、映射规则基于 DOC-RULES.md，`reinit` 时重新生成
+- **规则从文件读取** — 文档目录、检查脚本、映射规则基于 DOC-RULES.md，`/xbase reinit xdoc` 时重新生成
 - **脚本优先** — DOC-RULES.md 中有检查脚本就用，没有才用内置基础检查
 - **逐项决策** — 每个问题单独决策，不批量处理
 - **批量修复后验证** — 10+ 文件修改后按 DOC-RULES.md 运行验证脚本

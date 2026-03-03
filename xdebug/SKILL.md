@@ -8,7 +8,7 @@ argument-hint: "[bug描述 | #issue编号]"
 ### 参数处理（`$ARGUMENTS`）
 
 - **空** → 正常走阶段 1 询问
-- **以 `#` 开头**（如 `#003`）→ 从 SKILL-STATE.md `## xtest → test_issues` 读取 TEST-ISSUES.md 路径。如果字段为空（xtest 未初始化），提示用户"TEST-ISSUES.md 尚未创建，请先运行 /xtest"，回退到正常阶段 1 询问。路径有效则取对应条目作为问题描述，用 `issues.py status` 设为 🟡（修复中），跳过阶段 1 直接进入阶段 2
+- **以 `#` 开头**（如 `#003`）→ 从 SKILL-STATE.md `## xtest → test_issues` 读取 TEST-ISSUES.md 路径。如果字段为空（xtest 未初始化），提示用户"TEST-ISSUES.md 尚未创建，请先运行 /xtest"，回退到正常阶段 1 询问。路径有效则取对应条目作为问题描述，用 Edit 将状态设为 🟡（修复中），跳过阶段 1 直接进入阶段 2
 - **其他文本** → 作为 bug 描述，跳过阶段 1 直接进入阶段 2
 
 ### 核心文件
@@ -34,7 +34,7 @@ argument-hint: "[bug描述 | #issue编号]"
 ```
 问题：这次调试什么？
 选项：
-- 从 TEST-ISSUES.md 选取（→ 先检查 SKILL-STATE.md `## xtest → test_issues` 是否有值。无值则不展示此选项。有值则用 issues.py list 展示 🔴 项，用户选一个后 issues.py status 设为 🟡（修复中））
+- 从 TEST-ISSUES.md 选取（→ 先检查 SKILL-STATE.md `## xtest → test_issues` 是否有值。无值则不展示此选项。有值则读取文件展示 🔴 项，用户选一个后用 Edit 将状态设为 🟡（修复中））
 - 探索性测试（先跑起来看日志）
 - 继续上次调试（→ 从 TEST-ISSUES.md 找 🟡 条目，如无则提示无进行中的调试）
 - Other → 用户直接输入 Bug 描述
@@ -108,7 +108,7 @@ argument-hint: "[bug描述 | #issue编号]"
 2. 在 DEBUG-LOG.md 追加本次 Bug 修复记录（格式见 `references/debug-log-template.md`）
 3. 如涉及技术决策且项目有决策记录文档，更新记录
 4. 如果本次修复来自 TEST-ISSUES.md：
-   - 用 `issues.py status` 将状态从 🟡（修复中）改为 🟢（已修复）：`python3 .claude/skills/xtest/scripts/issues.py status <path> <id> 已修复`
+   - 用 Edit 将对应条目状态从 🟡（修复中）改为 🟢（已修复）
    - 用 Edit 工具在对应条目下写入修复说明
 5. 用 AskUserQuestion：
 

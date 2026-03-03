@@ -27,11 +27,11 @@ argument-hint: "[commit消息]"
 
 ### 阶段 1：检查变更
 
-1. 运行 git-context.py 收集上下文：
-   ```bash
-   python3 .claude/skills/xcommit/scripts/git-context.py commit-context
-   ```
-   输出包含 status、diff_stat、cached_diff、recent_log、commit_style 等。
+1. 收集 git 上下文（自行执行以下命令）：
+   - `git status`（工作区状态）
+   - `git diff --stat`（变更概览）
+   - `git diff --cached`（已暂存详情）
+   - `git log --oneline -10`（近期提交风格参考）
 
 **分支判断**：
 - **无变更（工作区干净）** → 提示"无变更需要提交"，结束

@@ -5,7 +5,7 @@
    - 指纹 Grep：`"^## D-\\d{3} "`, glob=`"*.md"`
    - 模糊名 Glob：`"**/*{决策,decision,ADR,decide}*.md"`
    - 内容指纹：`^## D-\d{3} `
-   - 已就绪时追加：用 `decision-log.py list` 获取现有条目概览
+   - 已就绪时追加：读取文件获取现有条目概览
 
 ## 创建
 

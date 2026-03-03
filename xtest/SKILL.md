@@ -88,11 +88,7 @@ argument-hint: "[自动化 | 手动]"
 
 1. 启动后台子 agent（Task 工具，run_in_background），让它读取日志做初步分析，输出分析结论
 2. **不打断测试流程**，在 TEST-CHECKLIST.md 该项标注 ❌ 并记录问题描述
-3. 写入 TEST-ISSUES.md 一条 🔴 条目：
-   ```bash
-   python3 .claude/skills/xtest/scripts/issues.py next-id <TEST-ISSUES.md 路径>
-   ```
-   然后用 Edit 工具在 TEST-ISSUES.md 末尾追加问题记录（格式见 `references/test-issues-template.md`），包含复现步骤、实际/预期表现
+3. 写入 TEST-ISSUES.md 一条 🔴 条目：读取文件找到最大编号并 +1，用 Edit 工具在末尾追加问题记录（格式见 `references/test-issues-template.md`），包含复现步骤、实际/预期表现
 4. 继续下一个测试项
 
 ### 阶段 4：汇总

@@ -15,8 +15,8 @@ argument-hint: "[自动化 | 手动]"
 
 | 文件 | 说明 | 格式规范 |
 |------|------|----------|
-| `TEST-CHECKLIST.md` | 测试清单（按模块组织，记录测试结果） | `references/test-checklist-template.md` |
-| `TEST-ISSUES.md` | Bug 队列（状态流转：🔴→🟡→🟢→✅） | `references/test-issues-template.md` |
+| `TEST-CHECKLIST.md` | 测试清单（按模块组织，记录测试结果） | 骨架 `references/test-checklist-template.md`；写法 `references/test-checklist-standard.md` |
+| `TEST-ISSUES.md` | Bug 队列（状态流转：🔴→🟡→🟢→✅） | 骨架 `references/test-issues-template.md`；写法 `references/test-issues-standard.md` |
 
 ### 预加载状态
 !`python3 .claude/skills/xbase/scripts/state.py check-and-read xtest 2>/dev/null`
@@ -88,7 +88,7 @@ argument-hint: "[自动化 | 手动]"
 
 1. 启动后台子 agent（Task 工具，run_in_background），让它读取日志做初步分析，输出分析结论
 2. **不打断测试流程**，在 TEST-CHECKLIST.md 该项标注 ❌ 并记录问题描述
-3. 写入 TEST-ISSUES.md 一条 🔴 条目：读取文件找到最大编号并 +1，用 Edit 工具在末尾追加问题记录（格式见 `references/test-issues-template.md`），包含复现步骤、实际/预期表现
+3. 写入 TEST-ISSUES.md 一条 🔴 条目：读取文件找到最大编号并 +1，用 Edit 工具在末尾追加问题记录（骨架见 `references/test-issues-template.md`，写法见 `references/test-issues-standard.md`），包含复现步骤、实际/预期表现
 4. 继续下一个测试项
 
 ### 阶段 4：汇总

@@ -15,7 +15,7 @@ argument-hint: "[bug描述 | #issue编号]"
 
 | 文件 | 说明 | 格式规范 |
 |------|------|----------|
-| `DEBUG-LOG.md` | Bug 修复日志（症状→根因→解决） | `references/debug-log-template.md` |
+| `DEBUG-LOG.md` | Bug 修复日志（症状→根因→解决） | 骨架 `references/debug-log-template.md`；写法 `references/debug-log-standard.md` |
 | `scripts/run.sh`（或等价物） | 调试运行脚本（构建/启动/停止/日志） | xbase 初始化创建 |
 
 ### 预加载状态
@@ -105,7 +105,7 @@ argument-hint: "[bug描述 | #issue编号]"
 **仅在确认修好后执行，不问用户：**
 
 1. 停止项目
-2. 在 DEBUG-LOG.md 追加本次 Bug 修复记录（格式见 `references/debug-log-template.md`）
+2. 在 DEBUG-LOG.md 追加本次 Bug 修复记录（骨架见 `references/debug-log-template.md`，写法见 `references/debug-log-standard.md`）
 3. 如涉及技术决策且项目有决策记录文档，更新记录
 4. 如果本次修复来自 TEST-ISSUES.md：
    - 用 Edit 将对应条目状态从 🟡（修复中）改为 🟢（已修复）

@@ -13,7 +13,7 @@ argument-hint: "[targeted <路径> [问题上下文]]"
 
 ### 启动方式补充
 
-- `/xdebug` 阶段 2 加日志时，子 agent 读取本 SKILL.MD，以 `targeted <目标路径> <问题描述>` 为参数执行轻量模式
+- `/xdebug` 阶段 2 加日志时，子 agent 读取本 SKILL.md，以 `targeted <目标路径> <问题描述>` 为参数执行轻量模式
 
 ### 核心文件
 

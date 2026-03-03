@@ -51,7 +51,7 @@ argument-hint: "[文件/目录路径]"
 
 #### 步骤 1.5：历史知识加载
 
-从 SKILL-STATE.md 获取路径，用变更涉及的模块/功能关键词搜索：
+从 SKILL-STATE.md 获取路径（`xdecide → decision_log`、`xdebug → debug_log`），用变更涉及的模块/功能关键词搜索：
 - **DECIDE-LOG.md**：相关决策条目，确保审查建议不违背已有决策
 - **DEBUG-LOG.md**：相关修复记录，关注已知易错点
 

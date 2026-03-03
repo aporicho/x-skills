@@ -15,7 +15,7 @@ argument-hint: "[决策描述 | review]"
 
 | 文件 | 说明 | 格式规范 |
 |------|------|----------|
-| `DECIDE-LOG.md` | 决策条目（编号递增，含背景/选项/结论） | `references/decide-log-template.md` |
+| `DECIDE-LOG.md` | 决策条目（编号递增，含背景/选项/结论） | 骨架 `references/decide-log-template.md`；写法 `references/decide-log-standard.md` |
 
 ### 预加载状态
 !`python3 .claude/skills/xbase/scripts/state.py check-and-read xdecide 2>/dev/null`

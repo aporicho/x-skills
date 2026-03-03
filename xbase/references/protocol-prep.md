@@ -16,5 +16,5 @@
 3. 找到文档目录（`document/`、`docs/`、`doc/` 等），未找到则创建 `docs/`
 4. 写入探测结果：
    ```bash
-   python3 .claude/skills/xbase/scripts/skill-state.py write-info doc_dir "<目录>"
+   python3 .claude/skills/xbase/scripts/state.py write-info doc_dir "<目录>"
    ```

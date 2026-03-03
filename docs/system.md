@@ -156,17 +156,11 @@ xBase 提供的 .py 辅助工具，供 SKILL.md 流程中调用。
 - **给谁用**：所有 SKILL.md 启动时通过 `!` 语法调用
 - **什么时候用**：skill 启动时预加载状态
 
-**include.py** — 位置：`xbase/scripts/`
-
-- **是什么**：参考文件的上下文注入工具
-- **包含什么**：读取指定参考文件内容，注入 SKILL.md 执行上下文
-- **给谁用**：SKILL.md 中需要动态加载参考文件的步骤
-- **什么时候用**：SKILL.md 流程中通过 `!` 语法按需注入
-
-以下脚本标记为待删除（功能可被 agent 自身能力替代），实际删除在旧实现改造阶段执行：
+以下脚本已删除（功能可被 agent 自身能力替代）：
 
 | 文件 | 替代方式 |
 |------|---------|
+| xbase/scripts/include.py | agent 按需 Read references 文件；跨 skill 引用用路径直接读取；段提取由 agent 定位 markdown 段落 |
 | xbase/scripts/artifact-create.py | agent 自行按 template 创建 |
 | xcommit/scripts/git-context.py | agent 自行执行 git 命令 |
 | xdecide/scripts/decision-log.py | agent 自行管理编号 |

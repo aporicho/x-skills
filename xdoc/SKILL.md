@@ -16,10 +16,10 @@ argument-hint: "[健康检查 | 一致性]"
 
 | 文件 | 说明 | 格式规范 |
 |------|------|----------|
-| `DOC-RULES.md` | 文档规范（目录结构 + 检查脚本 + 映射规则） | `references/doc-rules-format.md` |
+| `DOC-RULES.md` | 文档规范（目录结构 + 检查脚本 + 映射规则） | `references/doc-rules-guideline.md` |
 
 ### 预加载状态
-!`python3 .claude/skills/xbase/scripts/skill-state.py check-and-read xdoc 2>/dev/null`
+!`python3 .claude/skills/xbase/scripts/state.py check-and-read xdoc 2>/dev/null`
 
 ### 初始化检查
 

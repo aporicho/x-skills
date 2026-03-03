@@ -19,5 +19,5 @@
 ## 创建
 
 1. **DOC-RULES.md 处理**：
-   - 需创建 → 基于探测结果生成（格式见 `.claude/skills/xdoc/references/doc-rules-format.md`），每条规则标注来源（`CLAUDE.md` 或 `项目扫描`）
-2. **写入状态**：`python3 .claude/skills/xbase/scripts/skill-state.py write xdoc doc_rules "<DOC-RULES.md 路径>"`
+   - 需创建 → 基于探测结果生成（格式见 `.claude/skills/xdoc/references/doc-rules-guideline.md`），每条规则标注来源（`CLAUDE.md` 或 `项目扫描`）
+2. **写入状态**：`python3 .claude/skills/xbase/scripts/state.py write xdoc doc_rules "<DOC-RULES.md 路径>"`

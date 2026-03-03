@@ -14,10 +14,10 @@ argument-hint: "[文件/目录路径]"
 
 | 文件 | 说明 | 格式规范 |
 |------|------|----------|
-| `REVIEW-RULES.md` | 项目审查规则（从 CLAUDE.md + 代码扫描提取） | [references/review-rules-format.md](references/review-rules-format.md) |
+| `REVIEW-RULES.md` | 项目审查规则（从 CLAUDE.md + 代码扫描提取） | [references/review-rules-guideline.md](references/review-rules-guideline.md) |
 
 ### 预加载状态
-!`python3 .claude/skills/xbase/scripts/skill-state.py check-and-read xreview 2>/dev/null`
+!`python3 .claude/skills/xbase/scripts/state.py check-and-read xreview 2>/dev/null`
 
 ### 初始化检查
 

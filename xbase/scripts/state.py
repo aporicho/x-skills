@@ -4,14 +4,14 @@
 SKILL-STATE.md 作为模板预置在同目录下，所有段和字段已定义好，skill 初始化时只需填值。
 
 用法:
-    python3 .claude/skills/xbase/scripts/skill-state.py check <skill>
-    python3 .claude/skills/xbase/scripts/skill-state.py read
-    python3 .claude/skills/xbase/scripts/skill-state.py check-and-read <skill>
-    python3 .claude/skills/xbase/scripts/skill-state.py write <skill> <key> <value> [<key2> <value2> ...]
-    python3 .claude/skills/xbase/scripts/skill-state.py write-info <key> <value> [<key2> <value2> ...]
-    python3 .claude/skills/xbase/scripts/skill-state.py delete <skill>
-    python3 .claude/skills/xbase/scripts/skill-state.py delete-info
-    python3 .claude/skills/xbase/scripts/skill-state.py reset-all
+    python3 .claude/skills/xbase/scripts/state.py check <skill>
+    python3 .claude/skills/xbase/scripts/state.py read
+    python3 .claude/skills/xbase/scripts/state.py check-and-read <skill>
+    python3 .claude/skills/xbase/scripts/state.py write <skill> <key> <value> [<key2> <value2> ...]
+    python3 .claude/skills/xbase/scripts/state.py write-info <key> <value> [<key2> <value2> ...]
+    python3 .claude/skills/xbase/scripts/state.py delete <skill>
+    python3 .claude/skills/xbase/scripts/state.py delete-info
+    python3 .claude/skills/xbase/scripts/state.py reset-all
 """
 
 import sys
@@ -220,7 +220,7 @@ def clear_section_values(content: str, heading: str) -> str:
 def cmd_check(args: list[str]) -> None:
     """check <skill> — 检查 skill 是否已初始化（initialized 字段是否有值）。"""
     if len(args) != 1:
-        print("用法: skill-state.py check <skill>", file=sys.stderr)
+        print("用法: state.py check <skill>", file=sys.stderr)
         sys.exit(1)
 
     skill = args[0]
@@ -247,7 +247,7 @@ def cmd_check_and_read(args: list[str]) -> None:
     输出格式：第一行为 check 结果（initialized / not_found），第二行为 ---，后续为完整状态。
     """
     if len(args) != 1:
-        print("用法: skill-state.py check-and-read <skill>", file=sys.stderr)
+        print("用法: state.py check-and-read <skill>", file=sys.stderr)
         sys.exit(1)
 
     skill = args[0]
@@ -271,7 +271,7 @@ def cmd_check_and_read(args: list[str]) -> None:
 def cmd_write(args: list[str]) -> None:
     """write <skill> <key> <value> [<key2> <value2> ...] — 写入 skill 状态。"""
     if len(args) < 3 or (len(args) - 1) % 2 != 0:
-        print("用法: skill-state.py write <skill> <key> <value> [<key2> <value2> ...]", file=sys.stderr)
+        print("用法: state.py write <skill> <key> <value> [<key2> <value2> ...]", file=sys.stderr)
         sys.exit(1)
 
     skill = args[0]
@@ -290,7 +290,7 @@ def cmd_write(args: list[str]) -> None:
 def cmd_write_info(args: list[str]) -> None:
     """write-info <key> <value> [<key2> <value2> ...] — 写入项目信息。"""
     if len(args) < 2 or len(args) % 2 != 0:
-        print("用法: skill-state.py write-info <key> <value> [<key2> <value2> ...]", file=sys.stderr)
+        print("用法: state.py write-info <key> <value> [<key2> <value2> ...]", file=sys.stderr)
         sys.exit(1)
 
     kvs = {}
@@ -304,7 +304,7 @@ def cmd_write_info(args: list[str]) -> None:
 def cmd_delete(args: list[str]) -> None:
     """delete <skill> — 清空指定 skill 段的值（保留结构，用于 reinit）。"""
     if len(args) != 1:
-        print("用法: skill-state.py delete <skill>", file=sys.stderr)
+        print("用法: state.py delete <skill>", file=sys.stderr)
         sys.exit(1)
 
     skill = args[0]

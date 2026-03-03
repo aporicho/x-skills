@@ -14,10 +14,10 @@ argument-hint: "[commit消息]"
 
 | 文件 | 说明 | 格式规范 |
 |------|------|----------|
-| `COMMIT-RULES.md` | 提交规范（git log 分析 + CLAUDE.md 提取） | `references/commit-rules-format.md` |
+| `COMMIT-RULES.md` | 提交规范（git log 分析 + CLAUDE.md 提取） | `references/commit-rules-guideline.md` |
 
 ### 预加载状态
-!`python3 .claude/skills/xbase/scripts/skill-state.py check-and-read xcommit 2>/dev/null`
+!`python3 .claude/skills/xbase/scripts/state.py check-and-read xcommit 2>/dev/null`
 
 ### 初始化检查
 

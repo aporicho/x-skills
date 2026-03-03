@@ -19,12 +19,12 @@ argument-hint: "[targeted <路径> [问题上下文]]"
 
 | 文件 | 说明 | 格式规范 |
 |------|------|----------|
-| `LOG-RULES.md` | 日志规范（Logger 列表、级别用法、代码模式） | `references/log-rules-format.md` |
+| `LOG-RULES.md` | 日志规范（Logger 列表、级别用法、代码模式） | `references/log-rules-guideline.md` |
 
 由 `/xlog` 创建和维护，存放在 SKILL-STATE.md 的 `doc_dir` 目录下。
 
 ### 预加载状态
-!`python3 .claude/skills/xbase/scripts/skill-state.py check-and-read xlog 2>/dev/null`
+!`python3 .claude/skills/xbase/scripts/state.py check-and-read xlog 2>/dev/null`
 
 ### 初始化检查
 
@@ -53,12 +53,11 @@ argument-hint: "[targeted <路径> [问题上下文]]"
 - Other → 自由输入
 ```
 
-!`python3 .claude/skills/xbase/scripts/include.py xlog $log_rules $ARGUMENTS`
-
 ### 阶段 2：扫描 + 确认 + 补全 + 纠正
 
 1. 确定扫描范围（来自阶段 1 选择或参数指定）
-2. 读取目标代码，按上方注入的 LOG-RULES.md 检查两类问题：
+2. 从预加载状态中获取 `log_rules` 路径，读取 LOG-RULES.md 内容
+3. 按 LOG-RULES.md 检查两类问题：
    - **盲区**：该有日志但没有的位置 → 补充
    - **不规范**：已有日志但不符合 LOG-RULES.md → 纠正
      - 违反项目禁忌（如用 print 代替 Logger）
@@ -103,7 +102,7 @@ argument-hint: "[targeted <路径> [问题上下文]]"
 
 流程：
 
-1. **补日志** — 读取目标路径代码，结合问题上下文，按上方注入的 LOG-RULES.md，在关键决策点和边界处补充诊断日志
+1. **补日志** — 读取目标路径代码，结合问题上下文，从预加载状态获取 `log_rules` 路径并读取 LOG-RULES.md，按规范在关键决策点和边界处补充诊断日志
 2. **构建验证** — 执行构建命令确认编译通过
    - 编译失败 → 最多重试 2 次（修复后重新构建）
    - 仍失败 → 回滚所有日志变更，输出失败摘要，退出

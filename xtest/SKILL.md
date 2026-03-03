@@ -15,11 +15,11 @@ argument-hint: "[自动化 | 手动]"
 
 | 文件 | 说明 | 格式规范 |
 |------|------|----------|
-| `TEST-CHECKLIST.md` | 测试清单（按模块组织，记录测试结果） | `references/test-checklist-format.md` |
-| `TEST-ISSUES.md` | Bug 队列（状态流转：🔴→🟡→🟢→✅） | `references/test-issues-format.md` |
+| `TEST-CHECKLIST.md` | 测试清单（按模块组织，记录测试结果） | `references/test-checklist-template.md` |
+| `TEST-ISSUES.md` | Bug 队列（状态流转：🔴→🟡→🟢→✅） | `references/test-issues-template.md` |
 
 ### 预加载状态
-!`python3 .claude/skills/xbase/scripts/skill-state.py check-and-read xtest 2>/dev/null`
+!`python3 .claude/skills/xbase/scripts/state.py check-and-read xtest 2>/dev/null`
 
 ### 初始化检查
 
@@ -92,7 +92,7 @@ argument-hint: "[自动化 | 手动]"
    ```bash
    python3 .claude/skills/xtest/scripts/issues.py next-id <TEST-ISSUES.md 路径>
    ```
-   然后用 Edit 工具在 TEST-ISSUES.md 末尾追加问题记录（格式见 `references/test-issues-format.md`），包含复现步骤、实际/预期表现
+   然后用 Edit 工具在 TEST-ISSUES.md 末尾追加问题记录（格式见 `references/test-issues-template.md`），包含复现步骤、实际/预期表现
 4. 继续下一个测试项
 
 ### 阶段 4：汇总

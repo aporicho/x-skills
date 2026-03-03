@@ -16,7 +16,7 @@ argument-hint: "[ensure | init | reinit <skill> | status]"
 
 ### 预加载状态
 
-!`python3 .claude/skills/xbase/scripts/skill-state.py read 2>/dev/null`
+!`python3 .claude/skills/xbase/scripts/state.py read 2>/dev/null`
 
 ---
 
@@ -31,7 +31,7 @@ argument-hint: "[ensure | init | reinit <skill> | status]"
 
 ### `reinit <skill>`：重新初始化指定 skill
 
-1. 删除状态：`python3 .claude/skills/xbase/scripts/skill-state.py delete <skill>`
+1. 删除状态：`python3 .claude/skills/xbase/scripts/state.py delete <skill>`
 2. 按 `ensure` 流程处理（只会处理刚删除的那个 skill）
 
 ---
@@ -40,46 +40,24 @@ argument-hint: "[ensure | init | reinit <skill> | status]"
 
 先清空所有状态，确保从零开始：
 ```bash
-python3 .claude/skills/xbase/scripts/skill-state.py reset-all
+python3 .claude/skills/xbase/scripts/state.py reset-all
 ```
 
 ### 阶段 1：集中探测
 
 > 一次性收集所有信息，后续阶段直接使用结果。
 
-!`python3 .claude/skills/xbase/scripts/include.py xbase protocol-detection $ARGUMENTS`
-
-**项目级**
-
-!`python3 .claude/skills/xbase/scripts/include.py xbase xbase:探测 $ARGUMENTS`
-
-**xdebug**
-
-!`python3 .claude/skills/xbase/scripts/include.py xbase xdebug:探测 $ARGUMENTS`
-
-**xlog**
-
-!`python3 .claude/skills/xbase/scripts/include.py xbase xlog:探测 $ARGUMENTS`
-
-**xtest**
-
-!`python3 .claude/skills/xbase/scripts/include.py xbase xtest:探测 $ARGUMENTS`
-
-**xreview**
-
-!`python3 .claude/skills/xbase/scripts/include.py xbase xreview:探测 $ARGUMENTS`
-
-**xcommit**
-
-!`python3 .claude/skills/xbase/scripts/include.py xbase xcommit:探测 $ARGUMENTS`
-
-**xdoc**
-
-!`python3 .claude/skills/xbase/scripts/include.py xbase xdoc:探测 $ARGUMENTS`
-
-**xdecide**
-
-!`python3 .claude/skills/xbase/scripts/include.py xbase xdecide:探测 $ARGUMENTS`
+1. 读取探测协议：`.claude/skills/xbase/references/protocol-detection.md`
+2. 对每个待初始化 skill，读取其 `references/artifacts.md` 的 `## 探测` 段：
+   - 项目级：`.claude/skills/xbase/references/artifacts.md`
+   - xdebug：`.claude/skills/xdebug/references/artifacts.md`
+   - xlog：`.claude/skills/xlog/references/artifacts.md`
+   - xtest：`.claude/skills/xtest/references/artifacts.md`
+   - xreview：`.claude/skills/xreview/references/artifacts.md`
+   - xcommit：`.claude/skills/xcommit/references/artifacts.md`
+   - xdoc：`.claude/skills/xdoc/references/artifacts.md`
+   - xdecide：`.claude/skills/xdecide/references/artifacts.md`
+3. 按协议和各 skill 探测声明执行探测
 
 展示**最终状态**表（基于上方原始命中汇总推导），等待用户确认后进入阶段 2：
 
@@ -99,87 +77,17 @@ python3 .claude/skills/xbase/scripts/skill-state.py reset-all
 
 > 根据阶段 1 的四态结果，对每个核心文件执行对应处理。
 
-!`python3 .claude/skills/xbase/scripts/include.py xbase protocol-creation $ARGUMENTS`
-
-**项目级**
-
-!`python3 .claude/skills/xbase/scripts/include.py xbase xbase:创建 $ARGUMENTS`
-
----
-
-**xdebug**
-
-!`python3 .claude/skills/xbase/scripts/include.py xbase xdebug:创建 $ARGUMENTS`
-
----
-
-**xlog**
-
-!`python3 .claude/skills/xbase/scripts/include.py xbase xlog:创建 $ARGUMENTS`
-
----
-
-**xtest**
-
-!`python3 .claude/skills/xbase/scripts/include.py xbase xtest:创建 $ARGUMENTS`
-
----
-
-**xreview**
-
-!`python3 .claude/skills/xbase/scripts/include.py xbase xreview:创建 $ARGUMENTS`
-
----
-
-**xcommit**
-
-!`python3 .claude/skills/xbase/scripts/include.py xbase xcommit:创建 $ARGUMENTS`
-
----
-
-**xdoc**
-
-!`python3 .claude/skills/xbase/scripts/include.py xbase xdoc:创建 $ARGUMENTS`
-
----
-
-**xdecide**
-
-!`python3 .claude/skills/xbase/scripts/include.py xbase xdecide:创建 $ARGUMENTS`
+1. 读取创建协议：`.claude/skills/xbase/references/protocol-creation.md`
+2. 对每个需创建/迁移/更新的 skill，读取其 `references/artifacts.md` 的 `## 创建` 段
+3. 按协议和各 skill 创建声明执行创建
 
 ### 阶段 3：集中清理
 
 > 所有核心文件已就位，一次性清理废弃文件和 CLAUDE.md 重复内容。
 
-!`python3 .claude/skills/xbase/scripts/include.py xbase protocol-cleanup $ARGUMENTS`
-
-**xdebug**
-
-!`python3 .claude/skills/xbase/scripts/include.py xbase xdebug:清理 $ARGUMENTS`
-
-**xlog**
-
-!`python3 .claude/skills/xbase/scripts/include.py xbase xlog:清理 $ARGUMENTS`
-
-**xtest**
-
-!`python3 .claude/skills/xbase/scripts/include.py xbase xtest:清理 $ARGUMENTS`
-
-**xreview**
-
-!`python3 .claude/skills/xbase/scripts/include.py xbase xreview:清理 $ARGUMENTS`
-
-**xcommit**
-
-!`python3 .claude/skills/xbase/scripts/include.py xbase xcommit:清理 $ARGUMENTS`
-
-**xdoc**
-
-!`python3 .claude/skills/xbase/scripts/include.py xbase xdoc:清理 $ARGUMENTS`
-
-**xdecide**
-
-!`python3 .claude/skills/xbase/scripts/include.py xbase xdecide:清理 $ARGUMENTS`
+1. 读取清理协议：`.claude/skills/xbase/references/protocol-cleanup.md`
+2. 对每个有废弃候选的 skill，读取其 `references/artifacts.md` 的 `## 清理` 段（如有）
+3. 按协议执行清理
 
 ### 阶段 4：汇总
 
@@ -189,7 +97,7 @@ python3 .claude/skills/xbase/scripts/skill-state.py reset-all
 
 ### `status`：状态查看
 
-1. 使用预加载状态（已在上方执行 `skill-state.py read`），直接格式化展示
+1. 使用预加载状态（已在上方执行 `state.py read`），直接格式化展示
 2. 展示汇总表：
 
 ```

@@ -33,13 +33,18 @@ for name in "${targets[@]}"; do
     cd "$dir"
     git checkout -- . 2>/dev/null || true
     git clean -fd 2>/dev/null || true
-    rm -f SKILL-STATE.md
   )
   echo "  已重置"
 done
 
 # 重新部署
 "$SCRIPT_DIR/deploy.sh" "${targets[@]}"
+
+# 重置 SKILL-STATE.md 为空模板
+for name in "${targets[@]}"; do
+  dir="$PROJECTS_DIR/$name"
+  [ -d "$dir" ] && python3 "$dir/.claude/skills/xbase/scripts/state.py" reset-all 2>/dev/null || true
+done
 
 echo ""
 echo "重置完成。"

@@ -4,45 +4,45 @@
 
 ## 项目信息
 
-- doc_dir: document/90-开发
+- doc_dir:
 
 ## xbase
 
-- run_script: scripts/run.sh
-- initialized: 2026-02-21
+- run_script:
+- initialized:
 
 ## xdebug
 
-- debug_log: document/90-开发/DEBUG-LOG.md
-- initialized: 2026-02-20
+- debug_log:
+- initialized:
 
 ## xtest
 
-- test_checklist: document/90-开发/TEST-CHECKLIST.md
-- test_issues: document/90-开发/TEST-ISSUES.md
-- initialized: 2026-02-20
+- test_checklist:
+- test_issues:
+- initialized:
 
 ## xlog
 
-- log_rules: document/90-开发/LOG-RULES.md
-- initialized: 2026-02-21
+- log_rules:
+- initialized:
 
 ## xcommit
 
-- commit_rules: document/90-开发/COMMIT-RULES.md
-- initialized: 2026-02-20
+- commit_rules:
+- initialized:
 
 ## xreview
 
-- review_rules: document/90-开发/REVIEW-RULES.md
-- initialized: 2026-02-20
+- review_rules:
+- initialized:
 
 ## xdoc
 
-- doc_rules: document/90-开发/DOC-RULES.md
-- initialized: 2026-02-20
+- doc_rules:
+- initialized:
 
 ## xdecide
 
-- decision_log: document/90-开发/DECIDE-LOG.md
-- initialized: 2026-02-20
+- decision_log:
+- initialized:

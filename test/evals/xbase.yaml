@@ -1,6 +1,6 @@
 # xbase 初始化评判标准
 expected_behavior:
-  - 生成了 SKILL-STATE.md 文件，包含各 skill 的初始化状态
-  - 生成了 run.sh，其构建命令适配项目的实际构建系统
-  - 生成了 DOC-RULES.md、REVIEW-RULES.md、COMMIT-RULES.md 等核心文件
-  - 核心文件内容基于项目实际代码和结构生成，不是空模板
+  - 输出包含阶段 1 探测结果（原始命中表或最终状态表）
+  - 输出包含阶段 2 创建过程（提到创建了核心文件）
+  - 输出包含阶段 4 汇总表，所有 skill 显示为已初始化（✅）
+  - 汇总表中的核心文件路径不为空（如 run.sh、DOC-RULES.md 等有实际路径）

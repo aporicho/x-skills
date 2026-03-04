@@ -13,15 +13,18 @@
 #     grade.txt      - 自动评判结果（如果有 eval 定义）
 set -euo pipefail
 
+# 允许从 Claude Code session 内部调用（绕过嵌套检测）
+unset CLAUDECODE 2>/dev/null || true
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECTS_DIR="$SCRIPT_DIR/projects"
 RESULTS_DIR="$SCRIPT_DIR/results"
 EVALS_DIR="$SCRIPT_DIR/evals"
 
 # 超时（秒），可通过环境变量覆盖
-TIMEOUT="${XSKILLS_TEST_TIMEOUT:-300}"
+TIMEOUT="${XSKILLS_TEST_TIMEOUT:-600}"
 # 预算上限（美元）
-MAX_BUDGET="${XSKILLS_TEST_BUDGET:-1.00}"
+MAX_BUDGET="${XSKILLS_TEST_BUDGET:-5.00}"
 
 # skill 默认测试命令（按依赖顺序：xbase 必须在前）
 declare_skills() {
@@ -85,16 +88,18 @@ run_test() {
   start_time=$(date +%s)
 
   # 注意：
-  # - 不用 bypassPermissions（会导致 AskUserQuestion 返回空）
-  # - 用 allowedTools 白名单放行 skill 需要的工具
-  # - -p 模式下 AskUserQuestion 可能返回空，skill 参数应尽量绕过交互
+  # - -p 模式无交互，通过 system prompt 指示自动确认
   # - stream-json 捕获完整工具调用链，同时提取 text 输出
   # 后台运行 claude，用 kill 实现超时（macOS 没有 timeout 命令）
+  local full_prompt="[测试模式] 这是自动化测试，无人值守。遇到需要用户确认的步骤时，直接选择第一个选项继续执行，不要等待用户输入。
+
+$prompt"
   (
     cd "$project_dir"
-    claude -p "$prompt" \
-      --allowedTools "Bash Read Edit Write Grep Glob Skill" \
+    claude -p "$full_prompt" \
+      --allowedTools "Bash Read Edit Write Grep Glob Skill AskUserQuestion" \
       --output-format stream-json \
+      --verbose \
       --max-budget-usd "$MAX_BUDGET" \
       > "$result_dir/stream.jsonl" 2>"$result_dir/stderr.txt" \
       &

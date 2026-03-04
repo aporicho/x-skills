@@ -138,8 +138,8 @@ expected_behavior:
 
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
-| `XSKILLS_TEST_TIMEOUT` | 300 | 单次测试超时（秒） |
-| `XSKILLS_TEST_BUDGET` | 1.00 | 单次测试预算上限（美元） |
+| `XSKILLS_TEST_TIMEOUT` | 600 | 单次测试超时（秒） |
+| `XSKILLS_TEST_BUDGET` | 5.00 | 单次测试预算上限（美元） |
 
 ## 结果目录
 
@@ -159,11 +159,19 @@ results/
             └── ...
 ```
 
+## 自动确认机制
+
+`-p` 模式下无法交互。test.sh 在提示词前注入 `[测试模式]` 指令，让 AI 遇到确认步骤时自动选择第一个选项继续执行。
+
+对于可通过参数跳过交互的 skill（如 `/xdoc 巡检`），优先使用参数方式。
+
 ## 已知限制
 
-- **AskUserQuestion**：`-p` 模式下 AskUserQuestion 可能返回空或自动选第一个选项。skill 参数设计应尽量绕过交互步骤（如用 `/xdoc 巡检` 而非 `/xdoc`）。
+- **自动确认不是 100% 可靠**：AI 可能仍然用文本提问而非 AskUserQuestion 工具，导致流程提前终止。遇到此情况，检查 output.txt 末尾是否有疑问句。
+- **stream-json 需要 --verbose**：`-p` 模式下 `--output-format stream-json` 必须搭配 `--verbose`，否则报错且无输出。
 - **评判精度**：LLM-as-a-judge 不是 100% 准确，grade.txt 作为参考，最终判断看 output.txt 原文。
 - **stream-json 解析**：output.txt 从 stream-json 提取，可能有格式损失，完整内容看 stream.jsonl。
+- **嵌套 session**：脚本已处理（unset CLAUDECODE），可从 Claude Code session 内部调用。
 
 ## 评估方式
 

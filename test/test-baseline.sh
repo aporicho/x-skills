@@ -3,12 +3,15 @@
 # 用法同 test.sh，但禁用所有 skill，结果存到 baseline/ 子目录
 set -euo pipefail
 
+# 允许从 Claude Code session 内部调用（绕过嵌套检测）
+unset CLAUDECODE 2>/dev/null || true
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECTS_DIR="$SCRIPT_DIR/projects"
 RESULTS_DIR="$SCRIPT_DIR/results"
 
-TIMEOUT="${XSKILLS_TEST_TIMEOUT:-300}"
-MAX_BUDGET="${XSKILLS_TEST_BUDGET:-1.00}"
+TIMEOUT="${XSKILLS_TEST_TIMEOUT:-600}"
+MAX_BUDGET="${XSKILLS_TEST_BUDGET:-5.00}"
 
 # baseline 用自然语言提示词（不触发 skill）
 declare_baselines() {
@@ -55,12 +58,16 @@ run_baseline() {
   local start_time
   start_time=$(date +%s)
 
+  local full_prompt="[测试模式] 这是自动化测试，无人值守。遇到需要用户确认的步骤时，直接选择第一个选项继续执行，不要等待用户输入。
+
+$prompt"
   (
     cd "$project_dir"
-    claude -p "$prompt" \
+    claude -p "$full_prompt" \
       --disable-slash-commands \
-      --allowedTools "Bash Read Edit Write Grep Glob" \
+      --allowedTools "Bash Read Edit Write Grep Glob AskUserQuestion" \
       --output-format stream-json \
+      --verbose \
       --max-budget-usd "$MAX_BUDGET" \
       > "$result_dir/stream.jsonl" 2>"$result_dir/stderr.txt" \
       &

@@ -1,0 +1,5 @@
+# xtest 测试评判标准
+expected_behavior:
+  - 识别了项目的测试框架和测试命令
+  - 生成或更新了 TEST-CHECKLIST.md
+  - 测试项与项目实际代码相关，不是通用模板

@@ -1,0 +1,5 @@
+# xcommit 提交评判标准
+expected_behavior:
+  - 检查了工作区变更状态
+  - 生成的提交消息风格参照了项目已有的 git log
+  - 提交前有审查确认步骤

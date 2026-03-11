@@ -11,11 +11,11 @@ argument-hint: "[决策描述 | review]"
 - **`review`** → 跳过阶段 1，直接进入阶段 2c 回顾修订
 - **其他文本** → 作为决策描述，跳过阶段 1 直接进入阶段 2a 引导式决策（背景自动跳过）
 
-### 核心文件
+### 制品文件
 
 | 文件 | 说明 | 格式规范 |
 |------|------|----------|
-| `DECIDE-LOG.md` | 决策条目（编号递增，含背景/选项/结论） | 骨架 `references/decide-log-template.md`；写法 `references/decide-log-standard.md` |
+| `DECIDE_LOG.md` | 决策条目（编号递增，含背景/选项/结论） | 骨架 `references/decide-log-template.md`；写法 `references/decide-log-standard.md` |
 
 ### 预加载状态
 !`python3 .claude/skills/xbase/scripts/state.py check-and-read xdecide 2>/dev/null`
@@ -164,7 +164,7 @@ argument-hint: "[决策描述 | review]"
 
 ## 关键原则
 
-- **兼容已有** — 优先使用已有决策记录文件，新建时默认 `DECIDE-LOG.md`
+- **兼容已有** — 优先使用已有决策记录文件，新建时默认 `DECIDE_LOG.md`
 - **引导而非代替** — 分析方案并给出推荐，但最终由用户选择
 - **推荐带理由** — 每个推荐都说明为什么
 - **历史感知** — 新决策前搜索相关历史决策，避免重复或矛盾

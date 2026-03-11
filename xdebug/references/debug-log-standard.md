@@ -1,4 +1,4 @@
-# DEBUG-LOG.md 书写标准
+# DEBUG_LOG.md 书写标准
 
 ## 创建位置
 

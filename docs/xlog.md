@@ -2,9 +2,9 @@
 
 > 诊断日志治理：盲区补全 + 反模式纠正 + 冗余抑制
 
-**核心文件**
+**制品文件**
 
-- **LOG-RULES.md**（规范）
+- **LOG_RULES.md**（规范）
   项目的日志规范——可用的 Logger 列表、级别使用约定、消息格式要求。
   - **创建**：xBase→xLog 阶段 0，agent 在 guideline 指导下，从项目代码探测生成
   - **读取**：xLog 执行时以此为判断依据（扫描治理 D1-D4 + targeted D5）
@@ -13,8 +13,8 @@
 **参考文件**
 
 - **log-rules-guideline.md**（生成指南）
-  LOG-RULES.md 的生成指南——结构模板 + 质量原则，指导 agent 从项目数据产出高质量日志规范。
-  - **消费场景**：xBase→xLog 阶段 0 生成 LOG-RULES.md 时
+  LOG_RULES.md 的生成指南——结构模板 + 质量原则，指导 agent 从项目数据产出高质量日志规范。
+  - **消费场景**：xBase→xLog 阶段 0 生成 LOG_RULES.md 时
 
 **入口**
 

@@ -1,6 +1,6 @@
-# LOG-RULES.md 生成指南
+# LOG_RULES.md 生成指南
 
-> 供 agent 生成/审查 LOG-RULES.md 时参照，不是用户文档。
+> 供 agent 生成/审查 LOG_RULES.md 时参照，不是用户文档。
 > 基于行业共识：BetterStack、Swift.org（os_log 指引）、DataSet、OWASP Logging Cheat Sheet。
 
 ---
@@ -138,12 +138,12 @@
 
 ### D. 生成规范时的自检清单（Self-Check for Generation）
 
-生成或更新 LOG-RULES.md 后，逐项核对：
+生成或更新 LOG_RULES.md 后，逐项核对：
 
 - [ ] **级别表判断标准具体可操作** — 不是"重要的事"这种模糊描述，而是"操作失败且用户会感知到"
 - [ ] **必加位置覆盖项目实际关键路径** — FFI 边界、状态机转换、错误处理分支、异步回调入口
 - [ ] **代码模式速查从项目真实代码提取** — 不是通用模板，包含项目实际的 Logger 实例和调用风格
-- [ ] **禁忌条目与 CLAUDE.md 一致** — 如 CLAUDE.md 禁止 print()，LOG-RULES.md 必须包含对应禁忌
+- [ ] **禁忌条目与 CLAUDE.md 一致** — 如 CLAUDE.md 禁止 print()，LOG_RULES.md 必须包含对应禁忌
 - [ ] **消息风格有正反例** — 至少覆盖：函数入口、guard 失败、错误处理、状态变化
 - [ ] **Logger 列表完整且有用途说明** — 每个 Logger 实例标明适用场景，避免选错
 - [ ] **级别速判表与详细判断标准一致** — 速判是缩写不是另一套标准

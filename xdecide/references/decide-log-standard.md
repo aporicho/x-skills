@@ -1,4 +1,4 @@
-# DECIDE-LOG.md 书写标准
+# DECIDE_LOG.md 书写标准
 
 ## 条目字段
 

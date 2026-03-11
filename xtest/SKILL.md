@@ -1,6 +1,6 @@
 ---
 name: xtest
-description: 测试工作流：自动化测试 + 手动逐项验证，维护 TEST-CHECKLIST.md，失败衔接 /xdebug。当用户要测试、验证功能、跑测试用例时使用。
+description: 测试工作流：自动化测试 + 手动逐项验证，维护 TEST_CHECKLIST.md，失败衔接 /xdebug。当用户要测试、验证功能、跑测试用例时使用。
 allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestion", "Task"]
 argument-hint: "[自动化 | 手动]"
 ---
@@ -11,12 +11,12 @@ argument-hint: "[自动化 | 手动]"
 - **`自动化`** → 跳过阶段 1，直接进入阶段 2a
 - **`手动`** → 跳过阶段 1，直接进入阶段 2b
 
-### 核心文件
+### 制品文件
 
 | 文件 | 说明 | 格式规范 |
 |------|------|----------|
-| `TEST-CHECKLIST.md` | 测试清单（按模块组织，记录测试结果） | 骨架 `references/test-checklist-template.md`；写法 `references/test-checklist-standard.md` |
-| `TEST-ISSUES.md` | Bug 队列（状态流转：🔴→🟡→🟢→✅） | 骨架 `references/test-issues-template.md`；写法 `references/test-issues-standard.md` |
+| `TEST_CHECKLIST.md` | 测试清单（按模块组织，记录测试结果） | 骨架 `references/test-checklist-template.md`；写法 `references/test-checklist-standard.md` |
+| `TEST_ISSUES.md` | Bug 队列（状态流转：🔴→🟡→🟢→✅） | 骨架 `references/test-issues-template.md`；写法 `references/test-issues-standard.md` |
 
 ### 预加载状态
 !`python3 .claude/skills/xbase/scripts/state.py check-and-read xtest 2>/dev/null`
@@ -44,7 +44,7 @@ argument-hint: "[自动化 | 手动]"
 **不问用户，全自动完成：**
 
 1. 根据项目构建系统运行测试（从 CLAUDE.md 或项目配置推导命令）
-2. 解析输出，映射到 TEST-CHECKLIST.md 对应项
+2. 解析输出，映射到 TEST_CHECKLIST.md 对应项
 3. 更新状态和概览表
 4. 用 AskUserQuestion 汇报：
 
@@ -59,11 +59,11 @@ argument-hint: "[自动化 | 手动]"
 
 ### 阶段 2b：手动测试（👤/🤝）
 
-**选模块**：从 TEST-CHECKLIST.md grep ⏳ 行按 ID 前缀统计，展示选项（最多 4 个取待测最多的模块）。
+**选模块**：从 TEST_CHECKLIST.md grep ⏳ 行按 ID 前缀统计，展示选项（最多 4 个取待测最多的模块）。
 
 **构建 + 运行**（不问用户）：
 - 如果已有预构建结果 → 直接使用
-- 否则根据项目构建系统执行构建命令
+- 否则执行 `RUN.sh build`
 - 后台启动项目，日志输出到初始化时确定的位置
 - 构建失败自行修复，不问用户
 
@@ -80,15 +80,15 @@ argument-hint: "[自动化 | 手动]"
 - Other → 备注
 ```
 
-结果在内存中暂存，**一轮结束后批量写入** TEST-CHECKLIST.md。
+结果在内存中暂存，**一轮结束后批量写入** TEST_CHECKLIST.md。
 
 ### 阶段 3：失败处理
 
 用户选"失败"时：
 
 1. 启动后台子 agent（Task 工具，run_in_background），让它读取日志做初步分析，输出分析结论
-2. **不打断测试流程**，在 TEST-CHECKLIST.md 该项标注 ❌ 并记录问题描述
-3. 写入 TEST-ISSUES.md 一条 🔴 条目：读取文件找到最大编号并 +1，用 Edit 工具在末尾追加问题记录（骨架见 `references/test-issues-template.md`，写法见 `references/test-issues-standard.md`），包含复现步骤、实际/预期表现
+2. **不打断测试流程**，在 TEST_CHECKLIST.md 该项标注 ❌ 并记录问题描述
+3. 写入 TEST_ISSUES.md 一条 🔴 条目：读取文件找到最大编号并 +1，用 Edit 工具在末尾追加问题记录（骨架见 `references/test-issues-template.md`，写法见 `references/test-issues-standard.md`），包含复现步骤、实际/预期表现
 4. 继续下一个测试项
 
 ### 阶段 4：汇总
@@ -103,7 +103,7 @@ argument-hint: "[自动化 | 手动]"
 ```
 问题：本轮完成：X 通过 / Y 失败 / Z 跳过。下一步？
 选项：
-- 立即修复（→ 从 TEST-ISSUES.md 取优先级最高的 🔴，衔接 /xdebug，传递条目编号如 #003）
+- 立即修复（→ 从 TEST_ISSUES.md 取优先级最高的 🔴，衔接 /xdebug，传递条目编号如 #003）
 - 复测已修复项（→ 扫描 🟢 条目逐项验证，通过→✅，未通过→回 🔴）
 - 提交变更（→ /xcommit）
 - 继续下一个模块（→ 回阶段 1）
@@ -116,9 +116,9 @@ argument-hint: "[自动化 | 手动]"
 
 - **代码是事实来源** — 扫描代码生成测试点，文档只做补充
 - **增量优先** — 清单已存在时只扫描 git diff 变更文件，首次生成用并行子 agent 加速
-- **不硬编码** — 路径、构建命令、编号体系均从项目动态推导
+- **不硬编码** — 路径、RUN.sh、编号体系均从 SKILL-STATE.md 动态读取
 - **选项优先于打字** — Other 兜底自由输入
 - **每次一个用例** — 不堆叠
 - **操作步骤要具体** — 根据功能给出 1-2-3 步骤，不泛泛说"测试 XX 功能"
 - **失败不打断测试** — 后台子 agent 分析日志，主流程继续下一项
-- **失败同步双写** — 每个失败项同时写入 TEST-CHECKLIST.md（❌）和 TEST-ISSUES.md（🔴）
+- **失败同步双写** — 每个失败项同时写入 TEST_CHECKLIST.md（❌）和 TEST_ISSUES.md（🔴）

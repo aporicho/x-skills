@@ -1,4 +1,4 @@
-# TEST-CHECKLIST.md 书写标准
+# TEST_CHECKLIST.md 书写标准
 
 ## 创建位置
 

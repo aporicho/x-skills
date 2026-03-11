@@ -2,9 +2,9 @@
 
 > 决策守护：轻重分流 + 前提审计 + 偏见检查 + 决策演化追踪
 
-**核心文件**
+**制品文件**
 
-- **DECIDE-LOG.md**（记录）
+- **DECIDE_LOG.md**（记录）
   所有技术/产品决策的结构化记录——背景、前提假设、方案对比、结论和理由。支持前提审计（假设是否仍成立）和决策演化追踪（Supersede 链）。
   - **创建**：xBase→xDecide 阶段 0，按 template 创建空文件
   - **写入**：xDecide 新决策/替代决策时按 standard 追加条目
@@ -14,10 +14,10 @@
 **参考文件**
 
 - **decide-log-template.md**（模板）
-  DECIDE-LOG.md 的结构骨架——文件头和条目占位符。
-  - **消费场景**：xBase→xDecide 阶段 0 创建 DECIDE-LOG.md 时
+  DECIDE_LOG.md 的结构骨架——文件头和条目占位符。
+  - **消费场景**：xBase→xDecide 阶段 0 创建 DECIDE_LOG.md 时
 - **decide-log-standard.md**（书写标准）
-  DECIDE-LOG.md 的书写标准——条目字段、编号规则、修订格式、三态检测。
+  DECIDE_LOG.md 的书写标准——条目字段、编号规则、修订格式、三态检测。
   - **消费场景**：xDecide 写入新决策/替代决策时
 
 ### D1. 操作类型

@@ -1,6 +1,6 @@
 ---
 name: xcommit
-description: 提交工作流：基于 COMMIT-RULES.md 自动预检 + 文档完整性检查 + 规范化提交。当用户要提交代码、保存变更时使用。
+description: 提交工作流：基于 COMMIT_RULES.md 自动预检 + 文档完整性检查 + 规范化提交。当用户要提交代码、保存变更时使用。
 allowed-tools: ["Bash", "Read", "Edit", "Write", "Grep", "Glob", "AskUserQuestion"]
 argument-hint: "[commit消息]"
 ---
@@ -10,11 +10,11 @@ argument-hint: "[commit消息]"
 - **空** → 正常走全流程（自动生成 commit message）
 - **其他文本** → 作为 commit message 候选，跳到阶段 1（阶段 5 时优先使用此消息）
 
-### 核心文件
+### 制品文件
 
 | 文件 | 说明 | 格式规范 |
 |------|------|----------|
-| `COMMIT-RULES.md` | 提交规范（git log 分析 + CLAUDE.md 提取） | `references/commit-rules-guideline.md` |
+| `COMMIT_RULES.md` | 提交规范（git log 分析 + CLAUDE.md 提取） | `references/commit-rules-guideline.md` |
 
 ### 预加载状态
 !`python3 .claude/skills/xbase/scripts/state.py check-and-read xcommit 2>/dev/null`
@@ -66,7 +66,7 @@ argument-hint: "[commit消息]"
 
 ### 阶段 3：预检
 
-读取 COMMIT-RULES.md 中的「预检脚本」列表，逐个运行：
+读取 COMMIT_RULES.md 中的「预检脚本」列表，逐个运行：
 
 1. 运行每个脚本，捕获输出
 2. **全部通过** → 继续阶段 4
@@ -95,11 +95,11 @@ argument-hint: "[commit消息]"
    - **Bug 修复**：diff 中包含修复逻辑、测试修复、错误处理变更
    - **架构变更**：新增/删除模块、依赖关系变更、接口变更
    - **新功能**：新增文件/函数/命令
-3. 读取 COMMIT-RULES.md 中的「文档完整性检查 → 变更类型 → 文档映射」，检查对应文档是否在暂存中
+3. 读取 COMMIT_RULES.md 中的「文档完整性检查 → 变更类型 → 文档映射」，检查对应文档是否在暂存中
 4. **疑似遗漏** → 用 AskUserQuestion：
 
 ```
-问题：本次提交看起来是 [Bug 修复]，但 [DEBUG-LOG.md] 未在暂存中。
+问题：本次提交看起来是 [Bug 修复]，但 [DEBUG_LOG.md] 未在暂存中。
   可能需要更新文档？
 选项：
 - 先补文档再提交（暂停，用户补充后重新运行 /xcommit）
@@ -113,7 +113,7 @@ argument-hint: "[commit消息]"
 
 1. **生成 commit message**：
    - 如果参数已提供 message → 优先使用
-   - 否则：参照 COMMIT-RULES.md 中的「提交消息风格」，分析 `git diff --cached` 生成 message
+   - 否则：参照 COMMIT_RULES.md 中的「提交消息风格」，分析 `git diff --cached` 生成 message
    - 总结变更性质（新功能/增强/Bug修复/重构/文档等）
    - 确保 message 准确反映变更内容和目的
 
@@ -172,11 +172,11 @@ argument-hint: "[commit消息]"
 
 ## 关键原则
 
-- **规则从文件读取** — 预检脚本、文档映射、commit 风格基于 COMMIT-RULES.md，`/xbase reinit xcommit` 时重新生成
+- **规则从文件读取** — 预检脚本、文档映射、commit 风格基于 COMMIT_RULES.md，`/xbase reinit xcommit` 时重新生成
 - **全量暂存检查** — 展示完整文件列表，确认无遗漏
 - **文档完整性是建议不是阻断** — 提醒但不阻止提交
 - **不用 `git add -A`** — 用具体文件名暂存，避免意外包含敏感文件
-- **commit message 遵循项目风格** — 按 COMMIT-RULES.md 中的风格规范
+- **commit message 遵循项目风格** — 按 COMMIT_RULES.md 中的风格规范
 - **展示文件列表** — 提交前展示完整变更文件列表
 - **选项优先于打字** — Other 兜底自由输入
 - **每轮只问一个问题** — 不堆叠

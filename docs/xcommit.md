@@ -2,9 +2,9 @@
 
 > 提交工作流：原子性保障 + 意图捕获 + 预检 + 规范化提交
 
-**核心文件**
+**制品文件**
 
-- **COMMIT-RULES.md**（规范）
+- **COMMIT_RULES.md**（规范）
   项目的提交规范——message 风格、预检脚本路径、暂存规则。
   - **创建**：xBase→xCommit 阶段 0，agent 在 guideline 指导下，从 git log 分析和 CLAUDE.md 提取生成
   - **读取**：xCommit 每次提交前自动加载，驱动预检和 message 生成
@@ -13,8 +13,8 @@
 **参考文件**
 
 - **commit-rules-guideline.md**（生成指南）
-  COMMIT-RULES.md 的生成指南——结构模板 + 质量原则，指导 agent 从项目数据产出高质量提交规范。
-  - **消费场景**：xBase→xCommit 阶段 0 生成 COMMIT-RULES.md 时
+  COMMIT_RULES.md 的生成指南——结构模板 + 质量原则，指导 agent 从项目数据产出高质量提交规范。
+  - **消费场景**：xBase→xCommit 阶段 0 生成 COMMIT_RULES.md 时
 
 ### D1. 变更收集与原子性分析
 收集工作区所有变更（staged + unstaged + untracked），分析变更内容，识别有几个独立的逻辑变更。
@@ -31,7 +31,7 @@
 - **小变更**（typo、单行修复等）→ 自动跳过 → D4
 
 ### D4. 预检与文档完整性
-运行 COMMIT-RULES.md 中的预检脚本，失败可自动修复（修复产生的新变更自动补充暂存）。推断变更类型，检查是否遗漏文档更新（建议不阻断）。
+运行 COMMIT_RULES.md 中的预检脚本，失败可自动修复（修复产生的新变更自动补充暂存）。推断变更类型，检查是否遗漏文档更新（建议不阻断）。
 → D5
 
 ### D5. 生成 message 与提交

@@ -10,11 +10,11 @@ argument-hint: "[文件/目录路径]"
 - **空** → 正常走阶段 1 询问
 - **其他文本** → 作为审查目标路径，跳过阶段 1 直接进入阶段 2
 
-### 核心文件
+### 制品文件
 
 | 文件 | 说明 | 格式规范 |
 |------|------|----------|
-| `REVIEW-RULES.md` | 项目审查规则（从 CLAUDE.md + 代码扫描提取） | [references/review-rules-guideline.md](references/review-rules-guideline.md) |
+| `REVIEW_RULES.md` | 项目审查规则（从 CLAUDE.md + 代码扫描提取） | [references/review-rules-guideline.md](references/review-rules-guideline.md) |
 
 ### 预加载状态
 !`python3 .claude/skills/xbase/scripts/state.py check-and-read xreview 2>/dev/null`
@@ -52,8 +52,8 @@ argument-hint: "[文件/目录路径]"
 #### 步骤 1.5：历史知识加载
 
 从 SKILL-STATE.md 获取路径（`xdecide → decision_log`、`xdebug → debug_log`），用变更涉及的模块/功能关键词搜索：
-- **DECIDE-LOG.md**：相关决策条目，确保审查建议不违背已有决策
-- **DEBUG-LOG.md**：相关修复记录，关注已知易错点
+- **DECIDE_LOG.md**：相关决策条目，确保审查建议不违背已有决策
+- **DEBUG_LOG.md**：相关修复记录，关注已知易错点
 
 #### 步骤 2：影响面分析（先于代码审查执行）
 
@@ -82,7 +82,7 @@ argument-hint: "[文件/目录路径]"
 
 #### 步骤 3：七维度审查
 
-读取 REVIEW-RULES.md（路径从 SKILL-STATE.md 的 `review_rules` 字段获取），按以下维度审查。根据变更类型调整权重：
+读取 REVIEW_RULES.md（路径从 SKILL-STATE.md 的 `review_rules` 字段获取），按以下维度审查。根据变更类型调整权重：
 
 - **Bug 修复** → 重点 A 正确性 + B 影响面
 - **新功能** → 重点 C 可理解性 + D 架构适配 + F 测试伴随
@@ -124,7 +124,7 @@ argument-hint: "[文件/目录路径]"
 
 > 核心问题：**放对地方了吗？符合系统设计吗？**
 
-逐条核对 REVIEW-RULES.md `## D. 架构适配` 中的项目特有规则：
+逐条核对 REVIEW_RULES.md `## D. 架构适配` 中的项目特有规则：
 - 分层依赖：是否违反依赖方向（如内层依赖外层）
 - 模块职责：新增代码是否放在正确的模块/目录
 - 设计模式：是否遵循项目现有模式（如命令模式、注册模式）
@@ -138,7 +138,7 @@ argument-hint: "[文件/目录路径]"
 - 资源管理：内存泄漏、文件句柄未关闭、循环引用
 - 并发安全：共享状态保护、主线程操作
 - 安全漏洞：注入、XSS、硬编码密钥、权限检查
-- 逐条核对 REVIEW-RULES.md `## E. 健壮性` 中的项目特有检查点
+- 逐条核对 REVIEW_RULES.md `## E. 健壮性` 中的项目特有检查点
 
 **F. 测试伴随（Test Coverage）**
 
@@ -156,7 +156,7 @@ argument-hint: "[文件/目录路径]"
 
 > 核心问题：**符合项目规矩吗？**
 
-逐条核对 REVIEW-RULES.md `## G. 规范合规` 中的规则：
+逐条核对 REVIEW_RULES.md `## G. 规范合规` 中的规则：
 - 项目禁忌：是否违反任何禁止规则
 - 项目必须：是否遵守所有必须规则
 - 编码规范：命名风格、缩进、注释语言

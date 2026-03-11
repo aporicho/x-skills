@@ -4,7 +4,7 @@
    - 找到 → 记录路径
    - 未找到 → 标记为"待创建"
 2. **运行脚本**探测：
-   - Glob 搜索 `"**/run.sh"` + `"**/*{run,start,launch,debug}*.sh"` 找所有候选
+   - Glob 搜索 `"**/RUN.sh"` + `"**/*{run,start,launch,debug}*.sh"` 找所有候选
    - 排除 `.claude/`、`node_modules/`、`build/`、`target/` 等
    - 对每个候选检查是否支持 `build`/`start`/`stop`/`logs`/`status` 五个子命令
    - 功能最完备的 → 记录为规范脚本；其余 → 标记为废弃候选（清理阶段处理）

@@ -2,15 +2,15 @@
 
 > 调试工作流：系统化定位根因 + 修复验证 + 调试归档
 
-**核心文件**
+**制品文件**
 
-- **DEBUG-LOG.md**（记录）
+- **DEBUG_LOG.md**（记录）
   每次 Bug 修复的完整轨迹——症状、根因、解决方案。跨 session 可追溯，新 session 遇到类似问题时先查这里避免重复排查。
   - **创建**：xBase→xDebug 阶段 0，按 template 创建空文件
   - **写入**：xDebug 修复完成后按 standard 追加条目
   - **读取**：xDebug 新 session 排查前先查历史
   - **更新时机**：每次 Bug 修复收尾阶段
-- **run.sh**（工具，来自 xBase）
+- **RUN.sh**（工具，来自 xBase）
   通过 SKILL-STATE.md 获取路径。
   - **创建**：xBase 初始化时
   - **读取**：xDebug 用于构建/启动/停止 App 和读取日志
@@ -18,14 +18,14 @@
 **参考文件**
 
 - **debug-log-template.md**（模板）
-  DEBUG-LOG.md 的结构骨架——段落标题和占位符。
-  - **消费场景**：xBase→xDebug 阶段 0 创建 DEBUG-LOG.md 时
+  DEBUG_LOG.md 的结构骨架——段落标题和占位符。
+  - **消费场景**：xBase→xDebug 阶段 0 创建 DEBUG_LOG.md 时
 - **debug-log-standard.md**（书写标准）
-  DEBUG-LOG.md 的书写标准——字段质量标准、编号规则、分类规则。
-  - **消费场景**：xDebug 修复收尾写入 DEBUG-LOG.md 时
+  DEBUG_LOG.md 的书写标准——字段质量标准、编号规则、分类规则。
+  - **消费场景**：xDebug 修复收尾写入 DEBUG_LOG.md 时
 
 ### D1. 问题确认与历史查询
-用户选择/描述问题（从 TEST-ISSUES.md 选取或直接描述），同时后台启动构建利用等待时间。用问题关键词搜索 DEBUG-LOG.md，有相关历史记录则直接用历史根因和解决方案指导本次排查，避免重复踩坑。
+用户选择/描述问题（从 TEST_ISSUES.md 选取或直接描述），同时后台启动构建利用等待时间。用问题关键词搜索 DEBUG_LOG.md，有相关历史记录则直接用历史根因和解决方案指导本次排查，避免重复踩坑。
 → D2
 
 ### D2. 调试模式
@@ -52,8 +52,8 @@
 - **验证未通过** → 继续调试，回到 D3（运行时调试）或继续代码分析（静态分析）
 
 ### D7. 收尾与衔接
-更新 DEBUG-LOG.md + TEST-ISSUES.md 状态。
+更新 DEBUG_LOG.md + TEST_ISSUES.md 状态。
 - **回归验证** → 衔接 xTest D6
-- **继续修下一个 Bug**（TEST-ISSUES.md 有待修条目）→ 回到 D1
+- **继续修下一个 Bug**（TEST_ISSUES.md 有待修条目）→ 回到 D1
 - **提交变更** → 衔接 xCommit D1
 - **记录决策** → 衔接 xDecide D1

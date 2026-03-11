@@ -1,4 +1,4 @@
-# TEST-ISSUES.md 书写标准
+# TEST_ISSUES.md 书写标准
 
 ## 条目格式
 
@@ -11,7 +11,7 @@
 | 编号 | ✅ | xtest | 三位数字，读取文件中最大编号 +1 |
 | 状态 emoji | ✅ | 两方 | 标题行中的 🔴🟡🟢✅ |
 | 标题 | ✅ | xtest | 问题简短描述 |
-| 检查清单 | 可选 | xtest | TEST-CHECKLIST.md 中对应的章节和测试项 |
+| 检查清单 | 可选 | xtest | TEST_CHECKLIST.md 中对应的章节和测试项 |
 | 复现步骤 | ✅ | xtest | 具体操作步骤 |
 | 实际表现 | ✅ | xtest | 观察到的行为 |
 | 预期表现 | ✅ | xtest | 正确行为 |

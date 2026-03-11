@@ -1,10 +1,10 @@
 ## 探测
 
-1. **REVIEW-RULES.md 探测**（三路并行，不短路）：
-   - 精确名 Glob：`"**/REVIEW-RULES.md"`
-   - 指纹 Grep：`"^## D\\. 架构适配"`, glob=`"*.md"`
+1. **REVIEW_RULES.md 探测**（三路并行，不短路）：
+   - 精确名 Glob：`"**/REVIEW_RULES.md"`
+   - 指纹 Grep：`"^> 由 /xreview"`, glob=`"*.md"`
    - 模糊名 Glob：`"**/*{review,审查,代码规范}*.md"`
-   - 内容指纹：`^## D\. 架构适配`
+   - 内容指纹：`^> 由 /xreview`
 2. **代码扫描**（始终执行，为生成规则收集信息）：
    - **命名风格**：扫描函数/变量名判断 camelCase/snake_case 等
    - **缩进风格**：扫描源文件判断 tab/空格、缩进宽度
@@ -24,6 +24,6 @@
 
 ## 创建
 
-1. **REVIEW-RULES.md 处理**：
+1. **REVIEW_RULES.md 处理**：
    - 需创建 → 基于探测结果生成（格式见 `.claude/skills/xreview/references/review-rules-guideline.md`），每条规则标注来源（`CLAUDE.md` 或 `代码扫描`）
-2. **写入状态**：`python3 .claude/skills/xbase/scripts/state.py write xreview review_rules "<REVIEW-RULES.md 路径>"`
+2. **写入状态**：`python3 .claude/skills/xbase/scripts/state.py write xreview review_rules "<REVIEW_RULES.md 路径>"`

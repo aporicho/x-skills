@@ -1,11 +1,11 @@
-# DOC-RULES.md 生成指南
+# DOC_RULES.md 生成指南
 
-> 供 agent 生成/审查 DOC-RULES.md 时参照，不是用户文档。
+> 供 agent 生成/审查 DOC_RULES.md 时参照，不是用户文档。
 > 基于行业共识：Diátaxis framework、Google Developer Documentation Style Guide、Write the Docs "Docs as Code"、Living Documentation 实践。
 
 ## Contents
 
-1. **结构模板** — DOC-RULES.md 的完整 markdown 结构（文档目录结构 / 检查脚本 / 格式规范 / 代码-文档映射 / 优先级规则 / 禁忌汇总）
+1. **结构模板** — DOC_RULES.md 的完整 markdown 结构（文档目录结构 / 检查脚本 / 格式规范 / 代码-文档映射 / 优先级规则 / 禁忌汇总）
 2. **更新时机** — 何时触发重新生成
 3. **质量原则** — 生成时的六个维度检查标准：
    - A. 目录结构（覆盖完整性 + 分类合理性）
@@ -65,8 +65,8 @@
 | 公开接口变更 | API 文档 | [项目扫描] |
 | 模块/依赖变更 | 架构文档 | [项目扫描] |
 | 配置项变更 | 配置说明 | [项目扫描] |
-| Bug 修复 | DEBUG-LOG.md | [CLAUDE.md / 项目扫描] |
-| 架构决策 | DECIDE-LOG.md | [CLAUDE.md / 项目扫描] |
+| Bug 修复 | DEBUG_LOG.md | [CLAUDE.md / 项目扫描] |
+| 架构决策 | DECIDE_LOG.md | [CLAUDE.md / 项目扫描] |
 
 ## 文档优先级规则
 
@@ -156,14 +156,14 @@
 | 变更类型     | 应检查的文档               |
 | -------- | -------------------- |
 | 公开接口变更   | API 文档 / 参考文档        |
-| 架构/设计决策  | 架构文档 + DECIDE-LOG.md |
+| 架构/设计决策  | 架构文档 + DECIDE_LOG.md |
 | 用户可见功能变更 | 功能文档 / 使用指南          |
-| Bug 修复   | DEBUG-LOG.md         |
+| Bug 修复   | DEBUG_LOG.md         |
 | 配置项变更    | 配置说明                 |
 
 #### 防漂移机制
 
-DOC-RULES.md 应包含新鲜度检测策略：
+DOC_RULES.md 应包含新鲜度检测策略：
 - 基于 git 历史分析"代码已变更但关联文档未更新"的检测方法
 - 新鲜度检测的触发时机（巡检时 / 提交前提醒）
 - 只防止新增漂移为主，历史漂移修复为辅——在持续产生新漂移的情况下修历史漂移是无效策略
@@ -172,19 +172,19 @@ DOC-RULES.md 应包含新鲜度检测策略：
 
 #### 不重复原则
 
-DOC-RULES.md 与其他核心文件的职责边界：
+DOC_RULES.md 与其他制品文件的职责边界：
 
-| 内容 | 归属 | DOC-RULES.md 中 |
+| 内容 | 归属 | DOC_RULES.md 中 |
 |------|------|----------------|
-| 提交时的文档完整性检查 | COMMIT-RULES.md | 不重复，可引用 |
-| 代码审查中的文档同步 | REVIEW-RULES.md | 不重复，可引用 |
-| 文档的目录结构、格式、映射 | DOC-RULES.md | 唯一来源 |
+| 提交时的文档完整性检查 | COMMIT_RULES.md | 不重复，可引用 |
+| 代码审查中的文档同步 | REVIEW_RULES.md | 不重复，可引用 |
+| 文档的目录结构、格式、映射 | DOC_RULES.md | 唯一来源 |
 
 同一条信息只有一个真实来源（Single Source of Truth），其他地方用引用。
 
 ### F. 生成规范时的自检清单（Self-Check for Generation）
 
-生成或更新 DOC-RULES.md 后，逐项核对：
+生成或更新 DOC_RULES.md 后，逐项核对：
 
 - [ ] **目录表覆盖项目所有文档目录** — 对照实际目录结构逐一确认
 - [ ] **检查脚本来自实际探测** — 路径、命令都有，不是猜的
@@ -193,5 +193,5 @@ DOC-RULES.md 与其他核心文件的职责边界：
 - [ ] **代码-文档映射指向实际存在的文件** — 逐个确认
 - [ ] **映射表覆盖主要变更类型** — 至少覆盖接口变更、架构决策、功能变更、Bug 修复
 - [ ] **新鲜度检测策略已定义** — 有检测方法和触发时机
-- [ ] **不与 COMMIT-RULES / REVIEW-RULES 重复** — 各自职责边界清晰
+- [ ] **不与 COMMIT_RULES / REVIEW_RULES 重复** — 各自职责边界清晰
 - [ ] **禁忌汇总与 CLAUDE.md 一致** — 逐条对照
